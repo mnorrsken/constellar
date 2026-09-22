@@ -1,0 +1,89 @@
+{
+	"core_radius_ly": 20.0,
+	"rim_radius_ly": 55.0,
+	"group_radius_ly": 0.3,
+	"bridge_max_lane_ly": 10.0,
+	"max_systems": 140,
+	"lanes": {
+		"k_nearest": 4,
+		"max_lane_ly": 16.0,
+		"detour_factor": 1.1
+	},
+
+	"notable": [
+		"Altair", "Vega", "Fomalhaut", "Castor", "Capella", "Arcturus", "Pollux",
+		"Denebola", "Rasalhague", "Alderamin", "Caph", "Chara", "Muphrid", "Zavijava",
+		"55 Cancri", "Upsilon Andromedae", "51 Pegasi", "47 Ursae Majoris", "61 Virginis",
+		"18 Scorpii", "Xi Bootis", "Beta Hydri", "Zeta Tucanae", "Mu Cassiopeiae",
+		"Alpha Mensae", "Gamma Leporis", "Iota Persei", "Gamma Pavonis",
+		"Beta Comae Berenices", "Gliese 667", "Gliese 581"
+	],
+
+	"rename": {
+		"Rigil Kentaurus": "Alpha Centauri",
+		"Ran": "Epsilon Eridani",
+		"Keid": "40 Eridani",
+		"Achird": "Eta Cassiopeiae",
+		"Titawin": "Upsilon Andromedae",
+		"Copernicus": "55 Cancri",
+		"Chalawan": "47 Ursae Majoris",
+		"Hoerikwaggo": "Alpha Mensae",
+		"Helvetios": "51 Pegasi",
+		"Guniibuu": "36 Ophiuchi",
+		"Gliese 65": "Luyten 726-8",
+		"268 G. Cet": "Gliese 105",
+		"82 G. Eri": "82 Eridani",
+		"Alsafi": "Sigma Draconis",
+		"Noquisi": "Gliese 436",
+		"Struve 2398 A": "Struve 2398",
+		"EZ Aqr": "EZ Aquarii"
+	},
+
+	"systems": {
+		"Sol": {
+			"components": [
+				{ "name": "Sol", "spect": "G2V", "luminosity": 1.0, "mass": 1.0 }
+			]
+		},
+		"Alpha Centauri": {
+			"component_names": ["Alpha Centauri A", "Alpha Centauri B", "Proxima Centauri"]
+		},
+		"Castor": {
+			"components": [
+				{ "name": "Castor Aa", "spect": "A1V", "luminosity": 37.0, "mass": 2.37 },
+				{ "name": "Castor Ba", "spect": "A2Vm", "luminosity": 13.0, "mass": 1.79 },
+				{ "name": "Castor Ca", "spect": "M0.5Ve", "luminosity": 0.07, "mass": 0.6 },
+				{ "name": "Castor Cb", "spect": "M0.5Ve", "luminosity": 0.07, "mass": 0.6 },
+				{ "name": "Castor Ab", "spect": "M2V", "luminosity": 0.04, "mass": 0.5 },
+				{ "name": "Castor Bb", "spect": "M2V", "luminosity": 0.04, "mass": 0.5 }
+			]
+		},
+		"Capella": {
+			"components": [
+				{ "name": "Capella Aa", "spect": "K0III", "luminosity": 79.0, "mass": 2.57 },
+				{ "name": "Capella Ab", "spect": "G1III", "luminosity": 73.0, "mass": 2.48 },
+				{ "name": "Capella H", "spect": "M2.5V", "luminosity": 0.05, "mass": 0.57 },
+				{ "name": "Capella L", "spect": "M4V", "luminosity": 0.005, "mass": 0.2 }
+			]
+		},
+		"Epsilon Indi": {
+			"components": [
+				{ "name": "Epsilon Indi A", "spect": "K5V", "luminosity": 0.22, "mass": 0.76 },
+				{ "name": "Epsilon Indi Ba", "spect": "T1V", "luminosity": 0.00002, "mass": 0.066 },
+				{ "name": "Epsilon Indi Bb", "spect": "T6V", "luminosity": 0.000005, "mass": 0.047 }
+			]
+		}
+	},
+
+	"extra_systems": [
+		{
+			"name": "TRAPPIST-1",
+			"ra_deg": 346.6224,
+			"dec_deg": -5.0414,
+			"dist_pc": 12.47,
+			"components": [
+				{ "name": "TRAPPIST-1", "spect": "M8V", "luminosity": 0.00055, "mass": 0.0898 }
+			]
+		}
+	]
+}

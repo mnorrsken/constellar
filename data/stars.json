@@ -1,0 +1,4463 @@
+{
+	"credit": "Star positions and magnitudes from the HYG database v4.4 (https://codeberg.org/astronexus/hyg), licensed CC BY-SA 4.0. Selected, grouped and extended for Constellar; this file is also CC BY-SA 4.0.",
+	"systems": [
+		{
+			"id": "sol",
+			"name": "Sol",
+			"pos": [
+				-0.0,
+				0.0,
+				-0.0
+			],
+			"stars": [
+				{
+					"name": "Sol",
+					"spect": "G2V",
+					"class": "G",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 1.0,
+					"mass": 1.0
+				}
+			]
+		},
+		{
+			"id": "alpha_centauri",
+			"name": "Alpha Centauri",
+			"pos": [
+				3.093,
+				-3.015,
+				-0.051
+			],
+			"stars": [
+				{
+					"name": "Alpha Centauri A",
+					"spect": "G2V",
+					"class": "G",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 1.501,
+					"mass": 1.107
+				},
+				{
+					"name": "Alpha Centauri B",
+					"spect": "K1V",
+					"class": "K",
+					"subclass": 1.0,
+					"lum_class": "V",
+					"luminosity": 0.5157,
+					"mass": 0.847
+				},
+				{
+					"name": "Proxima Centauri",
+					"spect": "M5Ve",
+					"class": "M",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 0.0007537,
+					"mass": 0.083
+				}
+			]
+		},
+		{
+			"id": "barnards_star",
+			"name": "Barnard's Star",
+			"pos": [
+				4.943,
+				2.971,
+				1.445
+			],
+			"stars": [
+				{
+					"name": "Barnard's Star",
+					"spect": "sdM4",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "VI",
+					"luminosity": 0.003648,
+					"mass": 0.165
+				}
+			]
+		},
+		{
+			"id": "wolf_359",
+			"name": "Wolf 359",
+			"pos": [
+				-1.902,
+				-3.909,
+				6.475
+			],
+			"stars": [
+				{
+					"name": "Wolf 359",
+					"spect": "M6",
+					"class": "M",
+					"subclass": 6.0,
+					"lum_class": "",
+					"luminosity": 0.0005167,
+					"mass": 0.071
+				}
+			]
+		},
+		{
+			"id": "lalande_21185",
+			"name": "Lalande 21185",
+			"pos": [
+				-3.439,
+				-0.308,
+				7.553
+			],
+			"stars": [
+				{
+					"name": "Lalande 21185",
+					"spect": "M2V",
+					"class": "M",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 0.02249,
+					"mass": 0.364
+				}
+			]
+		},
+		{
+			"id": "luyten_726_8",
+			"name": "Luyten 726-8",
+			"pos": [
+				-2.111,
+				0.167,
+				-8.306
+			],
+			"stars": [
+				{
+					"name": "Luyten 726-8 A",
+					"spect": "dM5.5e",
+					"class": "M",
+					"subclass": 5.5,
+					"lum_class": "V",
+					"luminosity": 0.001016,
+					"mass": 0.095
+				},
+				{
+					"name": "Luyten 726-8 B",
+					"spect": "dM5.5e",
+					"class": "M",
+					"subclass": 5.5,
+					"lum_class": "V",
+					"luminosity": 0.0009012,
+					"mass": 0.09
+				}
+			]
+		},
+		{
+			"id": "sirius",
+			"name": "Sirius",
+			"pos": [
+				-5.77,
+				-6.238,
+				-1.329
+			],
+			"stars": [
+				{
+					"name": "Sirius A",
+					"spect": "A0m...",
+					"class": "A",
+					"subclass": 0.0,
+					"lum_class": "",
+					"luminosity": 24.8,
+					"mass": 2.273
+				},
+				{
+					"name": "Sirius B",
+					"spect": "DA2",
+					"class": "D",
+					"subclass": 2.0,
+					"lum_class": "",
+					"luminosity": 0.04813,
+					"mass": 0.6
+				}
+			]
+		},
+		{
+			"id": "ross_154",
+			"name": "Ross 154",
+			"pos": [
+				9.345,
+				1.869,
+				-1.729
+			],
+			"stars": [
+				{
+					"name": "Ross 154",
+					"spect": "M3.5Ve",
+					"class": "M",
+					"subclass": 3.5,
+					"lum_class": "V",
+					"luminosity": 0.003746,
+					"mass": 0.167
+				}
+			]
+		},
+		{
+			"id": "ross_248",
+			"name": "Ross 248",
+			"pos": [
+				-3.375,
+				9.279,
+				-3.008
+			],
+			"stars": [
+				{
+					"name": "Ross 248",
+					"spect": "dM6  e",
+					"class": "M",
+					"subclass": 6.0,
+					"lum_class": "V",
+					"luminosity": 0.00264,
+					"mass": 0.143
+				}
+			]
+		},
+		{
+			"id": "epsilon_eridani",
+			"name": "Epsilon Eridani",
+			"pos": [
+				-6.746,
+				-1.915,
+				-7.802
+			],
+			"stars": [
+				{
+					"name": "Epsilon Eridani",
+					"spect": "K2V",
+					"class": "K",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 0.3688,
+					"mass": 0.779
+				}
+			]
+		},
+		{
+			"id": "lacaille_9352",
+			"name": "Lacaille 9352",
+			"pos": [
+				4.336,
+				0.387,
+				-9.758
+			],
+			"stars": [
+				{
+					"name": "Lacaille 9352",
+					"spect": "M2/M3V",
+					"class": "M",
+					"subclass": 2.0,
+					"lum_class": "",
+					"luminosity": 0.04234,
+					"mass": 0.454
+				}
+			]
+		},
+		{
+			"id": "ross_128",
+			"name": "Ross 128",
+			"pos": [
+				0.014,
+				-5.544,
+				9.434
+			],
+			"stars": [
+				{
+					"name": "Ross 128",
+					"spect": "M4.5V",
+					"class": "M",
+					"subclass": 4.5,
+					"lum_class": "V",
+					"luminosity": 0.003627,
+					"mass": 0.165
+				}
+			]
+		},
+		{
+			"id": "ez_aquarii",
+			"name": "EZ Aquarii",
+			"pos": [
+				4.11,
+				4.417,
+				-9.284
+			],
+			"stars": [
+				{
+					"name": "EZ Aquarii",
+					"spect": "M5  e",
+					"class": "M",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.001133,
+					"mass": 0.099
+				}
+			]
+		},
+		{
+			"id": "61_cygni",
+			"name": "61 Cygni",
+			"pos": [
+				1.512,
+				11.21,
+				-1.153
+			],
+			"stars": [
+				{
+					"name": "61 Cygni A",
+					"spect": "K5V",
+					"class": "K",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 0.1383,
+					"mass": 0.61
+				},
+				{
+					"name": "61 Cygni B",
+					"spect": "K7V",
+					"class": "K",
+					"subclass": 7.0,
+					"lum_class": "V",
+					"luminosity": 0.07936,
+					"mass": 0.531
+				}
+			]
+		},
+		{
+			"id": "procyon",
+			"name": "Procyon",
+			"pos": [
+				-9.29,
+				-6.196,
+				2.582
+			],
+			"stars": [
+				{
+					"name": "Procyon A",
+					"spect": "F5IV-V",
+					"class": "F",
+					"subclass": 5.0,
+					"lum_class": "IV",
+					"luminosity": 6.912,
+					"mass": 1.621
+				},
+				{
+					"name": "Procyon B",
+					"spect": "DA",
+					"class": "D",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.001269,
+					"mass": 0.6
+				}
+			]
+		},
+		{
+			"id": "struve_2398",
+			"name": "Struve 2398",
+			"pos": [
+				0.132,
+				10.614,
+				4.778
+			],
+			"stars": [
+				{
+					"name": "Struve 2398 A",
+					"spect": "K5",
+					"class": "K",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.004626,
+					"mass": 0.183
+				},
+				{
+					"name": "Struve 2398 B",
+					"spect": "K5",
+					"class": "K",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.002152,
+					"mass": 0.131
+				}
+			]
+		},
+		{
+			"id": "groombridge_34",
+			"name": "Groombridge 34",
+			"pos": [
+				-4.983,
+				9.918,
+				-3.702
+			],
+			"stars": [
+				{
+					"name": "Groombridge 34 A",
+					"spect": "M1V",
+					"class": "M",
+					"subclass": 1.0,
+					"lum_class": "V",
+					"luminosity": 0.02136,
+					"mass": 0.356
+				},
+				{
+					"name": "Groombridge 34 B",
+					"spect": "M6 Ve",
+					"class": "M",
+					"subclass": 6.0,
+					"lum_class": "V",
+					"luminosity": 0.01039,
+					"mass": 0.26
+				}
+			]
+		},
+		{
+			"id": "epsilon_indi",
+			"name": "Epsilon Indi",
+			"pos": [
+				7.226,
+				-3.188,
+				-8.785
+			],
+			"stars": [
+				{
+					"name": "Epsilon Indi A",
+					"spect": "K5V",
+					"class": "K",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 0.22,
+					"mass": 0.76
+				},
+				{
+					"name": "Epsilon Indi Ba",
+					"spect": "T1V",
+					"class": "T",
+					"subclass": 1.0,
+					"lum_class": "V",
+					"luminosity": 2e-05,
+					"mass": 0.066
+				},
+				{
+					"name": "Epsilon Indi Bb",
+					"spect": "T6V",
+					"class": "T",
+					"subclass": 6.0,
+					"lum_class": "V",
+					"luminosity": 5e-06,
+					"mass": 0.047
+				}
+			]
+		},
+		{
+			"id": "gj_1111",
+			"name": "GJ 1111",
+			"pos": [
+				-9.545,
+				-2.92,
+				6.34
+			],
+			"stars": [
+				{
+					"name": "GJ 1111",
+					"spect": "M6.5",
+					"class": "M",
+					"subclass": 6.5,
+					"lum_class": "",
+					"luminosity": 0.0004176,
+					"mass": 0.064
+				}
+			]
+		},
+		{
+			"id": "tau_ceti",
+			"name": "Tau Ceti",
+			"pos": [
+				-3.369,
+				0.408,
+				-11.411
+			],
+			"stars": [
+				{
+					"name": "Tau Ceti",
+					"spect": "G8V",
+					"class": "G",
+					"subclass": 8.0,
+					"lum_class": "V",
+					"luminosity": 0.4884,
+					"mass": 0.836
+				}
+			]
+		},
+		{
+			"id": "gliese_54_1",
+			"name": "Gliese 54.1",
+			"pos": [
+				-2.026,
+				1.183,
+				-11.805
+			],
+			"stars": [
+				{
+					"name": "Gliese 54.1",
+					"spect": "M5.5Ve",
+					"class": "M",
+					"subclass": 5.5,
+					"lum_class": "V",
+					"luminosity": 0.00309,
+					"mass": 0.154
+				}
+			]
+		},
+		{
+			"id": "hip_82724",
+			"name": "HIP 82724",
+			"pos": [
+				9.937,
+				-6.375,
+				-2.445
+			],
+			"stars": [
+				{
+					"name": "HIP 82724",
+					"spect": "Mp",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.002829,
+					"mass": 0.148
+				}
+			]
+		},
+		{
+			"id": "luytens_star",
+			"name": "Luyten's Star",
+			"pos": [
+				-10.307,
+				-6.527,
+				2.233
+			],
+			"stars": [
+				{
+					"name": "Luyten's Star",
+					"spect": "M5",
+					"class": "M",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.01905,
+					"mass": 0.339
+				}
+			]
+		},
+		{
+			"id": "kapteyns_star",
+			"name": "Kapteyn's Star",
+			"pos": [
+				-3.442,
+				-9.736,
+				-7.503
+			],
+			"stars": [
+				{
+					"name": "Kapteyn's Star",
+					"spect": "M0V",
+					"class": "M",
+					"subclass": 0.0,
+					"lum_class": "V",
+					"luminosity": 0.01039,
+					"mass": 0.26
+				}
+			]
+		},
+		{
+			"id": "lacaille_8760",
+			"name": "Lacaille 8760",
+			"pos": [
+				9.198,
+				0.628,
+				-8.983
+			],
+			"stars": [
+				{
+					"name": "Lacaille 8760",
+					"spect": "M1/M2V",
+					"class": "M",
+					"subclass": 1.0,
+					"lum_class": "",
+					"luminosity": 0.09384,
+					"mass": 0.553
+				}
+			]
+		},
+		{
+			"id": "gliese_860",
+			"name": "Gliese 860",
+			"pos": [
+				-3.313,
+				12.639,
+				-0.001
+			],
+			"stars": [
+				{
+					"name": "Gliese 860 A",
+					"spect": "M6 V",
+					"class": "M",
+					"subclass": 6.0,
+					"lum_class": "V",
+					"luminosity": 0.01051,
+					"mass": 0.261
+				},
+				{
+					"name": "Gliese 860 B",
+					"spect": "M2V",
+					"class": "M",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 0.008024,
+					"mass": 0.232
+				}
+			]
+		},
+		{
+			"id": "ross_614",
+			"name": "Ross 614",
+			"pos": [
+				-11.232,
+				-7.274,
+				-1.451
+			],
+			"stars": [
+				{
+					"name": "Ross 614 A",
+					"spect": "M4.5Ve",
+					"class": "M",
+					"subclass": 4.5,
+					"lum_class": "V",
+					"luminosity": 0.005485,
+					"mass": 0.197
+				},
+				{
+					"name": "Ross 614 B",
+					"spect": "",
+					"class": "M",
+					"subclass": 9.0,
+					"lum_class": "V",
+					"luminosity": 0.001928,
+					"mass": 0.125
+				}
+			]
+		},
+		{
+			"id": "hip_82725",
+			"name": "HIP 82725",
+			"pos": [
+				11.146,
+				-7.151,
+				-2.743
+			],
+			"stars": [
+				{
+					"name": "HIP 82725",
+					"spect": "",
+					"class": "M",
+					"subclass": 5.8,
+					"lum_class": "V",
+					"luminosity": 0.006717,
+					"mass": 0.215
+				}
+			]
+		},
+		{
+			"id": "van_maanens_star",
+			"name": "Van Maanen's Star",
+			"pos": [
+				-3.948,
+				6.348,
+				-11.724
+			],
+			"stars": [
+				{
+					"name": "Van Maanen's Star",
+					"spect": "DG",
+					"class": "D",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.0004048,
+					"mass": 0.6
+				}
+			]
+		},
+		{
+			"id": "gj_1061",
+			"name": "GJ 1061",
+			"pos": [
+				-2.627,
+				-8.022,
+				-11.163
+			],
+			"stars": [
+				{
+					"name": "GJ 1061",
+					"spect": "M4.5",
+					"class": "M",
+					"subclass": 4.5,
+					"lum_class": "",
+					"luminosity": 0.001021,
+					"mass": 0.095
+				}
+			]
+		},
+		{
+			"id": "wolf_1061",
+			"name": "Wolf 1061",
+			"pos": [
+				12.798,
+				0.75,
+				5.622
+			],
+			"stars": [
+				{
+					"name": "Wolf 1061",
+					"spect": "M4",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "",
+					"luminosity": 0.01206,
+					"mass": 0.277
+				}
+			]
+		},
+		{
+			"id": "gliese_473",
+			"name": "Gliese 473",
+			"pos": [
+				1.441,
+				-4.244,
+				13.312
+			],
+			"stars": [
+				{
+					"name": "Gliese 473 A",
+					"spect": "M7",
+					"class": "M",
+					"subclass": 7.0,
+					"lum_class": "",
+					"luminosity": 0.002913,
+					"mass": 0.15
+				},
+				{
+					"name": "Gliese 473 B",
+					"spect": "dM5.5eJ",
+					"class": "M",
+					"subclass": 5.5,
+					"lum_class": "V",
+					"luminosity": 0.001772,
+					"mass": 0.121
+				}
+			]
+		},
+		{
+			"id": "gliese_1",
+			"name": "Gliese 1",
+			"pos": [
+				3.307,
+				-0.976,
+				-13.729
+			],
+			"stars": [
+				{
+					"name": "Gliese 1",
+					"spect": "M2V",
+					"class": "M",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 0.02437,
+					"mass": 0.377
+				}
+			]
+		},
+		{
+			"id": "gj_3522",
+			"name": "GJ 3522",
+			"pos": [
+				-9.418,
+				-7.956,
+				7.747
+			],
+			"stars": [
+				{
+					"name": "GJ 3522",
+					"spect": "k",
+					"class": "K",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.001201,
+					"mass": 0.102
+				}
+			]
+		},
+		{
+			"id": "gliese_83_1",
+			"name": "Gliese 83.1",
+			"pos": [
+				-8.474,
+				5.366,
+				-10.566
+			],
+			"stars": [
+				{
+					"name": "Gliese 83.1",
+					"spect": "dM8  e",
+					"class": "M",
+					"subclass": 8.0,
+					"lum_class": "V",
+					"luminosity": 0.01215,
+					"mass": 0.278
+				}
+			]
+		},
+		{
+			"id": "gj_3618",
+			"name": "GJ 3618",
+			"pos": [
+				4.58,
+				-13.895,
+				-0.51
+			],
+			"stars": [
+				{
+					"name": "GJ 3618",
+					"spect": "m",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.0006194,
+					"mass": 0.076
+				}
+			]
+		},
+		{
+			"id": "gj_3622",
+			"name": "GJ 3622",
+			"pos": [
+				-1.735,
+				-10.952,
+				9.738
+			],
+			"stars": [
+				{
+					"name": "GJ 3622",
+					"spect": "M6.5",
+					"class": "M",
+					"subclass": 6.5,
+					"lum_class": "",
+					"luminosity": 0.0003142,
+					"mass": 0.057
+				}
+			]
+		},
+		{
+			"id": "gliese_687",
+			"name": "Gliese 687",
+			"pos": [
+				-1.874,
+				12.388,
+				7.818
+			],
+			"stars": [
+				{
+					"name": "Gliese 687",
+					"spect": "M3.5Vvar",
+					"class": "M",
+					"subclass": 3.5,
+					"lum_class": "V",
+					"luminosity": 0.02679,
+					"mass": 0.393
+				}
+			]
+		},
+		{
+			"id": "gliese_674",
+			"name": "Gliese 674",
+			"pos": [
+				14.063,
+				-4.298,
+				-1.748
+			],
+			"stars": [
+				{
+					"name": "Gliese 674",
+					"spect": "K5",
+					"class": "K",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.004993,
+					"mass": 0.189
+				}
+			]
+		},
+		{
+			"id": "gliese_440",
+			"name": "Gliese 440",
+			"pos": [
+				6.584,
+				-13.49,
+				-0.749
+			],
+			"stars": [
+				{
+					"name": "Gliese 440",
+					"spect": "DC:",
+					"class": "D",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.001055,
+					"mass": 0.6
+				}
+			]
+		},
+		{
+			"id": "gliese_876",
+			"name": "Gliese 876",
+			"pos": [
+				4.76,
+				6.093,
+				-13.194
+			],
+			"stars": [
+				{
+					"name": "Gliese 876",
+					"spect": "M5",
+					"class": "M",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.02158,
+					"mass": 0.357
+				}
+			]
+		},
+		{
+			"id": "gj_1002",
+			"name": "GJ 1002",
+			"pos": [
+				-0.25,
+				5.801,
+				-14.177
+			],
+			"stars": [
+				{
+					"name": "GJ 1002",
+					"spect": "M5-5.5",
+					"class": "M",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.0007943,
+					"mass": 0.085
+				}
+			]
+		},
+		{
+			"id": "gj_1245",
+			"name": "GJ 1245",
+			"pos": [
+				2.94,
+				14.929,
+				2.277
+			],
+			"stars": [
+				{
+					"name": "GJ 1245 A",
+					"spect": "M5.5 V e",
+					"class": "M",
+					"subclass": 5.5,
+					"lum_class": "V",
+					"luminosity": 0.001511,
+					"mass": 0.112
+				},
+				{
+					"name": "GJ 1245 B",
+					"spect": "m",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.0006298,
+					"mass": 0.077
+				}
+			]
+		},
+		{
+			"id": "gliese_412",
+			"name": "Gliese 412",
+			"pos": [
+				-7.018,
+				1.428,
+				14.099
+			],
+			"stars": [
+				{
+					"name": "Gliese 412 A",
+					"spect": "M2Vvar",
+					"class": "M",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 0.02394,
+					"mass": 0.374
+				},
+				{
+					"name": "Gliese 412 B",
+					"spect": "M6  e",
+					"class": "M",
+					"subclass": 6.0,
+					"lum_class": "",
+					"luminosity": 0.0008798,
+					"mass": 0.089
+				}
+			]
+		},
+		{
+			"id": "gliese_380",
+			"name": "Gliese 380",
+			"pos": [
+				-9.458,
+				2.382,
+				12.549
+			],
+			"stars": [
+				{
+					"name": "Gliese 380",
+					"spect": "K8V",
+					"class": "K",
+					"subclass": 8.0,
+					"lum_class": "V",
+					"luminosity": 0.1037,
+					"mass": 0.567
+				}
+			]
+		},
+		{
+			"id": "gliese_388",
+			"name": "Gliese 388",
+			"pos": [
+				-7.457,
+				-5.509,
+				13.037
+			],
+			"stars": [
+				{
+					"name": "Gliese 388",
+					"spect": "M4.5Ve",
+					"class": "M",
+					"subclass": 4.5,
+					"lum_class": "V",
+					"luminosity": 0.03777,
+					"mass": 0.441
+				}
+			]
+		},
+		{
+			"id": "gliese_832",
+			"name": "Gliese 832",
+			"pos": [
+				10.954,
+				-2.095,
+				-11.691
+			],
+			"stars": [
+				{
+					"name": "Gliese 832",
+					"spect": "M1V",
+					"class": "M",
+					"subclass": 1.0,
+					"lum_class": "V",
+					"luminosity": 0.0241,
+					"mass": 0.375
+				}
+			]
+		},
+		{
+			"id": "40_eridani",
+			"name": "40 Eridani",
+			"pos": [
+				-11.971,
+				-4.536,
+				-10.019
+			],
+			"stars": [
+				{
+					"name": "40 Eridani A",
+					"spect": "K1V",
+					"class": "K",
+					"subclass": 1.0,
+					"lum_class": "V",
+					"luminosity": 0.4278,
+					"mass": 0.809
+				},
+				{
+					"name": "40 Eridani B",
+					"spect": "DA4",
+					"class": "D",
+					"subclass": 4.0,
+					"lum_class": "",
+					"luminosity": 0.03417,
+					"mass": 0.6
+				},
+				{
+					"name": "40 Eridani C",
+					"spect": "dM4.5e",
+					"class": "M",
+					"subclass": 4.5,
+					"lum_class": "V",
+					"luminosity": 0.007827,
+					"mass": 0.23
+				}
+			]
+		},
+		{
+			"id": "gj_1005",
+			"name": "GJ 1005",
+			"pos": [
+				0.411,
+				3.857,
+				-15.794
+			],
+			"stars": [
+				{
+					"name": "GJ 1005",
+					"spect": "M:",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.007171,
+					"mass": 0.221
+				}
+			]
+		},
+		{
+			"id": "gliese_682",
+			"name": "Gliese 682",
+			"pos": [
+				15.962,
+				-3.984,
+				-1.914
+			],
+			"stars": [
+				{
+					"name": "Gliese 682",
+					"spect": "M5",
+					"class": "M",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.01235,
+					"mass": 0.28
+				}
+			]
+		},
+		{
+			"id": "70_ophiuchi",
+			"name": "70 Ophiuchi",
+			"pos": [
+				14.092,
+				8.101,
+				3.268
+			],
+			"stars": [
+				{
+					"name": "70 Ophiuchi A",
+					"spect": "K0V SB",
+					"class": "K",
+					"subclass": 0.0,
+					"lum_class": "V",
+					"luminosity": 0.5976,
+					"mass": 0.879
+				},
+				{
+					"name": "70 Ophiuchi B",
+					"spect": "K5 Ve",
+					"class": "K",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 0.1409,
+					"mass": 0.613
+				}
+			]
+		},
+		{
+			"id": "gliese_873",
+			"name": "Gliese 873",
+			"pos": [
+				-2.996,
+				15.996,
+				-3.778
+			],
+			"stars": [
+				{
+					"name": "Gliese 873",
+					"spect": "M4.5Ve",
+					"class": "M",
+					"subclass": 4.5,
+					"lum_class": "V",
+					"luminosity": 0.01815,
+					"mass": 0.331
+				}
+			]
+		},
+		{
+			"id": "altair",
+			"name": "Altair",
+			"pos": [
+				11.114,
+				12.233,
+				-2.591
+			],
+			"stars": [
+				{
+					"name": "Altair",
+					"spect": "A7IV-V",
+					"class": "A",
+					"subclass": 7.0,
+					"lum_class": "IV",
+					"luminosity": 10.57,
+					"mass": 1.803
+				}
+			]
+		},
+		{
+			"id": "gj_1116",
+			"name": "GJ 1116",
+			"pos": [
+				-12.153,
+				-6.34,
+				10.13
+			],
+			"stars": [
+				{
+					"name": "GJ 1116 A",
+					"spect": "m",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.0007386,
+					"mass": 0.082
+				},
+				{
+					"name": "GJ 1116 B",
+					"spect": "m",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.0003345,
+					"mass": 0.058
+				}
+			]
+		},
+		{
+			"id": "hip_67593",
+			"name": "HIP 67593",
+			"pos": [
+				3.851,
+				1.575,
+				16.865
+			],
+			"stars": [
+				{
+					"name": "HIP 67593",
+					"spect": "",
+					"class": "M",
+					"subclass": 7.1,
+					"lum_class": "V",
+					"luminosity": 0.0046,
+					"mass": 0.183
+				}
+			]
+		},
+		{
+			"id": "gliese_445",
+			"name": "Gliese 445",
+			"pos": [
+				-8.253,
+				11.012,
+				10.732
+			],
+			"stars": [
+				{
+					"name": "Gliese 445",
+					"spect": "M4",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "",
+					"luminosity": 0.009836,
+					"mass": 0.254
+				}
+			]
+		},
+		{
+			"id": "gj_3379",
+			"name": "GJ 3379",
+			"pos": [
+				-15.674,
+				-7.164,
+				-3.083
+			],
+			"stars": [
+				{
+					"name": "GJ 3379",
+					"spect": "M4",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "",
+					"luminosity": 0.006076,
+					"mass": 0.206
+				}
+			]
+		},
+		{
+			"id": "gliese_526",
+			"name": "Gliese 526",
+			"pos": [
+				5.256,
+				-0.778,
+				16.762
+			],
+			"stars": [
+				{
+					"name": "Gliese 526",
+					"spect": "M3V",
+					"class": "M",
+					"subclass": 3.0,
+					"lum_class": "V",
+					"luminosity": 0.05959,
+					"mass": 0.494
+				}
+			]
+		},
+		{
+			"id": "hip_58910",
+			"name": "HIP 58910",
+			"pos": [
+				8.305,
+				-15.962,
+				0.118
+			],
+			"stars": [
+				{
+					"name": "HIP 58910",
+					"spect": "F0Ib-II",
+					"class": "F",
+					"subclass": 0.0,
+					"lum_class": "Ib",
+					"luminosity": 0.02245,
+					"mass": 1.5
+				}
+			]
+		},
+		{
+			"id": "gliese_169_1",
+			"name": "Gliese 169.1",
+			"pos": [
+				-15.321,
+				9.536,
+				2.316
+			],
+			"stars": [
+				{
+					"name": "Gliese 169.1 A",
+					"spect": "",
+					"class": "M",
+					"subclass": 3.9,
+					"lum_class": "V",
+					"luminosity": 0.01011,
+					"mass": 0.257
+				},
+				{
+					"name": "Gliese 169.1 B",
+					"spect": "DC5",
+					"class": "D",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.002008,
+					"mass": 0.6
+				}
+			]
+		},
+		{
+			"id": "gliese_251",
+			"name": "Gliese 251",
+			"pos": [
+				-17.566,
+				-0.901,
+				4.757
+			],
+			"stars": [
+				{
+					"name": "Gliese 251",
+					"spect": "K:...",
+					"class": "K",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.004725,
+					"mass": 0.185
+				}
+			]
+		},
+		{
+			"id": "hip_83609",
+			"name": "HIP 83609",
+			"pos": [
+				18.045,
+				-2.8,
+				1.409
+			],
+			"stars": [
+				{
+					"name": "HIP 83609",
+					"spect": "G0",
+					"class": "G",
+					"subclass": 0.0,
+					"lum_class": "",
+					"luminosity": 0.005282,
+					"mass": 0.194
+				}
+			]
+		},
+		{
+			"id": "gliese_205",
+			"name": "Gliese 205",
+			"pos": [
+				-15.511,
+				-7.881,
+				-6.143
+			],
+			"stars": [
+				{
+					"name": "Gliese 205",
+					"spect": "M1V",
+					"class": "M",
+					"subclass": 1.0,
+					"lum_class": "V",
+					"luminosity": 0.05932,
+					"mass": 0.494
+				}
+			]
+		},
+		{
+			"id": "gliese_754",
+			"name": "Gliese 754",
+			"pos": [
+				16.823,
+				-2.257,
+				-7.523
+			],
+			"stars": [
+				{
+					"name": "Gliese 754",
+					"spect": "M4.5",
+					"class": "M",
+					"subclass": 4.5,
+					"lum_class": "",
+					"luminosity": 0.003753,
+					"mass": 0.167
+				}
+			]
+		},
+		{
+			"id": "hip_103039",
+			"name": "HIP 103039",
+			"pos": [
+				13.323,
+				7.743,
+				-10.478
+			],
+			"stars": [
+				{
+					"name": "HIP 103039",
+					"spect": "",
+					"class": "M",
+					"subclass": 4.6,
+					"lum_class": "V",
+					"luminosity": 0.008426,
+					"mass": 0.237
+				}
+			]
+		},
+		{
+			"id": "gliese_229",
+			"name": "Gliese 229",
+			"pos": [
+				-11.77,
+				-13.356,
+				-5.935
+			],
+			"stars": [
+				{
+					"name": "Gliese 229",
+					"spect": "M1/M2V",
+					"class": "M",
+					"subclass": 1.0,
+					"lum_class": "",
+					"luminosity": 0.052,
+					"mass": 0.478
+				}
+			]
+		},
+		{
+			"id": "sigma_draconis",
+			"name": "Sigma Draconis",
+			"pos": [
+				-3.414,
+				17.081,
+				6.994
+			],
+			"stars": [
+				{
+					"name": "Sigma Draconis",
+					"spect": "K0V",
+					"class": "K",
+					"subclass": 0.0,
+					"lum_class": "V",
+					"luminosity": 0.4246,
+					"mass": 0.807
+				}
+			]
+		},
+		{
+			"id": "gliese_338",
+			"name": "Gliese 338",
+			"pos": [
+				-13.458,
+				3.622,
+				12.846
+			],
+			"stars": [
+				{
+					"name": "Gliese 338 A",
+					"spect": "M0V",
+					"class": "M",
+					"subclass": 0.0,
+					"lum_class": "V",
+					"luminosity": 0.07053,
+					"mass": 0.515
+				},
+				{
+					"name": "Gliese 338 B",
+					"spect": "K2",
+					"class": "K",
+					"subclass": 2.0,
+					"lum_class": "",
+					"luminosity": 0.03726,
+					"mass": 0.439
+				}
+			]
+		},
+		{
+			"id": "gliese_213",
+			"name": "Gliese 213",
+			"pos": [
+				-18.235,
+				-4.448,
+				-3.044
+			],
+			"stars": [
+				{
+					"name": "Gliese 213",
+					"spect": "M5",
+					"class": "M",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.009188,
+					"mass": 0.247
+				}
+			]
+		},
+		{
+			"id": "gliese_693",
+			"name": "Gliese 693",
+			"pos": [
+				16.731,
+				-7.694,
+				-4.746
+			],
+			"stars": [
+				{
+					"name": "Gliese 693",
+					"spect": "M5",
+					"class": "M",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.01939,
+					"mass": 0.341
+				}
+			]
+		},
+		{
+			"id": "gliese_570",
+			"name": "Gliese 570",
+			"pos": [
+				14.892,
+				-5.944,
+				10.285
+			],
+			"stars": [
+				{
+					"name": "Gliese 570 A",
+					"spect": "K4V",
+					"class": "K",
+					"subclass": 4.0,
+					"lum_class": "V",
+					"luminosity": 0.2233,
+					"mass": 0.687
+				},
+				{
+					"name": "Gliese 570 B",
+					"spect": "K5V",
+					"class": "K",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 0.03003,
+					"mass": 0.413
+				}
+			]
+		},
+		{
+			"id": "gliese_752",
+			"name": "Gliese 752",
+			"pos": [
+				14.546,
+				12.401,
+				-1.097
+			],
+			"stars": [
+				{
+					"name": "Gliese 752 A",
+					"spect": "M3.5V",
+					"class": "M",
+					"subclass": 3.5,
+					"lum_class": "V",
+					"luminosity": 0.04626,
+					"mass": 0.464
+				},
+				{
+					"name": "Gliese 752 B",
+					"spect": "dM5  e",
+					"class": "M",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 3.851e-05,
+					"mass": 0.023
+				}
+			]
+		},
+		{
+			"id": "gliese_300",
+			"name": "Gliese 300",
+			"pos": [
+				-9.101,
+				-16.733,
+				2.299
+			],
+			"stars": [
+				{
+					"name": "Gliese 300",
+					"spect": "M4",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "",
+					"luminosity": 0.003591,
+					"mass": 0.164
+				}
+			]
+		},
+		{
+			"id": "gliese_588",
+			"name": "Gliese 588",
+			"pos": [
+				16.797,
+				-8.679,
+				4.063
+			],
+			"stars": [
+				{
+					"name": "Gliese 588",
+					"spect": "M0",
+					"class": "M",
+					"subclass": 0.0,
+					"lum_class": "",
+					"luminosity": 0.01578,
+					"mass": 0.312
+				}
+			]
+		},
+		{
+			"id": "36_ophiuchi",
+			"name": "36 Ophiuchi",
+			"pos": [
+				19.204,
+				-0.577,
+				2.318
+			],
+			"stars": [
+				{
+					"name": "36 Ophiuchi A",
+					"spect": "K2:III:",
+					"class": "K",
+					"subclass": 2.0,
+					"lum_class": "III",
+					"luminosity": 0.7152,
+					"mass": 1.5
+				},
+				{
+					"name": "36 Ophiuchi B",
+					"spect": "K1 Ve",
+					"class": "K",
+					"subclass": 1.0,
+					"lum_class": "V",
+					"luminosity": 0.342,
+					"mass": 0.765
+				},
+				{
+					"name": "36 Ophiuchi C",
+					"spect": "K5V",
+					"class": "K",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 0.1432,
+					"mass": 0.615
+				}
+			]
+		},
+		{
+			"id": "eta_cassiopeiae",
+			"name": "Eta Cassiopeiae",
+			"pos": [
+				-10.426,
+				16.29,
+				-1.711
+			],
+			"stars": [
+				{
+					"name": "Eta Cassiopeiae A",
+					"spect": "G0V SB",
+					"class": "G",
+					"subclass": 0.0,
+					"lum_class": "V",
+					"luminosity": 1.229,
+					"mass": 1.053
+				},
+				{
+					"name": "Eta Cassiopeiae B",
+					"spect": "K7 V",
+					"class": "K",
+					"subclass": 7.0,
+					"lum_class": "V",
+					"luminosity": 0.05992,
+					"mass": 0.495
+				}
+			]
+		},
+		{
+			"id": "gliese_285",
+			"name": "Gliese 285",
+			"pos": [
+				-15.314,
+				-11.068,
+				4.521
+			],
+			"stars": [
+				{
+					"name": "Gliese 285",
+					"spect": "M4.5Ve",
+					"class": "M",
+					"subclass": 4.5,
+					"lum_class": "V",
+					"luminosity": 0.01072,
+					"mass": 0.264
+				}
+			]
+		},
+		{
+			"id": "gliese_908",
+			"name": "Gliese 908",
+			"pos": [
+				-0.662,
+				10.631,
+				-16.327
+			],
+			"stars": [
+				{
+					"name": "Gliese 908",
+					"spect": "M2V",
+					"class": "M",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 0.03142,
+					"mass": 0.421
+				}
+			]
+		},
+		{
+			"id": "gliese_783",
+			"name": "Gliese 783",
+			"pos": [
+				16.756,
+				1.535,
+				-10.08
+			],
+			"stars": [
+				{
+					"name": "Gliese 783 A",
+					"spect": "K2V",
+					"class": "K",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 0.2954,
+					"mass": 0.737
+				},
+				{
+					"name": "Gliese 783 B",
+					"spect": "M3.5",
+					"class": "M",
+					"subclass": 3.5,
+					"lum_class": "",
+					"luminosity": 0.00549,
+					"mass": 0.197
+				}
+			]
+		},
+		{
+			"id": "82_eridani",
+			"name": "82 Eridani",
+			"pos": [
+				-3.628,
+				-10.386,
+				-16.358
+			],
+			"stars": [
+				{
+					"name": "82 Eridani",
+					"spect": "G8V",
+					"class": "G",
+					"subclass": 8.0,
+					"lum_class": "V",
+					"luminosity": 0.6583,
+					"mass": 0.901
+				}
+			]
+		},
+		{
+			"id": "gliese_555",
+			"name": "Gliese 555",
+			"pos": [
+				13.411,
+				-5.304,
+				13.521
+			],
+			"stars": [
+				{
+					"name": "Gliese 555",
+					"spect": "M4",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "",
+					"luminosity": 0.00782,
+					"mass": 0.23
+				}
+			]
+		},
+		{
+			"id": "delta_pavonis",
+			"name": "Delta Pavonis",
+			"pos": [
+				14.53,
+				-8.468,
+				-10.68
+			],
+			"stars": [
+				{
+					"name": "Delta Pavonis",
+					"spect": "G5IV-Vvar",
+					"class": "G",
+					"subclass": 5.0,
+					"lum_class": "IV",
+					"luminosity": 1.225,
+					"mass": 1.052
+				}
+			]
+		},
+		{
+			"id": "gliese_581",
+			"name": "Gliese 581",
+			"pos": [
+				15.44,
+				-1.602,
+				13.034
+			],
+			"stars": [
+				{
+					"name": "Gliese 581",
+					"spect": "M5",
+					"class": "M",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.02599,
+					"mass": 0.388
+				}
+			]
+		},
+		{
+			"id": "xi_bootis",
+			"name": "Xi Bootis",
+			"pos": [
+				9.654,
+				4.115,
+				19.213
+			],
+			"stars": [
+				{
+					"name": "Xi Bootis A",
+					"spect": "G8V + K4V",
+					"class": "G",
+					"subclass": 8.0,
+					"lum_class": "V",
+					"luminosity": 0.6275,
+					"mass": 0.89
+				},
+				{
+					"name": "Xi Bootis B",
+					"spect": "K4 Ve",
+					"class": "K",
+					"subclass": 4.0,
+					"lum_class": "V",
+					"luminosity": 0.0929,
+					"mass": 0.552
+				}
+			]
+		},
+		{
+			"id": "gliese_643",
+			"name": "Gliese 643",
+			"pos": [
+				20.046,
+				3.914,
+				7.906
+			],
+			"stars": [
+				{
+					"name": "Gliese 643",
+					"spect": "M4",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "",
+					"luminosity": 0.006577,
+					"mass": 0.213
+				}
+			]
+		},
+		{
+			"id": "gliese_667",
+			"name": "Gliese 667",
+			"pos": [
+				22.063,
+				-3.163,
+				0.554
+			],
+			"stars": [
+				{
+					"name": "Gliese 667 A",
+					"spect": "K4V",
+					"class": "K",
+					"subclass": 4.0,
+					"lum_class": "V",
+					"luminosity": 0.2568,
+					"mass": 0.712
+				},
+				{
+					"name": "Gliese 667 B",
+					"spect": "K5 V",
+					"class": "K",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 0.08766,
+					"mass": 0.544
+				},
+				{
+					"name": "Gliese 667 C",
+					"spect": "M2.5",
+					"class": "M",
+					"subclass": 2.5,
+					"lum_class": "",
+					"luminosity": 0.0161,
+					"mass": 0.315
+				}
+			]
+		},
+		{
+			"id": "beta_hydri",
+			"name": "Beta Hydri",
+			"pos": [
+				10.662,
+				-15.357,
+				-15.567
+			],
+			"stars": [
+				{
+					"name": "Beta Hydri",
+					"spect": "G2IV",
+					"class": "G",
+					"subclass": 2.0,
+					"lum_class": "IV",
+					"luminosity": 3.509,
+					"mass": 1.369
+				}
+			]
+		},
+		{
+			"id": "mu_cassiopeiae",
+			"name": "Mu Cassiopeiae",
+			"pos": [
+				-14.127,
+				19.898,
+				-3.374
+			],
+			"stars": [
+				{
+					"name": "Mu Cassiopeiae A",
+					"spect": "G5Vp",
+					"class": "G",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 0.4211,
+					"mass": 0.806
+				},
+				{
+					"name": "Mu Cassiopeiae B",
+					"spect": "",
+					"class": "M",
+					"subclass": 3.4,
+					"lum_class": "V",
+					"luminosity": 0.01307,
+					"mass": 0.287
+				}
+			]
+		},
+		{
+			"id": "vega",
+			"name": "Vega",
+			"pos": [
+				9.069,
+				21.838,
+				8.252
+			],
+			"stars": [
+				{
+					"name": "Vega",
+					"spect": "A0Vvar",
+					"class": "A",
+					"subclass": 0.0,
+					"lum_class": "V",
+					"luminosity": 54.25,
+					"mass": 2.843
+				}
+			]
+		},
+		{
+			"id": "fomalhaut",
+			"name": "Fomalhaut",
+			"pos": [
+				9.981,
+				3.729,
+				-22.755
+			],
+			"stars": [
+				{
+					"name": "Fomalhaut",
+					"spect": "A3V",
+					"class": "A",
+					"subclass": 3.0,
+					"lum_class": "V",
+					"luminosity": 17.59,
+					"mass": 2.061
+				}
+			]
+		},
+		{
+			"id": "gj_1093",
+			"name": "GJ 1093",
+			"pos": [
+				-23.874,
+				-7.029,
+				4.568
+			],
+			"stars": [
+				{
+					"name": "GJ 1093",
+					"spect": "m",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.0008009,
+					"mass": 0.085
+				}
+			]
+		},
+		{
+			"id": "gj_3789",
+			"name": "GJ 3789",
+			"pos": [
+				2.705,
+				3.096,
+				25.557
+			],
+			"stars": [
+				{
+					"name": "GJ 3789",
+					"spect": "M4  e",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "",
+					"luminosity": 0.007502,
+					"mass": 0.226
+				}
+			]
+		},
+		{
+			"id": "chara",
+			"name": "Chara",
+			"pos": [
+				-5.031,
+				4.836,
+				26.627
+			],
+			"stars": [
+				{
+					"name": "Chara",
+					"spect": "G0V",
+					"class": "G",
+					"subclass": 0.0,
+					"lum_class": "V",
+					"luminosity": 1.204,
+					"mass": 1.048
+				}
+			]
+		},
+		{
+			"id": "61_virginis",
+			"name": "61 Virginis",
+			"pos": [
+				13.373,
+				-14.926,
+				19.415
+			],
+			"stars": [
+				{
+					"name": "61 Virginis",
+					"spect": "G5V",
+					"class": "G",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 0.8024,
+					"mass": 0.946
+				}
+			]
+		},
+		{
+			"id": "zeta_tucanae",
+			"name": "Zeta Tucanae",
+			"pos": [
+				10.71,
+				-13.55,
+				-22.046
+			],
+			"stars": [
+				{
+					"name": "Zeta Tucanae",
+					"spect": "F9V",
+					"class": "F",
+					"subclass": 9.0,
+					"lum_class": "V",
+					"luminosity": 1.249,
+					"mass": 1.057
+				}
+			]
+		},
+		{
+			"id": "hip_31292",
+			"name": "HIP 31292",
+			"pos": [
+				7.254,
+				-24.091,
+				-12.988
+			],
+			"stars": [
+				{
+					"name": "HIP 31292",
+					"spect": "",
+					"class": "M",
+					"subclass": 3.5,
+					"lum_class": "V",
+					"luminosity": 0.01228,
+					"mass": 0.28
+				}
+			]
+		},
+		{
+			"id": "gliese_867",
+			"name": "Gliese 867",
+			"pos": [
+				11.513,
+				8.937,
+				-24.327
+			],
+			"stars": [
+				{
+					"name": "Gliese 867 A",
+					"spect": "M0Vpe",
+					"class": "M",
+					"subclass": 0.0,
+					"lum_class": "V",
+					"luminosity": 0.0427,
+					"mass": 0.455
+				},
+				{
+					"name": "Gliese 867 B",
+					"spect": "dM4  e",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "V",
+					"luminosity": 0.0141,
+					"mass": 0.297
+				}
+			]
+		},
+		{
+			"id": "gamma_leporis",
+			"name": "Gamma Leporis",
+			"pos": [
+				-18.171,
+				-19.347,
+				-11.969
+			],
+			"stars": [
+				{
+					"name": "Gamma Leporis A",
+					"spect": "F7V",
+					"class": "F",
+					"subclass": 7.0,
+					"lum_class": "V",
+					"luminosity": 2.399,
+					"mass": 1.245
+				},
+				{
+					"name": "Gamma Leporis B",
+					"spect": "K2 V",
+					"class": "K",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 0.3116,
+					"mass": 0.747
+				}
+			]
+		},
+		{
+			"id": "beta_comae_berenices",
+			"name": "Beta Comae Berenices",
+			"pos": [
+				1.729,
+				1.641,
+				29.68
+			],
+			"stars": [
+				{
+					"name": "Beta Comae Berenices",
+					"spect": "G0V",
+					"class": "G",
+					"subclass": 0.0,
+					"lum_class": "V",
+					"luminosity": 1.422,
+					"mass": 1.092
+				}
+			]
+		},
+		{
+			"id": "gamma_pavonis",
+			"name": "Gamma Pavonis",
+			"pos": [
+				19.573,
+				-12.156,
+				-19.534
+			],
+			"stars": [
+				{
+					"name": "Gamma Pavonis",
+					"spect": "F6V",
+					"class": "F",
+					"subclass": 6.0,
+					"lum_class": "V",
+					"luminosity": 1.447,
+					"mass": 1.097
+				}
+			]
+		},
+		{
+			"id": "12_ophiuchi",
+			"name": "12 Ophiuchi",
+			"pos": [
+				27.174,
+				6.637,
+				15.133
+			],
+			"stars": [
+				{
+					"name": "12 Ophiuchi",
+					"spect": "K2V",
+					"class": "K",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 0.5129,
+					"mass": 0.846
+				}
+			]
+		},
+		{
+			"id": "gj_3126",
+			"name": "GJ 3126",
+			"pos": [
+				-21.207,
+				24.755,
+				1.108
+			],
+			"stars": [
+				{
+					"name": "GJ 3126",
+					"spect": "M4",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "",
+					"luminosity": 0.0278,
+					"mass": 0.399
+				}
+			]
+		},
+		{
+			"id": "gliese_436",
+			"name": "Gliese 436",
+			"pos": [
+				-7.58,
+				-4.472,
+				31.883
+			],
+			"stars": [
+				{
+					"name": "Gliese 436",
+					"spect": "M3",
+					"class": "M",
+					"subclass": 3.0,
+					"lum_class": "",
+					"luminosity": 0.02754,
+					"mass": 0.397
+				}
+			]
+		},
+		{
+			"id": "alpha_mensae",
+			"name": "Alpha Mensae",
+			"pos": [
+				7.916,
+				-28.052,
+				-16.025
+			],
+			"stars": [
+				{
+					"name": "Alpha Mensae",
+					"spect": "G5V",
+					"class": "G",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 0.8341,
+					"mass": 0.956
+				}
+			]
+		},
+		{
+			"id": "pollux",
+			"name": "Pollux",
+			"pos": [
+				-30.301,
+				-6.568,
+				13.421
+			],
+			"stars": [
+				{
+					"name": "Pollux",
+					"spect": "K0IIIvar",
+					"class": "K",
+					"subclass": 0.0,
+					"lum_class": "III",
+					"luminosity": 34.87,
+					"mass": 1.5
+				}
+			]
+		},
+		{
+			"id": "gliese_170",
+			"name": "Gliese 170",
+			"pos": [
+				-32.175,
+				10.456,
+				-3.476
+			],
+			"stars": [
+				{
+					"name": "Gliese 170",
+					"spect": "M4.5",
+					"class": "M",
+					"subclass": 4.5,
+					"lum_class": "",
+					"luminosity": 0.002682,
+					"mass": 0.144
+				}
+			]
+		},
+		{
+			"id": "gj_1265",
+			"name": "GJ 1265",
+			"pos": [
+				16.088,
+				13.063,
+				-27.016
+			],
+			"stars": [
+				{
+					"name": "GJ 1265",
+					"spect": "m",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.004626,
+					"mass": 0.183
+				}
+			]
+		},
+		{
+			"id": "iota_persei",
+			"name": "Iota Persei",
+			"pos": [
+				-27.792,
+				19.752,
+				-4.416
+			],
+			"stars": [
+				{
+					"name": "Iota Persei",
+					"spect": "G0V",
+					"class": "G",
+					"subclass": 0.0,
+					"lum_class": "V",
+					"luminosity": 2.237,
+					"mass": 1.223
+				}
+			]
+		},
+		{
+			"id": "gliese_653",
+			"name": "Gliese 653",
+			"pos": [
+				31.459,
+				8.646,
+				12.453
+			],
+			"stars": [
+				{
+					"name": "Gliese 653",
+					"spect": "K5V",
+					"class": "K",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 0.1304,
+					"mass": 0.601
+				}
+			]
+		},
+		{
+			"id": "gj_4281",
+			"name": "GJ 4281",
+			"pos": [
+				13.91,
+				15.516,
+				-28.724
+			],
+			"stars": [
+				{
+					"name": "GJ 4281",
+					"spect": "M6.5",
+					"class": "M",
+					"subclass": 6.5,
+					"lum_class": "",
+					"luminosity": 0.0004397,
+					"mass": 0.066
+				}
+			]
+		},
+		{
+			"id": "zavijava",
+			"name": "Zavijava",
+			"pos": [
+				0.159,
+				-17.413,
+				31.103
+			],
+			"stars": [
+				{
+					"name": "Zavijava",
+					"spect": "F8V",
+					"class": "F",
+					"subclass": 8.0,
+					"lum_class": "V",
+					"luminosity": 3.621,
+					"mass": 1.379
+				}
+			]
+		},
+		{
+			"id": "denebola",
+			"name": "Denebola",
+			"pos": [
+				-3.911,
+				-11.132,
+				33.881
+			],
+			"stars": [
+				{
+					"name": "Denebola",
+					"spect": "A3Vvar",
+					"class": "A",
+					"subclass": 3.0,
+					"lum_class": "V",
+					"luminosity": 14.68,
+					"mass": 1.957
+				}
+			]
+		},
+		{
+			"id": "gj_2069",
+			"name": "GJ 2069",
+			"pos": [
+				-28.112,
+				-13.33,
+				18.292
+			],
+			"stars": [
+				{
+					"name": "GJ 2069 A",
+					"spect": "M5Ve",
+					"class": "M",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 0.02421,
+					"mass": 0.376
+				},
+				{
+					"name": "GJ 2069 B",
+					"spect": "",
+					"class": "M",
+					"subclass": 5.8,
+					"lum_class": "V",
+					"luminosity": 0.006887,
+					"mass": 0.218
+				}
+			]
+		},
+		{
+			"id": "gj_1148",
+			"name": "GJ 1148",
+			"pos": [
+				-12.288,
+				4.324,
+				33.791
+			],
+			"stars": [
+				{
+					"name": "GJ 1148",
+					"spect": "M5",
+					"class": "M",
+					"subclass": 5.0,
+					"lum_class": "",
+					"luminosity": 0.02528,
+					"mass": 0.383
+				}
+			]
+		},
+		{
+			"id": "gj_3967",
+			"name": "GJ 3967",
+			"pos": [
+				30.446,
+				9.438,
+				17.83
+			],
+			"stars": [
+				{
+					"name": "GJ 3967",
+					"spect": "m",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.004769,
+					"mass": 0.185
+				}
+			]
+		},
+		{
+			"id": "arcturus",
+			"name": "Arcturus",
+			"pos": [
+				12.642,
+				3.399,
+				34.304
+			],
+			"stars": [
+				{
+					"name": "Arcturus",
+					"spect": "K2IIIp",
+					"class": "K",
+					"subclass": 2.0,
+					"lum_class": "III",
+					"luminosity": 145.5,
+					"mass": 1.5
+				}
+			]
+		},
+		{
+			"id": "muphrid",
+			"name": "Muphrid",
+			"pos": [
+				10.802,
+				1.0,
+				35.55
+			],
+			"stars": [
+				{
+					"name": "Muphrid",
+					"spect": "G0IV",
+					"class": "G",
+					"subclass": 0.0,
+					"lum_class": "IV",
+					"luminosity": 9.238,
+					"mass": 1.743
+				}
+			]
+		},
+		{
+			"id": "gliese_277",
+			"name": "Gliese 277",
+			"pos": [
+				-35.506,
+				-1.73,
+				15.318
+			],
+			"stars": [
+				{
+					"name": "Gliese 277 A",
+					"spect": "M3.5Ve",
+					"class": "M",
+					"subclass": 3.5,
+					"lum_class": "V",
+					"luminosity": 0.0521,
+					"mass": 0.478
+				},
+				{
+					"name": "Gliese 277 B",
+					"spect": "M4",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "",
+					"luminosity": 0.01928,
+					"mass": 0.34
+				}
+			]
+		},
+		{
+			"id": "gj_3954",
+			"name": "GJ 3954",
+			"pos": [
+				36.144,
+				-0.775,
+				14.166
+			],
+			"stars": [
+				{
+					"name": "GJ 3954",
+					"spect": "m",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.003073,
+					"mass": 0.153
+				}
+			]
+		},
+		{
+			"id": "gliese_96",
+			"name": "Gliese 96",
+			"pos": [
+				-28.409,
+				25.319,
+				-8.273
+			],
+			"stars": [
+				{
+					"name": "Gliese 96",
+					"spect": "M2",
+					"class": "M",
+					"subclass": 2.0,
+					"lum_class": "",
+					"luminosity": 0.08511,
+					"mass": 0.54
+				}
+			]
+		},
+		{
+			"id": "gj_3647",
+			"name": "GJ 3647",
+			"pos": [
+				-14.89,
+				-2.682,
+				36.785
+			],
+			"stars": [
+				{
+					"name": "GJ 3647",
+					"spect": "dM4",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "V",
+					"luminosity": 0.01192,
+					"mass": 0.276
+				}
+			]
+		},
+		{
+			"id": "55_cancri",
+			"name": "55 Cancri",
+			"pos": [
+				-30.49,
+				-9.202,
+				24.615
+			],
+			"stars": [
+				{
+					"name": "55 Cancri A",
+					"spect": "G8V",
+					"class": "G",
+					"subclass": 8.0,
+					"lum_class": "V",
+					"luminosity": 0.5739,
+					"mass": 0.87
+				},
+				{
+					"name": "55 Cancri B",
+					"spect": "M3.5",
+					"class": "M",
+					"subclass": 3.5,
+					"lum_class": "",
+					"luminosity": 0.0052,
+					"mass": 0.193
+				}
+			]
+		},
+		{
+			"id": "trappist_1",
+			"name": "TRAPPIST-1",
+			"pos": [
+				7.754,
+				20.975,
+				-33.972
+			],
+			"stars": [
+				{
+					"name": "TRAPPIST-1",
+					"spect": "M8V",
+					"class": "M",
+					"subclass": 8.0,
+					"lum_class": "V",
+					"luminosity": 0.00055,
+					"mass": 0.09
+				}
+			]
+		},
+		{
+			"id": "hip_112325",
+			"name": "HIP 112325",
+			"pos": [
+				10.249,
+				23.528,
+				-31.823
+			],
+			"stars": [
+				{
+					"name": "HIP 112325",
+					"spect": "F8",
+					"class": "F",
+					"subclass": 8.0,
+					"lum_class": "",
+					"luminosity": 0.02178,
+					"mass": 0.359
+				}
+			]
+		},
+		{
+			"id": "gliese_863",
+			"name": "Gliese 863",
+			"pos": [
+				7.879,
+				30.556,
+				-26.882
+			],
+			"stars": [
+				{
+					"name": "Gliese 863",
+					"spect": "M0V:",
+					"class": "M",
+					"subclass": 0.0,
+					"lum_class": "V",
+					"luminosity": 0.02757,
+					"mass": 0.398
+				}
+			]
+		},
+		{
+			"id": "gj_4326",
+			"name": "GJ 4326",
+			"pos": [
+				-2.567,
+				32.846,
+				-25.749
+			],
+			"stars": [
+				{
+					"name": "GJ 4326",
+					"spect": "M4",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "",
+					"luminosity": 0.01706,
+					"mass": 0.323
+				}
+			]
+		},
+		{
+			"id": "gj_1210",
+			"name": "GJ 1210",
+			"pos": [
+				33.202,
+				17.336,
+				18.59
+			],
+			"stars": [
+				{
+					"name": "GJ 1210",
+					"spect": "m",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.004656,
+					"mass": 0.183
+				}
+			]
+		},
+		{
+			"id": "capella",
+			"name": "Capella",
+			"pos": [
+				-40.713,
+				12.768,
+				3.408
+			],
+			"stars": [
+				{
+					"name": "Capella Aa",
+					"spect": "K0III",
+					"class": "K",
+					"subclass": 0.0,
+					"lum_class": "III",
+					"luminosity": 79.0,
+					"mass": 2.57
+				},
+				{
+					"name": "Capella Ab",
+					"spect": "G1III",
+					"class": "G",
+					"subclass": 1.0,
+					"lum_class": "III",
+					"luminosity": 73.0,
+					"mass": 2.48
+				},
+				{
+					"name": "Capella H",
+					"spect": "M2.5V",
+					"class": "M",
+					"subclass": 2.5,
+					"lum_class": "V",
+					"luminosity": 0.05,
+					"mass": 0.57
+				},
+				{
+					"name": "Capella L",
+					"spect": "M4V",
+					"class": "M",
+					"subclass": 4.0,
+					"lum_class": "V",
+					"luminosity": 0.005,
+					"mass": 0.2
+				}
+			]
+		},
+		{
+			"id": "upsilon_andromedae",
+			"name": "Upsilon Andromedae",
+			"pos": [
+				-27.549,
+				30.596,
+				-15.53
+			],
+			"stars": [
+				{
+					"name": "Upsilon Andromedae",
+					"spect": "F8V",
+					"class": "F",
+					"subclass": 8.0,
+					"lum_class": "V",
+					"luminosity": 3.448,
+					"mass": 1.363
+				}
+			]
+		},
+		{
+			"id": "18_scorpii",
+			"name": "18 Scorpii",
+			"pos": [
+				39.46,
+				3.241,
+				22.089
+			],
+			"stars": [
+				{
+					"name": "18 Scorpii",
+					"spect": "G1V",
+					"class": "G",
+					"subclass": 1.0,
+					"lum_class": "V",
+					"luminosity": 1.038,
+					"mass": 1.009
+				}
+			]
+		},
+		{
+			"id": "47_ursae_majoris",
+			"name": "47 Ursae Majoris",
+			"pos": [
+				-20.504,
+				1.512,
+				41.001
+			],
+			"stars": [
+				{
+					"name": "47 Ursae Majoris",
+					"spect": "G0V",
+					"class": "G",
+					"subclass": 0.0,
+					"lum_class": "V",
+					"luminosity": 1.614,
+					"mass": 1.127
+				}
+			]
+		},
+		{
+			"id": "gj_3438",
+			"name": "GJ 3438",
+			"pos": [
+				-43.921,
+				0.966,
+				17.427
+			],
+			"stars": [
+				{
+					"name": "GJ 3438",
+					"spect": "M1",
+					"class": "M",
+					"subclass": 1.0,
+					"lum_class": "",
+					"luminosity": 0.0455,
+					"mass": 0.462
+				}
+			]
+		},
+		{
+			"id": "rasalhague",
+			"name": "Rasalhague",
+			"pos": [
+				36.346,
+				26.304,
+				18.646
+			],
+			"stars": [
+				{
+					"name": "Rasalhague",
+					"spect": "A5III",
+					"class": "A",
+					"subclass": 5.0,
+					"lum_class": "III",
+					"luminosity": 26.92,
+					"mass": 1.5
+				}
+			]
+		},
+		{
+			"id": "alderamin",
+			"name": "Alderamin",
+			"pos": [
+				-9.238,
+				47.529,
+				7.818
+			],
+			"stars": [
+				{
+					"name": "Alderamin",
+					"spect": "A7IV-V",
+					"class": "A",
+					"subclass": 7.0,
+					"lum_class": "IV",
+					"luminosity": 19.16,
+					"mass": 2.112
+				}
+			]
+		},
+		{
+			"id": "gj_3069",
+			"name": "GJ 3069",
+			"pos": [
+				-27.666,
+				40.266,
+				-7.44
+			],
+			"stars": [
+				{
+					"name": "GJ 3069",
+					"spect": "m",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.002338,
+					"mass": 0.136
+				}
+			]
+		},
+		{
+			"id": "gj_3121",
+			"name": "GJ 3121",
+			"pos": [
+				-33.697,
+				35.449,
+				-12.755
+			],
+			"stars": [
+				{
+					"name": "GJ 3121",
+					"spect": "DAs",
+					"class": "D",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.005016,
+					"mass": 0.6
+				}
+			]
+		},
+		{
+			"id": "castor",
+			"name": "Castor",
+			"pos": [
+				-46.606,
+				-6.087,
+				19.449
+			],
+			"stars": [
+				{
+					"name": "Castor Aa",
+					"spect": "A1V",
+					"class": "A",
+					"subclass": 1.0,
+					"lum_class": "V",
+					"luminosity": 37.0,
+					"mass": 2.37
+				},
+				{
+					"name": "Castor Ba",
+					"spect": "A2Vm",
+					"class": "A",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 13.0,
+					"mass": 1.79
+				},
+				{
+					"name": "Castor Ca",
+					"spect": "M0.5Ve",
+					"class": "M",
+					"subclass": 0.5,
+					"lum_class": "V",
+					"luminosity": 0.07,
+					"mass": 0.6
+				},
+				{
+					"name": "Castor Cb",
+					"spect": "M0.5Ve",
+					"class": "M",
+					"subclass": 0.5,
+					"lum_class": "V",
+					"luminosity": 0.07,
+					"mass": 0.6
+				},
+				{
+					"name": "Castor Ab",
+					"spect": "M2V",
+					"class": "M",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 0.04,
+					"mass": 0.5
+				},
+				{
+					"name": "Castor Bb",
+					"spect": "M2V",
+					"class": "M",
+					"subclass": 2.0,
+					"lum_class": "V",
+					"luminosity": 0.04,
+					"mass": 0.5
+				}
+			]
+		},
+		{
+			"id": "51_pegasi",
+			"name": "51 Pegasi",
+			"pos": [
+				-0.046,
+				41.838,
+				-28.999
+			],
+			"stars": [
+				{
+					"name": "51 Pegasi",
+					"spect": "G5V",
+					"class": "G",
+					"subclass": 5.0,
+					"lum_class": "V",
+					"luminosity": 1.389,
+					"mass": 1.086
+				}
+			]
+		},
+		{
+			"id": "gj_4312",
+			"name": "GJ 4312",
+			"pos": [
+				-20.44,
+				46.617,
+				6.868
+			],
+			"stars": [
+				{
+					"name": "GJ 4312",
+					"spect": "m",
+					"class": "M",
+					"subclass": null,
+					"lum_class": "",
+					"luminosity": 0.02954,
+					"mass": 0.41
+				}
+			]
+		},
+		{
+			"id": "caph",
+			"name": "Caph",
+			"pos": [
+				-25.26,
+				48.466,
+				-3.13
+			],
+			"stars": [
+				{
+					"name": "Caph",
+					"spect": "F2III-IV",
+					"class": "F",
+					"subclass": 2.0,
+					"lum_class": "III",
+					"luminosity": 27.47,
+					"mass": 1.5
+				}
+			]
+		}
+	],
+	"lanes": [
+		[
+			"sol",
+			"alpha_centauri"
+		],
+		[
+			"sol",
+			"barnards_star"
+		],
+		[
+			"sol",
+			"wolf_359"
+		],
+		[
+			"sol",
+			"lalande_21185"
+		],
+		[
+			"alpha_centauri",
+			"barnards_star"
+		],
+		[
+			"alpha_centauri",
+			"ross_154"
+		],
+		[
+			"alpha_centauri",
+			"hip_82724"
+		],
+		[
+			"barnards_star",
+			"ross_154"
+		],
+		[
+			"barnards_star",
+			"wolf_1061"
+		],
+		[
+			"wolf_359",
+			"lalande_21185"
+		],
+		[
+			"wolf_359",
+			"ross_128"
+		],
+		[
+			"wolf_359",
+			"gj_1111"
+		],
+		[
+			"wolf_359",
+			"gj_3622"
+		],
+		[
+			"lalande_21185",
+			"ross_128"
+		],
+		[
+			"lalande_21185",
+			"gj_1111"
+		],
+		[
+			"lalande_21185",
+			"gliese_412"
+		],
+		[
+			"luyten_726_8",
+			"epsilon_eridani"
+		],
+		[
+			"luyten_726_8",
+			"lacaille_9352"
+		],
+		[
+			"luyten_726_8",
+			"tau_ceti"
+		],
+		[
+			"luyten_726_8",
+			"gliese_54_1"
+		],
+		[
+			"sirius",
+			"procyon"
+		],
+		[
+			"sirius",
+			"luytens_star"
+		],
+		[
+			"sirius",
+			"kapteyns_star"
+		],
+		[
+			"sirius",
+			"ross_614"
+		],
+		[
+			"ross_154",
+			"lacaille_8760"
+		],
+		[
+			"ross_154",
+			"wolf_1061"
+		],
+		[
+			"ross_154",
+			"gliese_674"
+		],
+		[
+			"ross_154",
+			"gliese_752"
+		],
+		[
+			"ross_248",
+			"61_cygni"
+		],
+		[
+			"ross_248",
+			"groombridge_34"
+		],
+		[
+			"ross_248",
+			"gliese_860"
+		],
+		[
+			"ross_248",
+			"gliese_873"
+		],
+		[
+			"epsilon_eridani",
+			"tau_ceti"
+		],
+		[
+			"epsilon_eridani",
+			"kapteyns_star"
+		],
+		[
+			"epsilon_eridani",
+			"gj_1061"
+		],
+		[
+			"epsilon_eridani",
+			"gliese_83_1"
+		],
+		[
+			"epsilon_eridani",
+			"40_eridani"
+		],
+		[
+			"lacaille_9352",
+			"ez_aquarii"
+		],
+		[
+			"lacaille_9352",
+			"epsilon_indi"
+		],
+		[
+			"lacaille_9352",
+			"lacaille_8760"
+		],
+		[
+			"lacaille_9352",
+			"gliese_1"
+		],
+		[
+			"lacaille_9352",
+			"gliese_876"
+		],
+		[
+			"ross_128",
+			"gliese_473"
+		],
+		[
+			"ross_128",
+			"gj_3622"
+		],
+		[
+			"ez_aquarii",
+			"lacaille_8760"
+		],
+		[
+			"ez_aquarii",
+			"gliese_876"
+		],
+		[
+			"ez_aquarii",
+			"gj_1002"
+		],
+		[
+			"61_cygni",
+			"struve_2398"
+		],
+		[
+			"61_cygni",
+			"gliese_860"
+		],
+		[
+			"61_cygni",
+			"gj_1245"
+		],
+		[
+			"61_cygni",
+			"gliese_873"
+		],
+		[
+			"61_cygni",
+			"altair"
+		],
+		[
+			"procyon",
+			"gj_1111"
+		],
+		[
+			"procyon",
+			"luytens_star"
+		],
+		[
+			"procyon",
+			"gj_3522"
+		],
+		[
+			"struve_2398",
+			"gliese_860"
+		],
+		[
+			"struve_2398",
+			"gliese_687"
+		],
+		[
+			"struve_2398",
+			"gj_1245"
+		],
+		[
+			"struve_2398",
+			"sigma_draconis"
+		],
+		[
+			"groombridge_34",
+			"gliese_860"
+		],
+		[
+			"groombridge_34",
+			"van_maanens_star"
+		],
+		[
+			"groombridge_34",
+			"gliese_873"
+		],
+		[
+			"groombridge_34",
+			"eta_cassiopeiae"
+		],
+		[
+			"epsilon_indi",
+			"lacaille_8760"
+		],
+		[
+			"epsilon_indi",
+			"gliese_1"
+		],
+		[
+			"epsilon_indi",
+			"gliese_832"
+		],
+		[
+			"gj_1111",
+			"luytens_star"
+		],
+		[
+			"gj_1111",
+			"gj_3522"
+		],
+		[
+			"gj_1111",
+			"gliese_380"
+		],
+		[
+			"gj_1111",
+			"gliese_388"
+		],
+		[
+			"gj_1111",
+			"gj_1116"
+		],
+		[
+			"gj_1111",
+			"gliese_251"
+		],
+		[
+			"gj_1111",
+			"gliese_338"
+		],
+		[
+			"tau_ceti",
+			"gliese_54_1"
+		],
+		[
+			"tau_ceti",
+			"van_maanens_star"
+		],
+		[
+			"tau_ceti",
+			"gj_1061"
+		],
+		[
+			"tau_ceti",
+			"gliese_83_1"
+		],
+		[
+			"tau_ceti",
+			"82_eridani"
+		],
+		[
+			"gliese_54_1",
+			"van_maanens_star"
+		],
+		[
+			"gliese_54_1",
+			"gliese_1"
+		],
+		[
+			"gliese_54_1",
+			"gliese_83_1"
+		],
+		[
+			"gliese_54_1",
+			"gj_1002"
+		],
+		[
+			"gliese_54_1",
+			"gj_1005"
+		],
+		[
+			"hip_82724",
+			"hip_82725"
+		],
+		[
+			"hip_82724",
+			"gliese_674"
+		],
+		[
+			"hip_82724",
+			"gliese_440"
+		],
+		[
+			"hip_82724",
+			"hip_58910"
+		],
+		[
+			"luytens_star",
+			"ross_614"
+		],
+		[
+			"luytens_star",
+			"gj_3522"
+		],
+		[
+			"luytens_star",
+			"gj_3379"
+		],
+		[
+			"luytens_star",
+			"gliese_300"
+		],
+		[
+			"luytens_star",
+			"gliese_285"
+		],
+		[
+			"kapteyns_star",
+			"gj_1061"
+		],
+		[
+			"kapteyns_star",
+			"gliese_229"
+		],
+		[
+			"kapteyns_star",
+			"82_eridani"
+		],
+		[
+			"lacaille_8760",
+			"gliese_832"
+		],
+		[
+			"lacaille_8760",
+			"hip_103039"
+		],
+		[
+			"lacaille_8760",
+			"gliese_783"
+		],
+		[
+			"gliese_860",
+			"gj_1245"
+		],
+		[
+			"gliese_860",
+			"gliese_873"
+		],
+		[
+			"gliese_860",
+			"sigma_draconis"
+		],
+		[
+			"gliese_860",
+			"eta_cassiopeiae"
+		],
+		[
+			"ross_614",
+			"40_eridani"
+		],
+		[
+			"ross_614",
+			"gj_3379"
+		],
+		[
+			"ross_614",
+			"gliese_205"
+		],
+		[
+			"ross_614",
+			"gliese_229"
+		],
+		[
+			"hip_82725",
+			"gliese_674"
+		],
+		[
+			"hip_82725",
+			"gliese_440"
+		],
+		[
+			"hip_82725",
+			"hip_58910"
+		],
+		[
+			"hip_82725",
+			"gliese_693"
+		],
+		[
+			"hip_82725",
+			"delta_pavonis"
+		],
+		[
+			"van_maanens_star",
+			"gliese_83_1"
+		],
+		[
+			"van_maanens_star",
+			"gj_1002"
+		],
+		[
+			"van_maanens_star",
+			"gliese_908"
+		],
+		[
+			"gj_1061",
+			"82_eridani"
+		],
+		[
+			"wolf_1061",
+			"70_ophiuchi"
+		],
+		[
+			"wolf_1061",
+			"hip_83609"
+		],
+		[
+			"wolf_1061",
+			"gliese_570"
+		],
+		[
+			"wolf_1061",
+			"36_ophiuchi"
+		],
+		[
+			"wolf_1061",
+			"gliese_555"
+		],
+		[
+			"wolf_1061",
+			"gliese_581"
+		],
+		[
+			"wolf_1061",
+			"gliese_643"
+		],
+		[
+			"gliese_473",
+			"gj_3622"
+		],
+		[
+			"gliese_473",
+			"hip_67593"
+		],
+		[
+			"gliese_473",
+			"gliese_526"
+		],
+		[
+			"gliese_1",
+			"gj_1005"
+		],
+		[
+			"gliese_1",
+			"82_eridani"
+		],
+		[
+			"gj_3522",
+			"gj_3622"
+		],
+		[
+			"gj_3522",
+			"gliese_388"
+		],
+		[
+			"gj_3522",
+			"gj_1116"
+		],
+		[
+			"gj_3522",
+			"gliese_300"
+		],
+		[
+			"gj_3522",
+			"gliese_285"
+		],
+		[
+			"gj_3618",
+			"gliese_440"
+		],
+		[
+			"gj_3618",
+			"hip_58910"
+		],
+		[
+			"gliese_687",
+			"gj_1245"
+		],
+		[
+			"gliese_687",
+			"gliese_445"
+		],
+		[
+			"gliese_687",
+			"sigma_draconis"
+		],
+		[
+			"gliese_687",
+			"vega"
+		],
+		[
+			"gliese_674",
+			"gliese_682"
+		],
+		[
+			"gliese_674",
+			"hip_83609"
+		],
+		[
+			"gliese_674",
+			"gliese_754"
+		],
+		[
+			"gliese_674",
+			"gliese_693"
+		],
+		[
+			"gliese_674",
+			"gliese_588"
+		],
+		[
+			"gliese_440",
+			"hip_58910"
+		],
+		[
+			"gliese_876",
+			"gj_1002"
+		],
+		[
+			"gliese_876",
+			"gj_1005"
+		],
+		[
+			"gliese_876",
+			"hip_103039"
+		],
+		[
+			"gliese_876",
+			"gliese_908"
+		],
+		[
+			"gliese_876",
+			"fomalhaut"
+		],
+		[
+			"gliese_876",
+			"gliese_867"
+		],
+		[
+			"gj_1002",
+			"gj_1005"
+		],
+		[
+			"gj_1002",
+			"gliese_908"
+		],
+		[
+			"gj_1245",
+			"sigma_draconis"
+		],
+		[
+			"gj_1245",
+			"vega"
+		],
+		[
+			"gliese_412",
+			"gliese_380"
+		],
+		[
+			"gliese_412",
+			"gliese_388"
+		],
+		[
+			"gliese_380",
+			"gliese_388"
+		],
+		[
+			"gliese_380",
+			"gliese_445"
+		],
+		[
+			"gliese_380",
+			"gliese_338"
+		],
+		[
+			"gliese_388",
+			"gj_1116"
+		],
+		[
+			"gliese_832",
+			"gliese_754"
+		],
+		[
+			"gliese_832",
+			"gliese_783"
+		],
+		[
+			"gliese_832",
+			"delta_pavonis"
+		],
+		[
+			"gliese_832",
+			"gamma_pavonis"
+		],
+		[
+			"40_eridani",
+			"gj_3379"
+		],
+		[
+			"40_eridani",
+			"gliese_205"
+		],
+		[
+			"gj_1005",
+			"gliese_908"
+		],
+		[
+			"gj_1005",
+			"fomalhaut"
+		],
+		[
+			"gliese_682",
+			"hip_83609"
+		],
+		[
+			"gliese_682",
+			"gliese_754"
+		],
+		[
+			"gliese_682",
+			"gliese_693"
+		],
+		[
+			"gliese_682",
+			"gliese_588"
+		],
+		[
+			"gliese_682",
+			"gliese_667"
+		],
+		[
+			"70_ophiuchi",
+			"altair"
+		],
+		[
+			"70_ophiuchi",
+			"gliese_752"
+		],
+		[
+			"70_ophiuchi",
+			"gliese_643"
+		],
+		[
+			"gliese_873",
+			"eta_cassiopeiae"
+		],
+		[
+			"gliese_873",
+			"mu_cassiopeiae"
+		],
+		[
+			"altair",
+			"hip_103039"
+		],
+		[
+			"altair",
+			"gliese_752"
+		],
+		[
+			"gj_1116",
+			"gliese_251"
+		],
+		[
+			"gj_1116",
+			"gliese_285"
+		],
+		[
+			"hip_67593",
+			"gliese_526"
+		],
+		[
+			"hip_67593",
+			"xi_bootis"
+		],
+		[
+			"hip_67593",
+			"gj_3789"
+		],
+		[
+			"gliese_445",
+			"gliese_169_1"
+		],
+		[
+			"gliese_445",
+			"sigma_draconis"
+		],
+		[
+			"gliese_445",
+			"gliese_338"
+		],
+		[
+			"gj_3379",
+			"gliese_205"
+		],
+		[
+			"gj_3379",
+			"gliese_229"
+		],
+		[
+			"gj_3379",
+			"gliese_213"
+		],
+		[
+			"gliese_526",
+			"gliese_555"
+		],
+		[
+			"gliese_526",
+			"xi_bootis"
+		],
+		[
+			"hip_58910",
+			"hip_31292"
+		],
+		[
+			"gliese_169_1",
+			"gliese_251"
+		],
+		[
+			"gliese_169_1",
+			"eta_cassiopeiae"
+		],
+		[
+			"gliese_169_1",
+			"mu_cassiopeiae"
+		],
+		[
+			"gliese_251",
+			"gliese_213"
+		],
+		[
+			"gliese_251",
+			"gj_1093"
+		],
+		[
+			"hip_83609",
+			"gliese_588"
+		],
+		[
+			"hip_83609",
+			"36_ophiuchi"
+		],
+		[
+			"hip_83609",
+			"gliese_667"
+		],
+		[
+			"gliese_205",
+			"gliese_229"
+		],
+		[
+			"gliese_205",
+			"gliese_213"
+		],
+		[
+			"gliese_205",
+			"gamma_leporis"
+		],
+		[
+			"gliese_754",
+			"gliese_693"
+		],
+		[
+			"gliese_754",
+			"gliese_783"
+		],
+		[
+			"gliese_754",
+			"delta_pavonis"
+		],
+		[
+			"hip_103039",
+			"gliese_752"
+		],
+		[
+			"hip_103039",
+			"gliese_783"
+		],
+		[
+			"gliese_229",
+			"gliese_300"
+		],
+		[
+			"gliese_229",
+			"gamma_leporis"
+		],
+		[
+			"sigma_draconis",
+			"vega"
+		],
+		[
+			"gliese_213",
+			"gj_1093"
+		],
+		[
+			"gliese_693",
+			"delta_pavonis"
+		],
+		[
+			"gliese_570",
+			"gliese_588"
+		],
+		[
+			"gliese_570",
+			"gliese_555"
+		],
+		[
+			"gliese_570",
+			"gliese_581"
+		],
+		[
+			"gliese_570",
+			"61_virginis"
+		],
+		[
+			"gliese_752",
+			"vega"
+		],
+		[
+			"gliese_300",
+			"gliese_285"
+		],
+		[
+			"gliese_588",
+			"gliese_667"
+		],
+		[
+			"36_ophiuchi",
+			"gliese_643"
+		],
+		[
+			"36_ophiuchi",
+			"gliese_667"
+		],
+		[
+			"eta_cassiopeiae",
+			"mu_cassiopeiae"
+		],
+		[
+			"gliese_285",
+			"gj_1093"
+		],
+		[
+			"gliese_555",
+			"gliese_581"
+		],
+		[
+			"gliese_555",
+			"61_virginis"
+		],
+		[
+			"delta_pavonis",
+			"beta_hydri"
+		],
+		[
+			"delta_pavonis",
+			"zeta_tucanae"
+		],
+		[
+			"delta_pavonis",
+			"gamma_pavonis"
+		],
+		[
+			"gliese_581",
+			"xi_bootis"
+		],
+		[
+			"gliese_581",
+			"gliese_643"
+		],
+		[
+			"xi_bootis",
+			"gj_3789"
+		],
+		[
+			"xi_bootis",
+			"arcturus"
+		],
+		[
+			"gliese_643",
+			"12_ophiuchi"
+		],
+		[
+			"beta_hydri",
+			"zeta_tucanae"
+		],
+		[
+			"beta_hydri",
+			"hip_31292"
+		],
+		[
+			"beta_hydri",
+			"gamma_pavonis"
+		],
+		[
+			"beta_hydri",
+			"alpha_mensae"
+		],
+		[
+			"mu_cassiopeiae",
+			"gj_3126"
+		],
+		[
+			"mu_cassiopeiae",
+			"iota_persei"
+		],
+		[
+			"fomalhaut",
+			"gliese_867"
+		],
+		[
+			"gj_1093",
+			"pollux"
+		],
+		[
+			"gj_1093",
+			"gj_2069"
+		],
+		[
+			"gj_3789",
+			"chara"
+		],
+		[
+			"gj_3789",
+			"beta_comae_berenices"
+		],
+		[
+			"gj_3789",
+			"arcturus"
+		],
+		[
+			"gj_3789",
+			"muphrid"
+		],
+		[
+			"chara",
+			"beta_comae_berenices"
+		],
+		[
+			"chara",
+			"gliese_436"
+		],
+		[
+			"chara",
+			"gj_1148"
+		],
+		[
+			"zeta_tucanae",
+			"hip_31292"
+		],
+		[
+			"zeta_tucanae",
+			"gamma_pavonis"
+		],
+		[
+			"zeta_tucanae",
+			"alpha_mensae"
+		],
+		[
+			"hip_31292",
+			"alpha_mensae"
+		],
+		[
+			"gliese_867",
+			"gj_1265"
+		],
+		[
+			"gliese_867",
+			"gj_4281"
+		],
+		[
+			"beta_comae_berenices",
+			"gliese_436"
+		],
+		[
+			"beta_comae_berenices",
+			"denebola"
+		],
+		[
+			"beta_comae_berenices",
+			"arcturus"
+		],
+		[
+			"beta_comae_berenices",
+			"muphrid"
+		],
+		[
+			"12_ophiuchi",
+			"gliese_653"
+		],
+		[
+			"12_ophiuchi",
+			"gj_3967"
+		],
+		[
+			"12_ophiuchi",
+			"gj_3954"
+		],
+		[
+			"12_ophiuchi",
+			"18_scorpii"
+		],
+		[
+			"gj_3126",
+			"iota_persei"
+		],
+		[
+			"gj_3126",
+			"gliese_96"
+		],
+		[
+			"gliese_436",
+			"denebola"
+		],
+		[
+			"gliese_436",
+			"gj_1148"
+		],
+		[
+			"gliese_436",
+			"gj_3647"
+		],
+		[
+			"pollux",
+			"gj_2069"
+		],
+		[
+			"pollux",
+			"gliese_277"
+		],
+		[
+			"pollux",
+			"55_cancri"
+		],
+		[
+			"gliese_170",
+			"iota_persei"
+		],
+		[
+			"gliese_170",
+			"capella"
+		],
+		[
+			"gj_1265",
+			"gj_4281"
+		],
+		[
+			"iota_persei",
+			"gliese_96"
+		],
+		[
+			"gliese_653",
+			"gj_3967"
+		],
+		[
+			"gliese_653",
+			"gj_3954"
+		],
+		[
+			"gliese_653",
+			"gj_1210"
+		],
+		[
+			"gliese_653",
+			"18_scorpii"
+		],
+		[
+			"gj_4281",
+			"trappist_1"
+		],
+		[
+			"gj_4281",
+			"hip_112325"
+		],
+		[
+			"zavijava",
+			"denebola"
+		],
+		[
+			"denebola",
+			"gj_3647"
+		],
+		[
+			"gj_2069",
+			"gliese_277"
+		],
+		[
+			"gj_2069",
+			"55_cancri"
+		],
+		[
+			"gj_1148",
+			"gj_3647"
+		],
+		[
+			"gj_1148",
+			"47_ursae_majoris"
+		],
+		[
+			"gj_3967",
+			"gj_3954"
+		],
+		[
+			"gj_3967",
+			"gj_1210"
+		],
+		[
+			"gj_3967",
+			"18_scorpii"
+		],
+		[
+			"arcturus",
+			"muphrid"
+		],
+		[
+			"gliese_277",
+			"55_cancri"
+		],
+		[
+			"gliese_277",
+			"gj_3438"
+		],
+		[
+			"gliese_277",
+			"castor"
+		],
+		[
+			"gj_3954",
+			"18_scorpii"
+		],
+		[
+			"gliese_96",
+			"upsilon_andromedae"
+		],
+		[
+			"gliese_96",
+			"gj_3069"
+		],
+		[
+			"gliese_96",
+			"gj_3121"
+		],
+		[
+			"gj_3647",
+			"47_ursae_majoris"
+		],
+		[
+			"trappist_1",
+			"hip_112325"
+		],
+		[
+			"hip_112325",
+			"gliese_863"
+		],
+		[
+			"gliese_863",
+			"gj_4326"
+		],
+		[
+			"gliese_863",
+			"51_pegasi"
+		],
+		[
+			"gj_4326",
+			"51_pegasi"
+		],
+		[
+			"gj_1210",
+			"rasalhague"
+		],
+		[
+			"upsilon_andromedae",
+			"gj_3069"
+		],
+		[
+			"upsilon_andromedae",
+			"gj_3121"
+		],
+		[
+			"gj_3438",
+			"castor"
+		],
+		[
+			"alderamin",
+			"gj_4312"
+		],
+		[
+			"gj_3069",
+			"gj_3121"
+		],
+		[
+			"gj_3069",
+			"caph"
+		],
+		[
+			"gj_4312",
+			"caph"
+		]
+	]
+}

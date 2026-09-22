@@ -75,8 +75,9 @@ do not move on until they pass.
    and so on. The player is just company 0. Ships, cargo, price knowledge and
    influence all belong to a company. Computer rivals later become more
    companies that call the same commands. No player-only code paths.
-7. **Coordinates in one place.** `GalaxyCoords` owns the conversion from the
-   catalogue (galactic XYZ in parsecs) to light years to Godot world space
+7. **Coordinates in one place.** The star tool converts the catalogue once
+   into galactic XYZ in light years (`stars.json`). In the game,
+   `GalaxyCoords` owns the conversion from galactic to Godot world space
    (1 unit = 1 ly, galactic north = +Y, Sol at the origin). Nothing else does
    coordinate maths.
 8. **Information is per company.** A company only knows a market's prices as
@@ -128,7 +129,7 @@ the fleet and your influence → react to wars, tariffs and crises.**
 
 ### The galaxy (real stars, simplified)
 
-- **~100–130 star systems.** All real systems within ~20 ly of Sol form a
+- **~140 star systems.** All real systems within ~20 ly of Sol form a
   dense old core (Alpha Centauri, Barnard's Star, Sirius, Epsilon Eridani,
   Procyon, 61 Cygni, Tau Ceti, Epsilon Indi…). A sparser set of notable
   stars out to ~50 ly forms the rim (Altair, Vega, Fomalhaut, Castor,
@@ -145,10 +146,12 @@ the fleet and your influence → react to wars, tariffs and crises.**
 - **Starlanes:** built once by the tool script. Take the k nearest
   neighbours (k≈3–4) up to a maximum lane length, then add the minimum
   spanning tree so the graph is always connected, then apply hand edits from
-  `lanes_overrides.json`. Long "deep lanes" (>9 ly) can only be flown by
-  ships with enough jump range. That makes upgrading hulls matter and
-  creates natural choke points. The max lane length is a knob: tune it until
-  the core is dense and the rim has a few real bottlenecks.
+  `lanes_overrides.json`. A ship can only use lanes up to its jump range.
+  The M1 build: lanes up to 16 ly, 7 real choke points, and every system
+  reachable with a 12 ly range (the planned starting hull). The 12–16 ly
+  "deep lanes" are shortcuts for long-range hulls, so upgrading matters.
+  Lane length and k are knobs in `tools/stars_curation.json`; `make stars`
+  prints the stats.
 
 ### Planets and settlements
 
@@ -497,9 +500,9 @@ ends, and a screenshot of the map reads as "sleek, modern, Elite II".
 
 ## 6. Open questions
 
-- Galaxy size: real stars ≤20 ly + notable stars ≤50 ly (≈100–130
-  systems) is the assumption. A bigger radius gives more rim but longer,
-  sparser lanes.
+- Galaxy size: real stars ≤20 ly + notable stars ≤55 ly + real "bridge"
+  stars that fill the gaps, capped at 140 systems (M1). HYG runs out of
+  bridge stars at about 170, so a much bigger rim means longer lanes.
 
 Decided: the title is **Constellar: Merchant Empire**, and the game starts on
 one fixed rim world.

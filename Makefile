@@ -4,9 +4,13 @@
 GODOT ?= godot
 PROJECT := .
 
+# HYG star catalogue (CC BY-SA 4.0), downloaded once into build/ for `make stars`.
+HYG_URL := https://codeberg.org/astronexus/hyg/media/branch/main/data/hyg/CURRENT/hyg_v44.csv.gz
+HYG := build/hyg_v44.csv.gz
+
 .DEFAULT_GOAL := help
 
-.PHONY: help run editor build import test clean
+.PHONY: help run editor build import test stars clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -25,6 +29,13 @@ import: ## Headless import: build the .godot cache and catch script/asset errors
 
 test: ## Run headless sim tests (non-zero exit on failure)
 	$(GODOT) --headless --path $(PROJECT) --script res://tests/run_tests.gd
+
+stars: $(HYG) ## Rebuild data/stars.json (systems + lanes) from the HYG catalogue
+	python3 tools/build_stars.py $(HYG)
+
+$(HYG):
+	mkdir -p $(dir $@)
+	curl -fL -o $@ $(HYG_URL)
 
 clean: ## Remove Godot's generated cache and build output
 	rm -rf $(PROJECT)/.godot $(PROJECT)/build

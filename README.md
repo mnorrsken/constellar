@@ -15,6 +15,7 @@ make run       # run the game
 make editor    # open the Godot editor
 make test      # headless test suite
 make import    # headless import; catches script/asset errors
+make stars     # rebuild data/stars.json from the HYG star catalogue
 make clean     # remove the .godot/ cache
 ```
 
@@ -30,5 +31,5 @@ Override the binary if needed: `make test GODOT=/path/to/godot`.
 
 ## Credits
 
-Star data (upcoming, Milestone 1) will come from the [HYG
-database](https://codeberg.org/astronexus/hyg), licensed CC BY-SA 4.0.
+Star data (`data/stars.json`) comes from the [HYG
+database](https://codeberg.org/astronexus/hyg) v4.4, licensed CC BY-SA 4.0.
