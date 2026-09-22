@@ -32,6 +32,10 @@ window/size/window_height_override=900
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[gui]
+
+theme/custom="res://ui/theme.tres"
+
 [rendering]
 
 anti_aliasing/quality/msaa_3d=2

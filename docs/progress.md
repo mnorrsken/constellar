@@ -3,7 +3,7 @@
 Milestone-by-milestone status. See [`constellar-plan.md`](../constellar-plan.md)
 for the plan and acceptance criteria this tracks.
 
-Current test count: **25 tests, 473 assertions, 0 failures** (`make test`).
+Current test count: **34 tests, 499 assertions, 0 failures** (`make test`).
 
 - **M0 — Project skeleton — done.** Godot 4.7 project setup, autoloads
   (`Events`/`Defs`/`Sim`), `data/commodities.json`, Makefile, headless test
@@ -12,7 +12,10 @@ Current test count: **25 tests, 473 assertions, 0 failures** (`make test`).
   `data/stars.json` (140 systems, 315 lanes, fully connected at a 12 ly jump
   range) from the HYG v4.4 catalogue; `Galaxy`/`StarSystem`/`Lane`/
   `GalaxyCoords` load it and provide pathfinding and coordinate conversion.
-- **M2 — 3D galaxy map — pending.**
+- **M2 — 3D galaxy map — done.** `GalaxyMap` draws the polar grid, starlanes,
+  drop lines and stars (glow billboards, distance-faded labels);
+  `MapCamera`/`OrbitRig` orbit/pan/zoom; `StarPicker` drives hover/click
+  selection and fly-to; HUD, star tooltip, F1 debug overlay.
 - **M3 — Planets and settlements — pending.**
 - **M4 — Calendar and markets — pending.**
 - **M5 — Ships and travel — pending.**

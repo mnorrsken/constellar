@@ -18,7 +18,8 @@ Godot is installed via Homebrew (`brew install --cask godot`), on PATH as
 - `make run` — run the game
 - `make editor` — open the Godot editor
 - `make test` — headless test suite (exits non-zero on failure)
-- `make import` / `make build` — headless import; catches script/asset errors
+- `make import` / `make build` — headless import. **Exits 0 even on script
+  errors**: grep its output for `ERROR`/`SCRIPT`/`WARNING`
 - `make clean` — remove the `.godot/` cache
 
 Override the binary if needed: `make test GODOT=/path/to/godot`.
@@ -41,8 +42,9 @@ Override the binary if needed: `make test GODOT=/path/to/godot`.
   in `data/*.json`. Adding content = editing JSON, not engine code.
 - **Deterministic:** one seeded RNG in the world; per-star generation seeded
   from `hash(world_seed, star_id)`.
-- **Coordinates in one place:** `GalaxyCoords` owns catalogue → light years →
-  world space (1 unit = 1 ly, galactic north = +Y, Sol at origin).
+- **Coordinates in one place:** `tools/build_stars.py` writes galactic XYZ in
+  light years; `GalaxyCoords` owns galactic → world space (1 unit = 1 ly,
+  galactic north = +Y, Sol at origin).
 
 Folders: `sim/` (logic), `render/` (map views), `ui/` (panels, theme), `data/`
 (JSON), `tests/` (headless tests), `tools/` (data build scripts). Create a
@@ -59,7 +61,8 @@ folder when the first file for it lands.
    tester `t` with `t.ok(cond, msg)` / `t.eq(a, b, msg)`. Construct sim
    classes with hand-made defs; don't rely on autoloads in tests.
 4. **Verify before declaring done:**
-   - `make import` — compiles cleanly (no script errors)
+   - `make import` — output has no `ERROR`/`SCRIPT`/`WARNING` lines (the exit
+     code alone proves nothing)
    - `make test` — all green
    - `godot --headless --quit-after 20 --path .` — no runtime errors
    - **Visual check via a throwaway capture scene** (below) when a change is

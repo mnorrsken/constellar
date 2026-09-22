@@ -21,6 +21,13 @@ make clean     # remove the .godot/ cache
 
 Override the binary if needed: `make test GODOT=/path/to/godot`.
 
+## Map controls
+
+Drag to orbit, right/middle-drag to pan, scroll or trackpad swipe/pinch to
+zoom, click a star to select and fly to it, Esc to deselect, Home to return
+to Sol. Keyboard: WASD/arrows pan, Q/E orbit, R/F tilt, -/= zoom, F1 toggles
+the debug overlay.
+
 ## Documentation
 
 - [`constellar-plan.md`](constellar-plan.md) — the authoritative design and
@@ -33,3 +40,6 @@ Override the binary if needed: `make test GODOT=/path/to/godot`.
 
 Star data (`data/stars.json`) comes from the [HYG
 database](https://codeberg.org/astronexus/hyg) v4.4, licensed CC BY-SA 4.0.
+
+Fonts (`assets/fonts/`): Exo 2, Inter and JetBrains Mono, licensed SIL Open
+Font License 1.1.

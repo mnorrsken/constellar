@@ -20,9 +20,10 @@ this order:
    `data/commodities.json`, and `Defs.stars` (the raw `data/stars.json`
    object, via `_load_object`) for `Galaxy.from_dict(Defs.stars)`.
 3. **`Sim`** (`sim/sim.gd`) — will own the world and the day clock (plan
-   §2). Empty placeholder until Milestone 4 adds the tick loop; the actual
-   world state will live in plain `RefCounted` classes so it stays
-   headlessly testable.
+   §2). Builds `Sim.galaxy = Galaxy.from_dict(Defs.stars)` in `_ready`; the
+   day clock and tick loop arrive in Milestone 4, and the rest of the world
+   state will live in plain `RefCounted` classes so it stays headlessly
+   testable.
 
 The viewport is 1920×1080 with `canvas_items` stretch mode.
 
@@ -80,10 +81,68 @@ position, and its `stars` array (brightest first).
 (`find_path(from, to, max_jump)` → system indices, plus `path_length`).
 `max_jump` limits every query to lanes no longer than a ship's jump range.
 
+## Render layer
+
+`render/star_look.gd` (`StarLook`) is pure functions from a star's spectral
+class/luminosity to how it's drawn: colour (subclass blends toward the next
+class), world size, HDR brightness, minimum on-screen pixel size, and label
+visibility range.
+
+`render/orbit_rig.gd` (`OrbitRig`) is pure camera maths: focus point,
+yaw/pitch/distance with clamps, pan in the galactic plane, and `lerp_to`
+(distance blended in log space for smooth zoom at any scale).
+
+`render/star_picker.gd` (`StarPicker`) does screen-space nearest-point
+picking (`nearest(points, screen_pos, radius_px)`); stars are one
+MultiMesh with no physics bodies, so picking works on projected 2D points
+rather than raycasts.
+
+`render/galaxy_map.gd` (`GalaxyMap`) builds the map from a `Galaxy`: a
+polar grid on the galactic plane (shader), starlanes as one ribbon mesh
+with a flowing dash (lanes over 12 ly drawn violet as deep lanes), drop
+lines from each star to the plane with a foot ring, stars as one
+MultiMesh of glow billboards (world size when close, minimum pixel size
+when far), `Label3D` names that fade by camera distance, and hover/
+selection rings. Members of a multi-star system circle the system centre
+(cosmetic, not to scale). `star_positions()`/`star_system()` expose where
+each star is drawn this frame, which `main.gd` uses for picking.
+
+`render/map_camera.gd` (`MapCamera`) turns input into edits on a target
+`OrbitRig`, then eases the view toward it: left-drag orbit, right/
+middle-drag pan, wheel or trackpad swipe/pinch zoom, WASD/arrows pan, Q/E
+orbit, R/F tilt, -/= zoom, Home returns to Sol. Emits `clicked(screen_pos)`
+for a click that isn't a drag, and exposes `fly_to(point, max_distance)`.
+
+`render/shaders/` holds the star, lane, grid, ring and sky shaders; `sky`
+draws faint background stars and a Milky Way band along the galactic
+plane, bulging toward +X (galactic centre).
+
+**Picking coordinate note:** `main.gd` tracks the mouse from
+`InputEventMouse.position` (not `Viewport.get_mouse_position()`, which did not follow input events) so it stays
+in the same coordinate space as `Camera3D.unproject_position` under the
+project's `canvas_items` stretch mode; mixing the two would misalign
+picking from real screen coordinates.
+
+## UI
+
+`ui/theme.tres` is the project theme (Inter font, dark glass
+`PanelContainer` style). `ui/fonts.gd` (`Fonts`) exposes `DISPLAY` (Exo 2),
+`BODY` (Inter) and `MONO` (JetBrains Mono), plus a `weight()` helper for
+variable-font weight/spacing variants.
+
+`ui/star_tooltip.gd` (`StarTooltip`) shows a hovered system's name,
+distance from Sol, lane count, and each star with a colour dot and
+spectral type. `ui/hud.gd` (`Hud`) draws the wordmark and a line of
+control hints. `ui/debug_overlay.gd` (`DebugOverlay`, F1) lists every
+on-screen system's id and galactic coordinates, FPS, camera state, and
+the hovered id.
+
 ## Main scene
 
-`main.tscn` is a `Node3D` with a `WorldEnvironment` (ink-blue background,
-filmic tonemap, glow enabled) and a `Camera3D`.
+`main.tscn` is a `Node3D` with a `WorldEnvironment` (sky shader
+background, filmic tonemap, glow enabled) and a `Camera3D`. `main.gd`
+wires `GalaxyMap`, `MapCamera` and picking together, and shows the hover
+tooltip; click selects and flies to a system, Esc deselects.
 
 ## Tests
 
@@ -92,6 +151,11 @@ filmic tonemap, glow enabled) and a `Camera3D`.
 test`). It discovers every `tests/test_*.gd`, instantiates it, and calls
 each `test_*` method with a `Tester` (`t.ok(cond, msg)` / `t.eq(a, b,
 msg)`), exiting non-zero on any failure.
+
+**`make import` exits 0 even on script errors** — it only builds the
+`.godot` cache, it doesn't fail the process on a broken script. Grep its
+output for `SCRIPT ERROR`/`Parse Error` rather than trusting the exit
+code.
 
 `tests/test_defs.gd` covers the data pipeline `Defs` depends on, reading
 `data/commodities.json` directly (no autoloads): array of 18 entries, all
@@ -103,3 +167,6 @@ test_stars_data.gd` checks the real `data/stars.json`: HYG credit present,
 fully connected (overall and at the Milestone 5 starting jump range),
 known facts (Sol at the origin, Sol–Alpha Centauri distance, Alpha
 Centauri's 3 stars, Sirius B as a white dwarf, Castor's 6 stars).
+
+`tests/test_map_helpers.gd` covers `StarLook`, `OrbitRig` and `StarPicker`
+against hand-built inputs (no scene tree needed).
