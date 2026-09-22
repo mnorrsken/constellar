@@ -1,0 +1,12 @@
+# Godot 4 auto-generated cache and imported resources — never commit.
+.godot/
+
+# Exported builds.
+/build/
+/dist/
+*.import.log
+
+# macOS / editor cruft.
+.DS_Store
+*.swp
+__pycache__/

@@ -1,0 +1,8 @@
+{
+  "autoMode": {
+    "environment": [
+      "$defaults",
+      "This repo: Constellar: Merchant Empire, a Godot 4.7 / GDScript space trade game (mnorrsken/constellar on GitHub). `godot` is on PATH via Homebrew. `make test`, `make import`, `make build`, `godot --headless --quit-after 20` and throwaway capture scenes for screenshots are routine actions."
+    ]
+  }
+}
