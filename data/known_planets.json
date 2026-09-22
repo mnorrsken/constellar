@@ -1,0 +1,208 @@
+{
+	"_comment": "Real planets, loosely after the NASA Exoplanet Archive (orbit a in AU, minimum mass in Earth masses). 'star' defaults to the system's primary. 'complete' = generate nothing extra around that host. 'separations' = real distances between stars in AU; missing pairs are rolled.",
+
+	"sol": {
+		"complete": true,
+		"planets": [
+			{ "name": "Mercury", "a": 0.387, "mass": 0.055, "type": "barren" },
+			{ "name": "Venus", "a": 0.723, "mass": 0.815, "type": "molten" },
+			{ "name": "Earth", "a": 1.0, "mass": 1.0, "type": "garden" },
+			{ "name": "Mars", "a": 1.524, "mass": 0.107, "type": "desert" },
+			{ "name": "Asteroid Belt", "a": 2.7, "type": "belt" },
+			{ "name": "Jupiter", "a": 5.2, "mass": 317.8 },
+			{ "name": "Saturn", "a": 9.54, "mass": 95.2 },
+			{ "name": "Uranus", "a": 19.2, "mass": 14.5 },
+			{ "name": "Neptune", "a": 30.1, "mass": 17.1 },
+			{ "name": "Kuiper Belt", "a": 45.0, "type": "belt" }
+		]
+	},
+	"alpha_centauri": {
+		"separations": [["Alpha Centauri A", "Alpha Centauri B", 23.4], ["Alpha Centauri A", "Proxima Centauri", 13000]],
+		"planets": [
+			{ "star": "Proxima Centauri", "name": "d", "a": 0.0288, "mass": 0.26 },
+			{ "star": "Proxima Centauri", "name": "b", "a": 0.0485, "mass": 1.07, "type": "tidally_locked" }
+		]
+	},
+	"barnards_star": {
+		"planets": [
+			{ "name": "d", "a": 0.0188, "mass": 0.26 },
+			{ "name": "b", "a": 0.0229, "mass": 0.37 },
+			{ "name": "c", "a": 0.0274, "mass": 0.34 },
+			{ "name": "e", "a": 0.0381, "mass": 0.19 }
+		]
+	},
+	"lalande_21185": {
+		"planets": [
+			{ "name": "b", "a": 0.079, "mass": 2.7 },
+			{ "name": "c", "a": 2.94, "mass": 14.2 }
+		]
+	},
+	"sirius": { "separations": [["Sirius A", "Sirius B", 20.0]] },
+	"luyten_726_8": { "separations": [["Luyten 726-8 A", "Luyten 726-8 B", 5.5]] },
+	"epsilon_eridani": {
+		"planets": [
+			{ "name": "Inner Belt", "a": 3.0, "type": "belt" },
+			{ "name": "b", "a": 3.5, "mass": 200 },
+			{ "name": "Outer Belt", "a": 65.0, "type": "belt" }
+		]
+	},
+	"lacaille_9352": {
+		"planets": [
+			{ "name": "b", "a": 0.068, "mass": 4.2 },
+			{ "name": "c", "a": 0.120, "mass": 7.6 }
+		]
+	},
+	"ross_128": { "planets": [{ "name": "b", "a": 0.0496, "mass": 1.4 }] },
+	"61_cygni": { "separations": [["61 Cygni A", "61 Cygni B", 84.0]] },
+	"procyon": { "separations": [["Procyon A", "Procyon B", 15.0]] },
+	"struve_2398": { "separations": [["Struve 2398 A", "Struve 2398 B", 56.0]] },
+	"groombridge_34": {
+		"separations": [["Groombridge 34 A", "Groombridge 34 B", 147.0]],
+		"planets": [
+			{ "star": "Groombridge 34 A", "name": "b", "a": 0.072, "mass": 3.0 },
+			{ "star": "Groombridge 34 A", "name": "c", "a": 5.4, "mass": 36.0 }
+		]
+	},
+	"epsilon_indi": {
+		"separations": [["Epsilon Indi A", "Epsilon Indi Ba", 1460.0], ["Epsilon Indi Ba", "Epsilon Indi Bb", 2.4]],
+		"planets": [{ "star": "Epsilon Indi A", "name": "b", "a": 11.55, "mass": 2000 }]
+	},
+	"tau_ceti": {
+		"planets": [
+			{ "name": "g", "a": 0.133, "mass": 1.75 },
+			{ "name": "h", "a": 0.243, "mass": 1.83 },
+			{ "name": "e", "a": 0.538, "mass": 3.9 },
+			{ "name": "f", "a": 1.334, "mass": 3.9 },
+			{ "name": "Debris Disc", "a": 20.0, "type": "belt" }
+		]
+	},
+	"gliese_54_1": {
+		"planets": [
+			{ "name": "b", "a": 0.0163, "mass": 0.7 },
+			{ "name": "c", "a": 0.0216, "mass": 1.14 },
+			{ "name": "d", "a": 0.0285, "mass": 1.09 }
+		]
+	},
+	"luytens_star": {
+		"planets": [
+			{ "name": "c", "a": 0.036, "mass": 1.2 },
+			{ "name": "b", "a": 0.091, "mass": 2.9 }
+		]
+	},
+	"kruger_60": { "separations": [["Kruger 60 A", "Kruger 60 B", 9.5]] },
+	"wolf_1061": {
+		"planets": [
+			{ "name": "b", "a": 0.0375, "mass": 1.9 },
+			{ "name": "c", "a": 0.089, "mass": 3.4 },
+			{ "name": "d", "a": 0.47, "mass": 7.7 }
+		]
+	},
+	"gj_1061": {
+		"planets": [
+			{ "name": "b", "a": 0.021, "mass": 1.37 },
+			{ "name": "c", "a": 0.035, "mass": 1.74 },
+			{ "name": "d", "a": 0.054, "mass": 1.64 }
+		]
+	},
+	"gj_1002": {
+		"planets": [
+			{ "name": "b", "a": 0.0457, "mass": 1.08 },
+			{ "name": "c", "a": 0.0738, "mass": 1.36 }
+		]
+	},
+	"gliese_687": { "planets": [{ "name": "b", "a": 0.164, "mass": 17.2 }] },
+	"gliese_674": { "planets": [{ "name": "b", "a": 0.039, "mass": 11.1 }] },
+	"gliese_876": {
+		"planets": [
+			{ "name": "d", "a": 0.0208, "mass": 6.8 },
+			{ "name": "c", "a": 0.130, "mass": 226 },
+			{ "name": "b", "a": 0.208, "mass": 725 },
+			{ "name": "e", "a": 0.334, "mass": 14.6 }
+		]
+	},
+	"gliese_832": { "planets": [{ "name": "b", "a": 3.56, "mass": 203 }] },
+	"40_eridani": { "separations": [["40 Eridani A", "40 Eridani B", 400.0], ["40 Eridani B", "40 Eridani C", 35.0]] },
+	"70_ophiuchi": { "separations": [["70 Ophiuchi A", "70 Ophiuchi B", 23.2]] },
+	"altair": {},
+	"36_ophiuchi": { "separations": [["36 Ophiuchi A", "36 Ophiuchi B", 88.0], ["36 Ophiuchi A", "36 Ophiuchi C", 30000.0]] },
+	"eta_cassiopeiae": { "separations": [["Eta Cassiopeiae A", "Eta Cassiopeiae B", 71.0]] },
+	"82_eridani": {
+		"planets": [
+			{ "name": "b", "a": 0.121, "mass": 2.7 },
+			{ "name": "c", "a": 0.204, "mass": 2.4 },
+			{ "name": "d", "a": 0.350, "mass": 4.8 }
+		]
+	},
+	"gliese_581": {
+		"planets": [
+			{ "name": "e", "a": 0.028, "mass": 1.7 },
+			{ "name": "b", "a": 0.041, "mass": 15.8 },
+			{ "name": "c", "a": 0.073, "mass": 5.5 }
+		]
+	},
+	"xi_bootis": { "separations": [["Xi Bootis A", "Xi Bootis B", 33.0]] },
+	"gliese_667": {
+		"separations": [["Gliese 667 A", "Gliese 667 B", 12.6], ["Gliese 667 A", "Gliese 667 C", 230.0]],
+		"planets": [
+			{ "star": "Gliese 667 C", "name": "b", "a": 0.050, "mass": 5.6 },
+			{ "star": "Gliese 667 C", "name": "c", "a": 0.125, "mass": 3.8 }
+		]
+	},
+	"fomalhaut": { "planets": [{ "name": "Dust Ring", "a": 140.0, "type": "belt" }] },
+	"vega": { "planets": [{ "name": "Warm Belt", "a": 14.0, "type": "belt" }, { "name": "Cold Belt", "a": 90.0, "type": "belt" }] },
+	"61_virginis": {
+		"planets": [
+			{ "name": "b", "a": 0.050, "mass": 5.1 },
+			{ "name": "c", "a": 0.218, "mass": 18.2 },
+			{ "name": "d", "a": 0.476, "mass": 22.9 }
+		]
+	},
+	"gliese_436": { "planets": [{ "name": "b", "a": 0.029, "mass": 22.1 }] },
+	"pollux": { "planets": [{ "name": "b", "a": 1.64, "mass": 731 }] },
+	"trappist_1": {
+		"complete": true,
+		"planets": [
+			{ "name": "b", "a": 0.01154, "mass": 1.37 },
+			{ "name": "c", "a": 0.01580, "mass": 1.31 },
+			{ "name": "d", "a": 0.02227, "mass": 0.39 },
+			{ "name": "e", "a": 0.02925, "mass": 0.69 },
+			{ "name": "f", "a": 0.03849, "mass": 1.04 },
+			{ "name": "g", "a": 0.04683, "mass": 1.32 },
+			{ "name": "h", "a": 0.06189, "mass": 0.33 }
+		]
+	},
+	"55_cancri": {
+		"separations": [["55 Cancri A", "55 Cancri B", 1065.0]],
+		"planets": [
+			{ "star": "55 Cancri A", "name": "e", "a": 0.0154, "mass": 7.99 },
+			{ "star": "55 Cancri A", "name": "b", "a": 0.1134, "mass": 263 },
+			{ "star": "55 Cancri A", "name": "c", "a": 0.2373, "mass": 54 },
+			{ "star": "55 Cancri A", "name": "f", "a": 0.7708, "mass": 45 },
+			{ "star": "55 Cancri A", "name": "d", "a": 5.957, "mass": 1210 }
+		]
+	},
+	"upsilon_andromedae": {
+		"planets": [
+			{ "name": "b", "a": 0.059, "mass": 218 },
+			{ "name": "c", "a": 0.828, "mass": 630 },
+			{ "name": "d", "a": 2.53, "mass": 1300 }
+		]
+	},
+	"47_ursae_majoris": {
+		"planets": [
+			{ "name": "b", "a": 2.10, "mass": 800 },
+			{ "name": "c", "a": 3.60, "mass": 172 },
+			{ "name": "d", "a": 11.6, "mass": 521 }
+		]
+	},
+	"51_pegasi": { "planets": [{ "name": "b", "a": 0.052, "mass": 146 }] },
+	"castor": {
+		"separations": [
+			["Castor Aa", "Castor Ab", 0.12], ["Castor Ba", "Castor Bb", 0.03],
+			["Castor Ca", "Castor Cb", 0.018], ["Castor Aa", "Castor Ba", 104.0], ["Castor Aa", "Castor Ca", 1100.0]
+		]
+	},
+	"capella": {
+		"separations": [["Capella Aa", "Capella Ab", 0.74], ["Capella Aa", "Capella H", 10000.0], ["Capella H", "Capella L", 44.0]]
+	}
+}

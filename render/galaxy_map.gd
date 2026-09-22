@@ -226,7 +226,7 @@ func _build_labels() -> void:
 		var label := Label3D.new()
 		label.text = s.name
 		label.font = font
-		label.font_size = 22
+		label.font_size = 26
 		label.outline_size = 8
 		label.outline_modulate = Color(0.02, 0.03, 0.07, 0.85)
 		label.modulate = Color(0.78, 0.86, 0.96)

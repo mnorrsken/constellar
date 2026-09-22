@@ -13,19 +13,25 @@ this order:
 1. **`Events`** (`sim/events.gd`) — a global signal bus. Empty for now; the
    sim will emit signals here as milestones need them, and UI/render layers
    will connect. Per the plan, UI must never poke `Sim` internals directly.
-2. **`Defs`** (`sim/defs.gd`) — loads read-only content definitions from
-   `data/*.json` at startup. `_load_json` reads a JSON array of id-keyed
-   objects into a `Dictionary` (id → entry), pushing an error and returning
-   `{}` on any parse failure. Loads `Defs.commodities` from
-   `data/commodities.json`, and `Defs.stars` (the raw `data/stars.json`
-   object, via `_load_object`) for `Galaxy.from_dict(Defs.stars)`.
-3. **`Sim`** (`sim/sim.gd`) — will own the world and the day clock (plan
-   §2). Builds `Sim.galaxy = Galaxy.from_dict(Defs.stars)` in `_ready`; the
-   day clock and tick loop arrive in Milestone 4, and the rest of the world
-   state will live in plain `RefCounted` classes so it stays headlessly
-   testable.
+2. **`Defs`** (`sim/defs.gd`) — loads read-only content definitions via
+   `Content` (`sim/content.gd`; also used directly by tests, so they can
+   build a `World` from the real data with no autoloads). `Content.load_list`
+   reads a JSON array of id-keyed objects into a `Dictionary` (id → entry);
+   `Content.load_object` reads a JSON object whole; both push an error and
+   return `{}` on any parse failure. `Defs.commodities` comes from
+   `data/commodities.json`, `Defs.stars` from `data/stars.json` (for
+   `Galaxy.from_dict`), and `Defs.world_content` from
+   `Content.load_world_content` (`known_planets`, `planet_types`,
+   `archetypes`, `governments`, `names`, `balance` — everything
+   `World.create` needs). `archetype_name`/`government_name`/`planet_type`
+   helpers look up a definition by id.
+3. **`Sim`** (`sim/sim.gd`) — owns the world. Builds
+   `Sim.world = World.create(seed, Defs.stars, Defs.world_content)` and
+   `Sim.galaxy = world.galaxy` in `_ready`, seed from `balance.json`
+   `world_seed`; the day clock and tick loop arrive in Milestone 4.
 
-The viewport is 1920×1080 with `canvas_items` stretch mode.
+The viewport is 1920×1080 with `canvas_items` stretch mode and a 1.25x UI
+scale (`window/stretch/scale`), so logical UI space is 1536×864.
 
 ## Data
 
@@ -39,6 +45,26 @@ class, subclass, lum_class, luminosity, mass}]}], lanes: [[id, id], ...]}`.
 Positions are galactic coordinates in light years (see `GalaxyCoords`);
 systems are sorted by distance from Sol. Carries a CC BY-SA 4.0 credit for
 the HYG database that must be kept.
+
+`data/known_planets.json` has real planets per system id, loosely after the
+NASA Exoplanet Archive (orbit AU, minimum mass in Earth masses, optional
+type; `separations` gives real AU distances between stars; `complete` skips
+rolling any extra planets for that system). `data/planet_types.json` lists
+10 body types (colour, habitability). `data/archetypes.json` lists 10
+economy archetypes (`body_weights` by planet type, `"*"` default and
+`"station"` for deep-space stations; `region_weights` by core/inner/rim;
+`population_factor`; `tech_bonus`) plus a `robot` archetype (`region_weights`
+all 0 so the normal draw never picks it; own `population_log10`,
+`robots_log10` and `tech_level` ranges, government `custodians`).
+`data/governments.json` lists 7 governments (stability, region/archetype
+weights) plus `custodians` (stability 0.92, never picked by region — robot
+worlds only). `data/names.json` holds settlement name pools, plus
+`robot_suffixes` for robot world names. `data/balance.json` has
+`world_seed`, `start_system`, region radii, settlement population/tech
+ranges by region, `settlements.robot_world_chance` (odds an uninhabited
+system becomes a robot world, higher for dead ends), and
+`forced_settlements` (pins fields for specific systems, e.g. Sol and the
+start world).
 
 ## Star data pipeline
 
@@ -68,7 +94,9 @@ space: `to_world` / `to_galactic`, 1 unit = 1 ly, galactic north = world
 +Y.
 
 `sim/star_system.gd` (`StarSystem`) holds one system's id, name, galactic
-position, and its `stars` array (brightest first).
+position, its `stars` array (brightest first), the `hosts` planets orbit
+(single stars or close pairs merged, built by `PlanetGen`), its `planets`
+(sorted by host then orbit) and its `settlement` (null if uninhabited).
 
 `sim/lane.gd` (`Lane`) is a two-way edge between two system indices, with
 `length` (ly) and `other(i)`.
@@ -80,6 +108,61 @@ position, and its `stars` array (brightest first).
 `is_fully_connected(max_jump)`, and A* pathfinding
 (`find_path(from, to, max_jump)` → system indices, plus `path_length`).
 `max_jump` limits every query to lanes no longer than a ship's jump range.
+
+## World generation
+
+`sim/planet.gd` (`Planet`) and `sim/settlement.gd` (`Settlement`) are plain
+data classes (name, orbit, type, population, government, ... ; `to_dict()`
+for snapshots) with no logic of their own. `Settlement.robots` counts
+robots for robot worlds, which have few or no humans.
+
+`sim/planet_gen.gd` (`PlanetGen`) fills a `StarSystem`'s `hosts` and
+`planets`. `build_hosts` groups stars into hosts: pairs closer than 0.5 AU
+(from curated `separations` or a rolled distance) are merged into one host
+that planets orbit together; each host gets a stable zone (`inner_au` =
+3x the merged pair's separation, `outer_au` = 0.3x the distance to the
+nearest companion). Known planets (from `known_planets.json`) are placed
+first; unless the system is flagged `complete`, rolled planets are added
+outside 2x the outermost known orbit, with counts, spacing and giant/rocky
+mix by spectral class, and orbits kept inside the host's stable zone and a
+global cap. `classify()` types a body from mass and equilibrium temperature
+(habitable zone ~ sqrt(luminosity) AU, snow line ~ 2.7 sqrt(luminosity)
+AU), rolling only where nature could plausibly go either way; red dwarf
+planets close in are tidally locked, white dwarfs (class `D`) get a debris
+belt instead of planets, and giant stars (`lum_class` I–III) have swallowed
+their inner system. `host_label()` names a host for planet names (e.g.
+"Castor Aa-Ab b").
+
+`sim/settlement_gen.gd` (`SettlementGen`) decides whether a system is
+inhabited and builds its `Settlement`. `region_of()` buckets a system into
+core/inner/rim by distance from Sol (`balance.json` radii); inhabited
+chance comes from the region (halved for brown-dwarf-only systems, cut for
+white dwarfs). A system that rolls uninhabited (never in the core) may
+instead become a robot world, per `robot_world_chance` — leaf systems
+(`generate`'s `lanes` argument ≤ 2, i.e. dead ends) roll far more often
+than others. Body and archetype are picked together in one weighted draw
+over every (body, archetype) pair — archetype's weight for that body type
+x its region weight x how pleasant the body is — so archetypes follow
+geography (refineries on giants, water worlds on oceans, frontier colonies
+on the rim). Population and tech level are rolled from `balance.json`
+ranges by region and scaled by the archetype; government is a weighted
+draw over region and archetype fit; stability comes from the government's
+base stability plus jitter. `forced` entries (from `balance.json`
+`forced_settlements`) pin any field and guarantee a settlement, used for
+Sol (Earth) and the start system (Lodestar).
+
+`sim/world.gd` (`World`) is the whole game world: `World.create(seed,
+stars_data, content)` builds the `Galaxy`, then runs `PlanetGen` and
+`SettlementGen` (passed each system's lane count, for robot-world odds)
+for every system, then assigns unique settlement names (`data/names.json`
+root/prefix/station-suffix pools, or `robot_suffixes` for robot worlds) in
+one global pass, each root used once across the galaxy. Generation is
+deterministic per system: `World.stream(seed, system_id,
+purpose)` gives each system its own `RandomNumberGenerator` seeded from
+`hash(seed, system_id, purpose)`, so editing one system's data never
+changes another's roll. `snapshot()` dumps everything generated as plain
+data (for tests and, later, saves); `settlements()` lists all inhabited
+systems.
 
 ## Render layer
 
@@ -111,7 +194,18 @@ each star is drawn this frame, which `main.gd` uses for picking.
 `OrbitRig`, then eases the view toward it: left-drag orbit, right/
 middle-drag pan, wheel or trackpad swipe/pinch zoom, WASD/arrows pan, Q/E
 orbit, R/F tilt, -/= zoom, Home returns to Sol. Emits `clicked(screen_pos)`
-for a click that isn't a drag, and exposes `fly_to(point, max_distance)`.
+for a click that isn't a drag and `double_clicked(screen_pos)` for a
+double-click, and exposes `fly_to(point, max_distance)`. `input_enabled`
+(false while the system view is open) gates keyboard camera movement and
+Home.
+
+`render/orrery_layout.gd` (`OrreryLayout`) is the pure layout for the
+system view: one row per host star, bodies log-scaled by orbit distance
+and pushed apart so none overlap, plus each row's habitable zone band and
+snow line position. Rows with only 1-2 bodies get a minimum two-decade
+span so they don't look empty; rows with more bodies use their real
+range. No scene tree dependency, so it's tested for every system in
+`data/stars.json`.
 
 `render/shaders/` holds the star, lane, grid, ring and sky shaders; `sky`
 draws faint background stars and a Milky Way band along the galactic
@@ -131,18 +225,47 @@ picking from real screen coordinates.
 variable-font weight/spacing variants.
 
 `ui/star_tooltip.gd` (`StarTooltip`) shows a hovered system's name,
-distance from Sol, lane count, and each star with a colour dot and
-spectral type. `ui/hud.gd` (`Hud`) draws the wordmark and a line of
-control hints. `ui/debug_overlay.gd` (`DebugOverlay`, F1) lists every
-on-screen system's id and galactic coordinates, FPS, camera state, and
-the hovered id.
+distance from Sol, lane count, each star with a colour dot and spectral
+type (`Format.spectral`), and its settlement line (name, archetype,
+population or "N robots", or "Uninhabited"). `ui/hud.gd` (`Hud`) draws the wordmark and
+a line of control hints. `ui/debug_overlay.gd` (`DebugOverlay`, F1) lists
+every on-screen system's id and galactic coordinates, FPS, camera state,
+and the hovered id.
+
+`ui/format.gd` (`Format`) has number/unit formatting shared by the tooltip
+and system UI: `population()` ("7.2 billion"), `thousands()`, `au()`, and
+`spectral()` (spectral type as text, e.g. "G2 V", "white dwarf").
+
+`ui/settlement_card.gd` (`SettlementCard`) shows one settlement's name,
+archetype and body, a short summary, and population (or "none" plus a
+Robots row for robot worlds)/tech/government/stability, or "Uninhabited";
+shared by the map's system panel and the
+system view. `ui/system_panel.gd` (`SystemPanel`) is the card on the right
+of the map for the selected system (star types, distance, region, body
+count, a `SettlementCard`, and a "View system" button); `view_requested`
+tells `main.gd` to open the system view. `ui/system_view.gd` (`SystemView`)
+is the full-screen orrery: one glowing row per host star (`StarLook`
+colour), orbit arcs, planet discs coloured by type with gas-giant bands
+and tidally-locked shading, belts as dots, the habitable zone band and
+snow line, and the settlement's body pulsing amber; laid out by
+`OrreryLayout` and redrawn in `_draw()`. Body labels are placed by
+measured text width: the settlement's body first, then each other label
+below if that spot is free, else above, else left out entirely (hovering
+still shows full details); the type name is only drawn where there's
+room, and a label matching the settlement's name is skipped. Hovering a
+body shows its details in the footer; `closed` signal fires on Esc or the
+close button.
 
 ## Main scene
 
 `main.tscn` is a `Node3D` with a `WorldEnvironment` (sky shader
-background, filmic tonemap, glow enabled) and a `Camera3D`. `main.gd`
-wires `GalaxyMap`, `MapCamera` and picking together, and shows the hover
-tooltip; click selects and flies to a system, Esc deselects.
+background, filmic tonemap, glow enabled), a `Camera3D`, and the
+`SystemPanel`/`SystemView` UI. `main.gd` wires `GalaxyMap`, `MapCamera` and
+picking together, and shows the hover tooltip. `select()` handles a click
+(ring on the map, `SystemPanel`, fly-to); `open_system_view()` opens the
+`SystemView` for the selected system, disabling `MapCamera.input_enabled`
+so keys don't move the map underneath it. Double-click or Enter opens the
+system view; Esc closes the view first, then deselects.
 
 ## Tests
 
@@ -170,3 +293,15 @@ Centauri's 3 stars, Sirius B as a white dwarf, Castor's 6 stars).
 
 `tests/test_map_helpers.gd` covers `StarLook`, `OrbitRig` and `StarPicker`
 against hand-built inputs (no scene tree needed).
+
+`tests/test_world_gen.gd` builds a `World` from the real data (via
+`Content`, no autoloads) and covers determinism (same seed twice matches,
+a different seed differs, and editing one system in `known_planets.json`
+leaves every other system unchanged), known planets (present, correctly
+typed, Sol matches the real solar system), the fixed start world for any
+seed, settlement bodies fitting their archetype and archetypes following
+geography, rolled planets staying inside companion orbit limits, Castor's
+3 hosts, the white dwarf debris belt, `PlanetGen`'s physics helpers,
+robot worlds, unique settlement names (including unique name roots across
+5 seeds), inhabited share and regions, `Format`, and `OrreryLayout` for
+every system in `data/stars.json`.

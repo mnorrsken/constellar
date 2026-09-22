@@ -10,12 +10,16 @@ extends Camera3D
 
 ## Emitted for a left click that was not a drag.
 signal clicked(screen_pos: Vector2)
+## Emitted on the second press of a double-click.
+signal double_clicked(screen_pos: Vector2)
 
 const DRAG_THRESHOLD_PX := 5.0
 const EASE := 7.0  # higher = snappier
 const HOME_DISTANCE := 100.0
 
 var rig := OrbitRig.new()
+## False while a full-screen view covers the map: keys stop moving the camera.
+var input_enabled := true
 var _view := OrbitRig.new()
 var _left_down := false
 var _dragging := false
@@ -43,7 +47,8 @@ func fly_to(point: Vector3, max_distance := 16.0) -> void:
 	rig.distance = minf(rig.distance, max_distance)
 
 func _process(delta: float) -> void:
-	_keyboard(delta)
+	if input_enabled:
+		_keyboard(delta)
 	_view.lerp_to(rig, 1.0 - exp(-EASE * delta))
 	transform = _view.camera_transform()
 
@@ -81,6 +86,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		var mb := event as InputEventMouseButton
 		match mb.button_index:
 			MOUSE_BUTTON_LEFT:
+				if mb.pressed and mb.double_click:
+					double_clicked.emit(mb.position)
 				if mb.pressed:
 					_left_down = true
 					_dragging = false
@@ -113,5 +120,5 @@ func _unhandled_input(event: InputEvent) -> void:
 		rig.zoom(1.0 / mg.factor)
 	elif event is InputEventKey:
 		var k := event as InputEventKey
-		if k.pressed and not k.echo and k.physical_keycode == KEY_HOME:
+		if input_enabled and k.pressed and not k.echo and k.physical_keycode == KEY_HOME:
 			go_home()

@@ -1,0 +1,12 @@
+[
+	{ "id": "molten",         "name": "Molten world",         "color": "ff6a3d", "habitability": 0.05 },
+	{ "id": "barren",         "name": "Barren rock",          "color": "9a938c", "habitability": 0.2 },
+	{ "id": "desert",         "name": "Desert world",         "color": "d9a45b", "habitability": 0.45 },
+	{ "id": "tidally_locked", "name": "Tidally locked world", "color": "8fb3a0", "habitability": 0.5 },
+	{ "id": "ocean",          "name": "Ocean world",          "color": "3f7fd6", "habitability": 0.75 },
+	{ "id": "garden",         "name": "Garden world",         "color": "58b86a", "habitability": 1.0 },
+	{ "id": "ice",            "name": "Ice world",            "color": "cfe6f2", "habitability": 0.3 },
+	{ "id": "gas_giant",      "name": "Gas giant",            "color": "d8b38a", "habitability": 0.15 },
+	{ "id": "ice_giant",      "name": "Ice giant",            "color": "7fc6d9", "habitability": 0.1 },
+	{ "id": "belt",           "name": "Asteroid belt",        "color": "8a8078", "habitability": 0.15 }
+]

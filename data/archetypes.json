@@ -1,0 +1,80 @@
+[
+	{
+		"id": "core", "name": "Core world",
+		"summary": "Old Concordance world. Exports electronics and robots; imports raw materials and luxuries.",
+		"body_weights": { "garden": 3, "ocean": 2, "desert": 1, "tidally_locked": 1, "barren": 0.5, "ice": 0.5, "belt": 0.3, "gas_giant": 0.3, "ice_giant": 0.2, "molten": 0.1, "station": 0.3 },
+		"region_weights": { "core": 6, "inner": 0.4, "rim": 0 },
+		"population_factor": 3.0, "tech_bonus": 1
+	},
+	{
+		"id": "agricultural", "name": "Agricultural world",
+		"summary": "Farms and fisheries. Exports food; needs machinery and consumer goods.",
+		"body_weights": { "garden": 9, "ocean": 8, "tidally_locked": 6 },
+		"region_weights": { "core": 1, "inner": 1, "rim": 1 },
+		"population_factor": 1.0, "tech_bonus": 0
+	},
+	{
+		"id": "mining", "name": "Mining colony",
+		"summary": "Digs ore and rare elements. Needs food, machinery and medicine.",
+		"body_weights": { "belt": 6, "barren": 5, "molten": 4, "desert": 2 },
+		"region_weights": { "core": 1, "inner": 1, "rim": 1 },
+		"population_factor": 0.4, "tech_bonus": 0
+	},
+	{
+		"id": "refinery", "name": "Fuel refinery",
+		"summary": "Skims helium-3 and deuterium from a giant planet. Exports fuel.",
+		"body_weights": { "gas_giant": 14, "ice_giant": 5 },
+		"region_weights": { "core": 1, "inner": 1, "rim": 1 },
+		"population_factor": 0.3, "tech_bonus": 0
+	},
+	{
+		"id": "water", "name": "Ice harvester",
+		"summary": "Mines water ice and volatiles. Exports water and chemicals.",
+		"body_weights": { "ice": 9, "ice_giant": 4 },
+		"region_weights": { "core": 1, "inner": 1, "rim": 1 },
+		"population_factor": 0.4, "tech_bonus": 0
+	},
+	{
+		"id": "industrial", "name": "Industrial world",
+		"summary": "Factories and shipyards. Turns metals and chemicals into machinery and goods.",
+		"body_weights": { "desert": 2, "barren": 1.5, "tidally_locked": 1, "ocean": 1, "garden": 1, "belt": 1, "station": 1 },
+		"region_weights": { "core": 1.5, "inner": 1.5, "rim": 0.4 },
+		"population_factor": 1.5, "tech_bonus": 1
+	},
+	{
+		"id": "frontier", "name": "Frontier colony",
+		"summary": "Young colony on the rim. Needs almost everything, pays well for it.",
+		"body_weights": { "*": 1 },
+		"region_weights": { "core": 0, "inner": 0.3, "rim": 3 },
+		"population_factor": 0.3, "tech_bonus": -1
+	},
+	{
+		"id": "research", "name": "Research station",
+		"summary": "Scientists and instruments. Buys biologics and electronics; small population.",
+		"body_weights": { "*": 0.3 },
+		"region_weights": { "core": 0.5, "inner": 0.8, "rim": 0.8 },
+		"population_factor": 0.05, "tech_bonus": 2
+	},
+	{
+		"id": "military", "name": "Military base",
+		"summary": "Garrison and naval yard. Buys weapons, fuel and food.",
+		"body_weights": { "*": 0.25 },
+		"region_weights": { "core": 0.6, "inner": 0.8, "rim": 0.4 },
+		"population_factor": 0.2, "tech_bonus": 1
+	},
+	{
+		"id": "robot", "name": "Robot world",
+		"summary": "Fully automated world run by robots, with a handful of human overseers or none at all. Sells robots and electronics; wary of outsiders.",
+		"body_weights": { "barren": 3, "desert": 3, "tidally_locked": 2, "molten": 2, "belt": 2, "ice": 1, "station": 1, "*": 1 },
+		"region_weights": { "core": 0, "inner": 0, "rim": 0 },
+		"population_log10": [0.0, 3.0], "robots_log10": [5.0, 7.5], "tech_level": [8, 10],
+		"government": "custodians"
+	},
+	{
+		"id": "free_port", "name": "Free port",
+		"summary": "Low-tariff trading station. Buys and sells a bit of everything.",
+		"body_weights": { "station": 1, "belt": 0.6, "*": 0.2 },
+		"region_weights": { "core": 0.1, "inner": 0.5, "rim": 1 },
+		"population_factor": 0.2, "tech_bonus": 0
+	}
+]

@@ -6,6 +6,7 @@ const OFFSET := Vector2(18, 18)
 
 var _title := Label.new()
 var _facts := Label.new()
+var _settlement := Label.new()
 var _stars := RichTextLabel.new()
 
 func _ready() -> void:
@@ -14,8 +15,9 @@ func _ready() -> void:
 	_title.add_theme_font_override("font", Fonts.weight(Fonts.DISPLAY, 600))
 	_title.add_theme_font_size_override("font_size", 24)
 	_facts.add_theme_font_override("font", Fonts.MONO)
-	_facts.add_theme_font_size_override("font_size", 14)
+	_facts.add_theme_font_size_override("font_size", 15)
 	_facts.add_theme_color_override("font_color", Color(0.45, 0.78, 0.86))
+	_settlement.add_theme_font_size_override("font_size", 16)
 	_stars.bbcode_enabled = true
 	_stars.fit_content = true
 	_stars.scroll_active = false
@@ -27,6 +29,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 4)
 	box.add_child(_title)
 	box.add_child(_facts)
+	box.add_child(_settlement)
 	box.add_child(_stars)
 	add_child(box)
 
@@ -37,11 +40,20 @@ func show_system(g: Galaxy, i: int, mouse: Vector2) -> void:
 	var place := "home system" if s.id == "sol" else "%.2f ly from Sol" % dist
 	var n_lanes := g.lanes_of(i).size()
 	_facts.text = "%s  ·  %d lane%s" % [place, n_lanes, "" if n_lanes == 1 else "s"]
+	var st := s.settlement
+	if st:
+		var people := "%s robots" % Format.population(st.robots) if st.robots > 0 \
+			else Format.population(st.population)
+		_settlement.text = "%s  ·  %s  ·  %s" % [st.name, Defs.archetype_name(st.archetype), people]
+		_settlement.add_theme_color_override("font_color", Color(0.98, 0.72, 0.3))
+	else:
+		_settlement.text = "Uninhabited"
+		_settlement.add_theme_color_override("font_color", Color(0.55, 0.62, 0.72))
 	var lines := PackedStringArray()
 	for star in s.stars:
 		var c := StarLook.color(star.get("class", ""), star.get("subclass"))
 		lines.append("[color=#%s]●[/color]  %s  [color=#8a9ab5]%s[/color]" % [
-			c.to_html(false), star.get("name", "?"), _type_text(star)])
+			c.to_html(false), star.get("name", "?"), Format.spectral(star)])
 	_stars.text = "\n".join(lines)
 	visible = true
 	reset_size()
@@ -52,23 +64,3 @@ func show_system(g: Galaxy, i: int, mouse: Vector2) -> void:
 	if pos.y + size.y > vp.y - 8:
 		pos.y = mouse.y - OFFSET.y - size.y
 	position = pos
-
-func _type_text(star: Dictionary) -> String:
-	var cls: String = star.get("class", "")
-	match cls:
-		"D":
-			return "white dwarf"
-		"L", "T", "Y":
-			return "brown dwarf"
-	var sub: Variant = star.get("subclass")
-	var sub_text := "" if sub == null else str(snappedf(float(sub), 0.1)).trim_suffix(".0")
-	var lum_class: String = star.get("lum_class", "")
-	var kind := ""
-	match lum_class:
-		"III", "II", "Ia", "Ib", "I":
-			kind = " giant"
-		"IV":
-			kind = " subgiant"
-		_:
-			kind = " dwarf" if cls in ["K", "M"] else ""
-	return "%s%s%s" % [cls, sub_text, kind]

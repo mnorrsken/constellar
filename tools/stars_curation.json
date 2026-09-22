@@ -36,7 +36,8 @@
 		"Alsafi": "Sigma Draconis",
 		"Noquisi": "Gliese 436",
 		"Struve 2398 A": "Struve 2398",
-		"EZ Aqr": "EZ Aquarii"
+		"EZ Aqr": "EZ Aquarii",
+		"Gliese 860": "Kruger 60"
 	},
 
 	"systems": {
@@ -64,6 +65,19 @@
 				{ "name": "Capella Ab", "spect": "G1III", "luminosity": 73.0, "mass": 2.48 },
 				{ "name": "Capella H", "spect": "M2.5V", "luminosity": 0.05, "mass": 0.57 },
 				{ "name": "Capella L", "spect": "M4V", "luminosity": 0.005, "mass": 0.2 }
+			]
+		},
+		"36 Ophiuchi": {
+			"components": [
+				{ "name": "36 Ophiuchi A", "spect": "K2V", "luminosity": 0.29, "mass": 0.85 },
+				{ "name": "36 Ophiuchi B", "spect": "K1V", "luminosity": 0.28, "mass": 0.85 },
+				{ "name": "36 Ophiuchi C", "spect": "K5V", "luminosity": 0.09, "mass": 0.71 }
+			]
+		},
+		"Kruger 60": {
+			"components": [
+				{ "name": "Kruger 60 A", "spect": "M3V", "luminosity": 0.01, "mass": 0.27 },
+				{ "name": "Kruger 60 B", "spect": "M4V", "luminosity": 0.004, "mass": 0.18 }
 			]
 		},
 		"Epsilon Indi": {

@@ -1,0 +1,13 @@
+[
+	{ "id": "concordance", "name": "Concordance governor", "stability": 0.7,  "region_weights": { "core": 6, "inner": 2, "rim": 0.3 } },
+	{ "id": "democracy",   "name": "Democracy",            "stability": 0.75, "region_weights": { "core": 2, "inner": 2, "rim": 1 } },
+	{ "id": "corporate",   "name": "Corporate state",      "stability": 0.7,  "region_weights": { "core": 1.5, "inner": 2, "rim": 1.5 },
+	  "archetype_weights": { "industrial": 2, "mining": 2, "refinery": 2 } },
+	{ "id": "theocracy",   "name": "Theocracy",            "stability": 0.6,  "region_weights": { "core": 0.3, "inner": 1, "rim": 1.2 } },
+	{ "id": "junta",       "name": "Military junta",       "stability": 0.5,  "region_weights": { "core": 0.3, "inner": 0.8, "rim": 1 },
+	  "archetype_weights": { "military": 8 } },
+	{ "id": "feudal",      "name": "Feudal lord",          "stability": 0.55, "region_weights": { "core": 0, "inner": 0.5, "rim": 1.5 } },
+	{ "id": "custodians",  "name": "Robot custodians",     "stability": 0.92, "region_weights": { "core": 0, "inner": 0, "rim": 0 } },
+	{ "id": "anarchy",     "name": "Anarchy",              "stability": 0.2,  "region_weights": { "core": 0, "inner": 0.2, "rim": 0.8 },
+	  "archetype_weights": { "free_port": 2 } }
+]

@@ -3,7 +3,7 @@
 Milestone-by-milestone status. See [`constellar-plan.md`](../constellar-plan.md)
 for the plan and acceptance criteria this tracks.
 
-Current test count: **34 tests, 499 assertions, 0 failures** (`make test`).
+Current test count: **51 tests, 2274 assertions, 0 failures** (`make test`).
 
 - **M0 — Project skeleton — done.** Godot 4.7 project setup, autoloads
   (`Events`/`Defs`/`Sim`), `data/commodities.json`, Makefile, headless test
@@ -16,7 +16,15 @@ Current test count: **34 tests, 499 assertions, 0 failures** (`make test`).
   drop lines and stars (glow billboards, distance-faded labels);
   `MapCamera`/`OrbitRig` orbit/pan/zoom; `StarPicker` drives hover/click
   selection and fly-to; HUD, star tooltip, F1 debug overlay.
-- **M3 — Planets and settlements — pending.**
+- **M3 — Planets and settlements — done.** Deterministic per-seed world
+  generation (`World.create`): known real planets plus rolled ones
+  (`PlanetGen`), settlements with archetype/population/tech/government
+  (`SettlementGen`), all driven by `data/known_planets.json`,
+  `planet_types.json`, `archetypes.json`, `governments.json`, `names.json`
+  and `balance.json`. Uninhabited systems (usually dead ends) may roll a
+  robot world instead. Full-screen system view (`SystemView`/`OrreryLayout`,
+  double-click or Enter to open) and a map-side system panel showing the
+  selected system's settlement.
 - **M4 — Calendar and markets — pending.**
 - **M5 — Ships and travel — pending.**
 - **M6 — Trading and routes — pending.**

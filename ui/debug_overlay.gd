@@ -34,7 +34,7 @@ func _draw() -> void:
 		var p := camera.unproject_position(world)
 		var g := s.position
 		draw_string(FONT, p + Vector2(8, 14), "%s  (%.1f, %.1f, %.1f)" % [s.id, g.x, g.y, g.z],
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 10, TEXT)
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 12, TEXT)
 	var r := camera.rig
 	var info := "FPS %d   focus (%.1f, %.1f, %.1f)   dist %.1f ly   yaw %.0f°   pitch %.0f°   hovered %s" % [
 		Engine.get_frames_per_second(), r.focus.x, r.focus.y, r.focus.z, r.distance,
@@ -42,4 +42,4 @@ func _draw() -> void:
 		map.galaxy.systems[map.hovered].id if map.hovered >= 0 else "-"]
 	var bottom := get_viewport_rect().size.y
 	draw_rect(Rect2(8, bottom - 30, 900, 22), Color(0, 0, 0, 0.6))
-	draw_string(FONT, Vector2(14, bottom - 14), info, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, TEXT)
+	draw_string(FONT, Vector2(14, bottom - 14), info, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, TEXT)

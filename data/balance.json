@@ -1,0 +1,22 @@
+{
+	"world_seed": 1,
+	"start_system": "gamma_pavonis",
+	"regions": { "core_ly": 12.0, "inner_ly": 25.0 },
+	"settlements": {
+		"inhabited_chance": { "core": 1.0, "inner": 0.85, "rim": 0.6 },
+		"population_log10": { "core": [7.5, 9.5], "inner": [5.5, 8.0], "rim": [3.5, 6.0] },
+		"tech_level": { "core": [7, 9], "inner": [5, 8], "rim": [2, 6] },
+		"stability_jitter": 0.15,
+		"robot_world_chance": { "leaf": 0.75, "other": 0.3 }
+	},
+	"forced_settlements": {
+		"sol": {
+			"name": "Earth", "planet": "Earth", "archetype": "core",
+			"population": 7200000000, "tech_level": 9, "government": "concordance", "stability": 0.62
+		},
+		"gamma_pavonis": {
+			"name": "Lodestar", "archetype": "frontier",
+			"population": 60000, "tech_level": 5, "government": "democracy", "stability": 0.7
+		}
+	}
+}

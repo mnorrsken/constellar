@@ -592,8 +592,8 @@
 			]
 		},
 		{
-			"id": "gliese_860",
-			"name": "Gliese 860",
+			"id": "kruger_60",
+			"name": "Kruger 60",
 			"pos": [
 				-3.313,
 				12.639,
@@ -601,22 +601,22 @@
 			],
 			"stars": [
 				{
-					"name": "Gliese 860 A",
-					"spect": "M6 V",
+					"name": "Kruger 60 A",
+					"spect": "M3V",
 					"class": "M",
-					"subclass": 6.0,
+					"subclass": 3.0,
 					"lum_class": "V",
-					"luminosity": 0.01051,
-					"mass": 0.261
+					"luminosity": 0.01,
+					"mass": 0.27
 				},
 				{
-					"name": "Gliese 860 B",
-					"spect": "M2V",
+					"name": "Kruger 60 B",
+					"spect": "M4V",
 					"class": "M",
-					"subclass": 2.0,
+					"subclass": 4.0,
 					"lum_class": "V",
-					"luminosity": 0.008024,
-					"mass": 0.232
+					"luminosity": 0.004,
+					"mass": 0.18
 				}
 			]
 		},
@@ -1699,21 +1699,21 @@
 			"stars": [
 				{
 					"name": "36 Ophiuchi A",
-					"spect": "K2:III:",
+					"spect": "K2V",
 					"class": "K",
 					"subclass": 2.0,
-					"lum_class": "III",
-					"luminosity": 0.7152,
-					"mass": 1.5
+					"lum_class": "V",
+					"luminosity": 0.29,
+					"mass": 0.85
 				},
 				{
 					"name": "36 Ophiuchi B",
-					"spect": "K1 Ve",
+					"spect": "K1V",
 					"class": "K",
 					"subclass": 1.0,
 					"lum_class": "V",
-					"luminosity": 0.342,
-					"mass": 0.765
+					"luminosity": 0.28,
+					"mass": 0.85
 				},
 				{
 					"name": "36 Ophiuchi C",
@@ -1721,8 +1721,8 @@
 					"class": "K",
 					"subclass": 5.0,
 					"lum_class": "V",
-					"luminosity": 0.1432,
-					"mass": 0.615
+					"luminosity": 0.09,
+					"mass": 0.71
 				}
 			]
 		},
@@ -3321,7 +3321,7 @@
 		],
 		[
 			"ross_248",
-			"gliese_860"
+			"kruger_60"
 		],
 		[
 			"ross_248",
@@ -3393,7 +3393,7 @@
 		],
 		[
 			"61_cygni",
-			"gliese_860"
+			"kruger_60"
 		],
 		[
 			"61_cygni",
@@ -3421,7 +3421,7 @@
 		],
 		[
 			"struve_2398",
-			"gliese_860"
+			"kruger_60"
 		],
 		[
 			"struve_2398",
@@ -3437,7 +3437,7 @@
 		],
 		[
 			"groombridge_34",
-			"gliese_860"
+			"kruger_60"
 		],
 		[
 			"groombridge_34",
@@ -3592,19 +3592,19 @@
 			"gliese_783"
 		],
 		[
-			"gliese_860",
+			"kruger_60",
 			"gj_1245"
 		],
 		[
-			"gliese_860",
+			"kruger_60",
 			"gliese_873"
 		],
 		[
-			"gliese_860",
+			"kruger_60",
 			"sigma_draconis"
 		],
 		[
-			"gliese_860",
+			"kruger_60",
 			"eta_cassiopeiae"
 		],
 		[

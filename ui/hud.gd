@@ -17,14 +17,14 @@ func _ready() -> void:
 	var sub := Label.new()
 	sub.text = "MERCHANT EMPIRE"
 	sub.add_theme_font_override("font", Fonts.weight(Fonts.DISPLAY, 500, 5))
-	sub.add_theme_font_size_override("font_size", 12)
+	sub.add_theme_font_size_override("font_size", 13)
 	sub.add_theme_color_override("font_color", Color(0.95, 0.66, 0.23))
 	sub.position = Vector2(35, 64)
 	add_child(sub)
 
 	var hints := Label.new()
 	hints.text = "Drag  rotate    ·    Right-drag  pan    ·    Scroll  zoom    ·    Click  select    ·    Home  Sol    ·    F1  debug"
-	hints.add_theme_font_size_override("font_size", 12)
+	hints.add_theme_font_size_override("font_size", 14)
 	hints.add_theme_color_override("font_color", Color(0.55, 0.64, 0.78, 0.8))
 	# Full-width strip along the bottom edge.
 	hints.anchor_left = 0.0

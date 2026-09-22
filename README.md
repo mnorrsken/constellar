@@ -28,6 +28,9 @@ zoom, click a star to select and fly to it, Esc to deselect, Home to return
 to Sol. Keyboard: WASD/arrows pan, Q/E orbit, R/F tilt, -/= zoom, F1 toggles
 the debug overlay.
 
+Double-click a star, or select it and press Enter, to open its system view.
+Esc closes the system view first, then deselects.
+
 ## Documentation
 
 - [`constellar-plan.md`](constellar-plan.md) — the authoritative design and
@@ -40,6 +43,8 @@ the debug overlay.
 
 Star data (`data/stars.json`) comes from the [HYG
 database](https://codeberg.org/astronexus/hyg) v4.4, licensed CC BY-SA 4.0.
+Known exoplanets (`data/known_planets.json`) are drawn loosely from the
+[NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/).
 
 Fonts (`assets/fonts/`): Exo 2, Inter and JetBrains Mono, licensed SIL Open
 Font License 1.1.

@@ -1,0 +1,30 @@
+{
+	"prefix_chance": 0.25,
+	"prefixes": ["New", "Port", "Fort", "Saint", "Nova", "Upper", "Far", "Old"],
+	"robot_suffixes": ["Works", "Array", "Foundry", "Custodium", "Mechanism", "Engine"],
+	"station_suffixes": ["Station", "Hub", "Anchorage", "Dock", "Outpost", "Platform", "Yard", "Haven"],
+	"roots": [
+		"Halcyon", "Meridian", "Tessaly", "Corvane", "Aubade", "Lindqvist", "Varos", "Kestrel",
+		"Solace", "Ardent", "Brightwater", "Caldera", "Dunmore", "Eskar", "Fallow", "Garnet",
+		"Harrow", "Isola", "Juniper", "Kairos", "Lumen", "Marisol", "Novaya", "Obelisk",
+		"Pellucid", "Quillon", "Rook", "Saffron", "Tamsin", "Umber", "Vesper", "Wren",
+		"Xanthe", "Yarrow", "Zephyr", "Alder", "Bastion", "Cinder", "Delphine", "Ember",
+		"Fenwick", "Galatea", "Hollis", "Ithaca", "Jubilee", "Kaskade", "Larkspur", "Mirador",
+		"Nadir", "Orison", "Paladin", "Quarry", "Rosewater", "Sable", "Tarrant", "Ulster",
+		"Valence", "Waypoint", "Ysolde", "Zenith", "Amaranth", "Beacon", "Cassel", "Drummond",
+		"Eyrie", "Farrow", "Gilead", "Hesper", "Ione", "Jericho", "Kittering", "Lodestar",
+		"Mariner", "Northgate", "Oriel", "Perdita", "Quintain", "Ravel", "Sorrel", "Thule",
+		"Utopia", "Vireo", "Westmark", "Arden", "Belmont", "Coriander", "Dovetail", "Elysia",
+		"Fairhaven", "Grisette", "Heliad", "Ingot", "Jasper", "Kelso", "Lachesis", "Montague",
+		"Nimbus", "Ostrava", "Prospero", "Reliance", "Sundial", "Temperance", "Undine", "Verity",
+		"Wakefield", "Anchor", "Bramble", "Castellan", "Dawnside", "Estuary", "Foxglove", "Gallant",
+		"Hearthstone", "Inverness", "Jacquard", "Kingfisher", "Lantern", "Marrow", "Nettle", "Osprey",
+		"Pinnacle", "Redoubt", "Serein", "Tidewater", "Umbra", "Vantage", "Windrose", "Albion",
+		"Brisance", "Chandler", "Dunlin", "Everly", "Firth", "Graywell", "Highmoor", "Ironside",
+		"Kilnside", "Longreach", "Morrow", "Newhollow", "Overlook", "Providence", "Rimfall", "Stillwater",
+		"Aldergrove", "Bellwether", "Cairnholm", "Dorado", "Eastmere", "Fennmark", "Glimmer", "Halden",
+		"Icarus", "Jessamine", "Keystone", "Lowmoor", "Minaret", "Northwind", "Olivine", "Palisade",
+		"Quenby", "Riverain", "Seahold", "Tinder", "Upland", "Verdance", "Whitlow", "Yearling",
+		"Zircon", "Ashgrove", "Brandt", "Corliss", "Dunhaven", "Emberlin"
+	]
+}
