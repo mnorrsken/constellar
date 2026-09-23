@@ -20,6 +20,10 @@ signal company_changed(company_id: int)
 ## A short message for the player ("Wanderer arrived at Beta Hydri").
 signal notice(text: String)
 
+## A player ship sold cargo: the profit (negative = loss) against what it
+## paid, summed over one day's sales.
+signal profit(ship_id: int, amount: float)
+
 ## A company charted new systems (fog of war lifted).
 signal charted(company_id: int)
 

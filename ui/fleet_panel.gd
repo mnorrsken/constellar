@@ -4,6 +4,7 @@ extends PanelContainer
 ## Click a row to select that ship.
 
 signal ship_selected(ship_id: int)
+signal orders_requested(ship_id: int)
 
 const MUTED := Color(0.55, 0.62, 0.74)
 
@@ -47,14 +48,25 @@ func refresh() -> void:
 		b.flat = s.id != selected
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.focus_mode = Control.FOCUS_NONE
-		b.text = "%s   ·   %s%s" % [s.name, status_text(world, s),
+		var cargo := s.cargo_tonnes()
+		b.text = "%s   ·   %s%s%s" % [s.name, status_text(world, s),
+			"   ·   %s t aboard" % Format.thousands(roundi(cargo)) if cargo >= 1.0 else "",
 			"   ·   awaiting orders" if Sim.waiting.has(s.id) else ""]
 		b.tooltip_text = "%s  ·  %s t cargo  ·  %.2f ly/day  ·  %.0f ly jump" % [
 			world.fleet.hull_def(s).name, Format.thousands(roundi(world.fleet.total_capacity(s))),
 			world.fleet.speed(s), world.fleet.jump_range(s)]
 		b.add_theme_font_size_override("font_size", 15)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.pressed.connect(func(): ship_selected.emit(s.id))
-		_rows.add_child(b)
+		var orders := Button.new()
+		orders.text = "Route ▸" if s.orders_active else "Orders"
+		orders.focus_mode = Control.FOCUS_NONE
+		orders.add_theme_font_size_override("font_size", 13)
+		orders.pressed.connect(func(): orders_requested.emit(s.id))
+		var row := HBoxContainer.new()
+		row.add_child(b)
+		row.add_child(orders)
+		_rows.add_child(row)
 	(func(): offset_top = offset_bottom).call_deferred()
 
 static func status_text(world: World, s: Ship) -> String:

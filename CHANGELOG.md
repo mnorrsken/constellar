@@ -8,6 +8,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Trading and routes: ships carry cargo (`Ship.cargo`, cost basis) in holds
+  of the right cargo class; `Trading` buys and sells at the docked market
+  (big lots move the price; no sales tax until tariffs and smuggling come
+  with the government rules), buys fuel for each trip at departure (`fuel_per_ly` per
+  hull, from the local market or dearer without one) and a docking fee on
+  arrival at a settlement, and books crew, maintenance and loan interest on
+  the first of each month. Every credit goes through `Company.book()` into a
+  monthly ledger by category and by ship. Price knowledge per company: a
+  company only knows prices where its ships have docked (refreshed weekly
+  while docked), with the day it saw them. Route orders: looping stops with
+  sell-all, buy one good (fill the hold), wait for a full load (up to 28
+  days) or auto-trade (auto-trader module: best known margin for the next
+  stop); ships on routes don't pause the game. UI: market panel with live
+  or remembered prices and their age, Buy/Sell with lot sizes and cargo
+  aboard; route editor (O); finances with borrow/repay (L); price map mode
+  (P) tinting stars and names by known price.
+- Each ship remembers what it paid for its cargo; every sale reports its
+  profit against that, shown as a floating "+12,340 cr" (red for a loss)
+  rising from the ship. A route that would sell its cargo at a loss stops,
+  keeps the cargo and pauses the game; restarting the route there sells
+  anyway.
 - Ships and travel: `data/hulls.json` (9 hulls from a courier to heavy
   freighters, a bulk carrier, a tanker, a liner and two later models) and
   `data/modules.json` (cargo holds by cargo class, cabins, suites, mail bay,

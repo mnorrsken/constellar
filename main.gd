@@ -13,7 +13,11 @@ const PICK_RADIUS_PX := 16.0
 @onready var market_panel: MarketPanel = $UI/MarketPanel
 @onready var fleet_panel: FleetPanel = $UI/FleetPanel
 @onready var shipyard: ShipyardPanel = $UI/ShipyardPanel
-@onready var shipyard_dim: ColorRect = $UI/ShipyardDim
+@onready var orders_panel: OrdersPanel = $UI/OrdersPanel
+@onready var finance_panel: FinancePanel = $UI/FinancePanel
+@onready var map_mode: MapModeBar = $UI/MapModeBar
+@onready var overlay_dim: ColorRect = $UI/OverlayDim
+@onready var floating: FloatingNumbers = $UI/FloatingNumbers
 
 ## Market panel wanted open (it follows the selection while on).
 var _market_open := false
@@ -31,6 +35,8 @@ func _ready() -> void:
 	map.build(Sim.galaxy)
 	map.set_known(Sim.player().known)
 	markers.setup(Sim.world, map)
+	floating.camera = camera
+	floating.markers = markers
 	debug_overlay.map = map
 	debug_overlay.camera = camera
 	camera.clicked.connect(_on_clicked)
@@ -40,18 +46,21 @@ func _ready() -> void:
 	panel.send_requested.connect(send_selected_ship)
 	panel.shipyard_requested.connect(open_shipyard)
 	fleet_panel.ship_selected.connect(select_ship)
+	fleet_panel.orders_requested.connect(open_orders)
+	map_mode.mode_changed.connect(_apply_price_map)
 	system_view.closed.connect(func(): camera.input_enabled = true)
-	shipyard.closed.connect(func():
-		camera.input_enabled = true
-		shipyard_dim.visible = false)
+	for p in [shipyard, orders_panel, finance_panel]:
+		p.closed.connect(_overlay_closed)
 	Events.fleet_changed.connect(_update_preview)
+	for sig in [Events.day_passed, Events.company_changed, Events.charted]:
+		sig.connect(func(_x = null): _apply_price_map(map_mode.commodity))
 	Events.charted.connect(_on_charted)
 	Events.attention.connect(_on_attention)
 
 func _process(_delta: float) -> void:
 	# Re-pick every frame: the camera may be moving under a still mouse.
 	var i := -1
-	if _mouse != StarPicker.OFF_SCREEN and not system_view.visible and not shipyard.visible:
+	if _mouse != StarPicker.OFF_SCREEN and not _overlay_open():
 		i = pick(_mouse)
 	if i != map.hovered:
 		map.set_hovered(i)
@@ -106,6 +115,7 @@ func _on_double_clicked(screen_pos: Vector2) -> void:
 ## camera flies there.
 func select(i: int) -> void:
 	map.set_selected(i)
+	orders_panel.set_add_system(i)
 	if i >= 0:
 		camera.fly_to(map.system_position(i))
 		panel.show_system(map.galaxy.systems[i])
@@ -121,6 +131,9 @@ func select(i: int) -> void:
 func select_ship(ship_id: int) -> void:
 	selected_ship = ship_id
 	markers.selected_ship = ship_id
+	market_panel.ship_id = ship_id
+	if market_panel.visible and map.selected >= 0:
+		market_panel.show_system(map.galaxy.systems[map.selected])
 	fleet_panel.select(ship_id)
 	panel.set_ship(ship_id)
 	if ship_id >= 0:
@@ -179,20 +192,68 @@ func open_shipyard() -> void:
 	if map.selected < 0 or not Sim.player().is_known(map.selected) \
 			or not Sim.world.fleet.is_shipyard(map.selected):
 		return
+	_overlay_opened()
+	shipyard.open(map.selected)
+
+func open_orders(ship_id: int) -> void:
+	if ship_id < 0:
+		Events.notice.emit("Select a ship first")
+		return
+	select_ship(ship_id)
+	_overlay_opened()
+	orders_panel.open(ship_id, map.selected)
+
+func open_finance() -> void:
+	_overlay_opened()
+	finance_panel.open()
+
+## Modal panels (shipyard, orders, finance): dim the map and stop the camera.
+func _overlay_opened() -> void:
+	for p in [shipyard, orders_panel, finance_panel]:
+		if p.visible:
+			p.visible = false
 	tooltip.visible = false
 	camera.input_enabled = false
-	shipyard_dim.visible = true
-	shipyard.open(map.selected)
+	overlay_dim.visible = true
+
+func _overlay_closed() -> void:
+	if not (shipyard.visible or orders_panel.visible or finance_panel.visible):
+		overlay_dim.visible = false
+		camera.input_enabled = not system_view.visible
+
+func _overlay_open() -> bool:
+	return system_view.visible or shipyard.visible or orders_panel.visible or finance_panel.visible
+
+## Price map mode: stars tinted by the known price of one good (-1 = off).
+func _apply_price_map(c: int) -> void:
+	tooltip.price_commodity = c
+	if c < 0:
+		map.set_tints({})
+		return
+	var w: World = Sim.world
+	var tints := {}
+	var unknown := Color(0.28, 0.3, 0.36)
+	for s in w.galaxy.systems:
+		var known := w.known_prices(Sim.PLAYER, s.index)
+		if known.is_empty():
+			tints[s.index] = unknown
+		else:
+			tints[s.index] = MapModeBar.ramp(known.price[c] / w.economy.markets[0].base_price[c])
+	map.set_tints(tints)
 
 func _unhandled_input(event: InputEvent) -> void:
 	var k := event as InputEventKey
 	if k == null or not k.pressed or k.echo:
 		return
-	var overlay := system_view.visible or shipyard.visible
+	var overlay := _overlay_open()
 	match k.physical_keycode:
 		KEY_ESCAPE:
 			if shipyard.visible:
 				shipyard.close_panel()
+			elif orders_panel.visible:
+				orders_panel.close_panel()
+			elif finance_panel.visible:
+				finance_panel.close_panel()
 			elif system_view.visible:
 				system_view.close_view()
 			elif map.selected >= 0:
@@ -208,6 +269,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_S:
 			if not overlay:
 				send_selected_ship()
+		KEY_O:
+			if not overlay:
+				open_orders(selected_ship)
+		KEY_L:
+			if finance_panel.visible:
+				finance_panel.close_panel()
+			elif not overlay:
+				open_finance()
+		KEY_P:
+			if not overlay:
+				map_mode.cycle()
 		KEY_SPACE:
 			Sim.toggle_pause()
 		KEY_F2:

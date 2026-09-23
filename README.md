@@ -44,6 +44,16 @@ Fog of war: you only see the glow of distant stars. A system and everything
 one jump from it are charted once one of your ships gets there; routes only
 use charted systems. F2 (cheat) charts everything and adds 10,000,000 cr.
 
+Trading: with a ship docked, the market panel (M) shows live prices with
+Buy/Sell buttons (lot size at the top); elsewhere it shows the last prices
+your ships saw and how old they are. O opens the selected ship's route
+orders (add the selected system as a stop; sell, buy, wait for a full load,
+auto-trade; Start route). L shows the finances (ledger, borrow, repay).
+P cycles the price map: stars and names coloured by what you know of one
+good's price. Every sale shows its profit (or loss) floating up from the
+ship. A route that would sell at a loss stops and pauses the game; restart
+it to sell anyway.
+
 Press M, or the system panel's Market button, to see the selected system's
 market. Space pauses/resumes the game clock; 1-4 set its speed (also
 buttons on the clock bar, top centre).

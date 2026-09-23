@@ -7,6 +7,9 @@ const OFFSET := Vector2(18, 18)
 var _title := Label.new()
 var _facts := Label.new()
 var _settlement := Label.new()
+var _price := Label.new()
+## Map mode: commodity whose known price to show (-1 = none).
+var price_commodity := -1
 var _stars := RichTextLabel.new()
 
 func _ready() -> void:
@@ -18,6 +21,8 @@ func _ready() -> void:
 	_facts.add_theme_font_size_override("font_size", 15)
 	_facts.add_theme_color_override("font_color", Color(0.45, 0.78, 0.86))
 	_settlement.add_theme_font_size_override("font_size", 16)
+	_price.add_theme_font_override("font", Fonts.MONO)
+	_price.add_theme_font_size_override("font_size", 14)
 	_stars.bbcode_enabled = true
 	_stars.fit_content = true
 	_stars.scroll_active = false
@@ -30,6 +35,7 @@ func _ready() -> void:
 	box.add_child(_title)
 	box.add_child(_facts)
 	box.add_child(_settlement)
+	box.add_child(_price)
 	box.add_child(_stars)
 	add_child(box)
 
@@ -38,6 +44,7 @@ func show_system(g: Galaxy, i: int, mouse: Vector2) -> void:
 	var charted: bool = Sim.player().is_known(i)
 	_facts.visible = charted
 	_settlement.visible = charted
+	_price.visible = charted and price_commodity >= 0 and s.settlement != null
 	_stars.visible = charted
 	if not charted:
 		_title.text = "Uncharted system"
@@ -57,6 +64,20 @@ func show_system(g: Galaxy, i: int, mouse: Vector2) -> void:
 	else:
 		_settlement.text = "Uninhabited"
 		_settlement.add_theme_color_override("font_color", Color(0.55, 0.62, 0.72))
+	if _price.visible:
+		var w: World = Sim.world
+		var known := w.known_prices(Sim.PLAYER, i)
+		var cname: String = Defs.commodities[w.economy.commodity_ids[price_commodity]].name
+		if known.is_empty():
+			_price.text = "%s: no price information" % cname
+			_price.add_theme_color_override("font_color", Color(0.55, 0.62, 0.74))
+		else:
+			var p: float = known.price[price_commodity]
+			var base: float = w.economy.markets[0].base_price[price_commodity]
+			var age: int = w.day - int(known.day)
+			_price.text = "%s %s cr (%+d%%)  ·  %s" % [cname, Format.thousands(roundi(p)),
+				roundi((p / base - 1.0) * 100.0), "today" if age == 0 else "%d days old" % age]
+			_price.add_theme_color_override("font_color", MapModeBar.ramp(p / base))
 	var lines := PackedStringArray()
 	for star in s.stars:
 		var c := StarLook.color(star.get("class", ""), star.get("subclass"))

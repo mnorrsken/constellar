@@ -16,6 +16,15 @@ static func date(day: int, start_year: int) -> Dictionary:
 		month += 1
 	return {"year": year, "month": month + 1, "day": rest + 1}
 
+## Months since the start (0 = January of the start year).
+static func month_index(day: int) -> int:
+	var d := date(day, 0)
+	return d.year * 12 + d.month - 1
+
+## "Mar 3401" for a month index.
+static func month_name(month: int, start_year: int) -> String:
+	return "%s %d" % [MONTHS[month % 12], start_year + month / 12]
+
 ## "12 Mar 3401"
 static func format(day: int, start_year: int) -> String:
 	var d := date(day, start_year)

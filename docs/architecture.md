@@ -292,6 +292,43 @@ ship is left waiting, otherwise it emits `attention` for the next one. `Sim.chea
 adds `CHEAT_CASH`. Arrival notices say "docked" only where there is a
 settlement ("holding" otherwise).
 
+## Trading
+
+`sim/trading.gd` (`Trading`, static functions on a `World`) holds the trade
+rules. `buy` / `sell` need the ship docked at a market; buying is limited by
+stock, free hold space of the good's cargo class (`free_space`) and cash;
+there is no sales tax yet (tariffs come with the government rules). `fuel_quote` / `pay_fuel`: `hull.fuel_per_ly` x route length,
+bought from the local market (the rest at base x `fuel_without_market`).
+`docking_fee` on arrival at a settlement. `monthly_costs` on the 1st: crew
+and maintenance per ship, interest on loans, ledger trimmed to
+`ledger_months`. `observe(company, system)` stores the market's prices in
+`Company.prices` (with the day); `observe_docked` refreshes them weekly
+where ships are docked. `process_orders` runs route orders daily for docked
+ships: at the stop, sell all, buy (fill or an amount), wait for a full load
+up to `wait_full_max_days`, then `World.depart` to the next stop; auto-trade
+(`auto_trader` module) buys the best known margin for the next stop per
+cargo class. A ship that can't go on stops its route (`orders_stopped`),
+and so does one whose cargo would sell at a loss (`sale_quote`: income vs
+the ship's cost basis); it keeps the cargo, and `World.start_orders` at that
+stop sets `Ship.allow_loss` so a restart sells anyway. `sell` returns and
+emits (`sale` event) the profit against `cargo_cost`; `Sim` sums a day's
+sales per player ship into `Events.profit`.
+
+`Company.book(category, amount, month, ship)` moves cash and records it in
+`ledger` (month -> category -> amount) and `ship_ledger`.
+`Calendar.month_index` / `month_name` give ledger months. `Ship` has
+`cargo`, `cargo_cost`, `orders` (+ `order_index`, `orders_active`,
+`stop_handled`, `wait_start`). `World` adds `content`, `month()`,
+`depart()` (fuel + send, used by `send_ship` — which stops a route — and by
+orders), `buy_cargo`, `sell_cargo`, `set_orders`, `start_orders`,
+`stop_orders`, `known_prices`; `advance_day` refreshes prices after the
+weekly market update, charges docking on arrival, runs month-start costs and
+route orders. `Economy.tick_day` returns whether markets moved. Ship
+purchases, refits and sales are booked as `ships`. Data: hull
+`fuel_per_ly`, balance
+`trade`. `Sim` wraps the new commands; arrivals of ships on routes don't
+ask for attention.
+
 ## Render layer
 
 `render/star_look.gd` (`StarLook`) is pure functions from a star's spectral
@@ -420,6 +457,17 @@ messages under the clock bar. `ClockBar` shows cash (loan in its tooltip).
 line (jumps, ly, days, arrival date, or why not) and "Send <ship> here",
 refreshed daily.
 
+`MarketPanel` never hides grid cells (a GridContainer would shift the rest
+into the wrong columns); it shows live prices (a player ship docked there) with Buy/Sell
+for that ship, a lot size and cargo aboard, else the prices the company
+last saw and their age, else nothing. `OrdersPanel` (O) edits a ship's route
+orders; `FinancePanel` (L) shows three months of the ledger by category and
+by ship, with borrow/repay; `MapModeBar` (top right, P cycles) picks the
+price map; `GalaxyMap.set_tints` colours stars and names; the tooltip adds
+the known price and its age. Modal panels share `OverlayDim`.
+`ui/floating_numbers.gd` (`FloatingNumbers`) draws the rising profit/loss
+text at the selling ship on `Events.profit`.
+
 ## Main scene
 
 `main.tscn` is a `Node3D` with a `WorldEnvironment` (sky shader
@@ -501,3 +549,12 @@ deep lane or getting "Out of range"; travel days and interpolated
 positions; jump extenders; only your own ships; selling and unique ids;
 loans; fog of war (start charting, uncharted targets refused, travel charts
 one jump further, routes through charted systems only).
+
+`tests/test_trading.gd` (worlds warmed up so prices differ) covers price
+knowledge only from own ships (charting doesn't reveal prices; weekly
+refresh while docked), buying limited by cargo class, space and cash,
+sales at the market price, fuel at departure and docking fees on arrival, monthly
+crew/maintenance/interest, a manual buy-travel-sell loop that makes money
+after costs, a two-stop route running 5 years unattended, waiting for a full
+load, the auto-trader, order refusals, sale profit against cost, and a
+route stopping (cargo kept) before a loss and selling after a restart.

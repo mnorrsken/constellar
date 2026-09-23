@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://main.gd" id="1_main"]
 [ext_resource type="Script" path="res://render/galaxy_map.gd" id="2_map"]
@@ -15,6 +15,10 @@
 [ext_resource type="Script" path="res://ui/fleet_panel.gd" id="13_fleet"]
 [ext_resource type="Script" path="res://ui/shipyard_panel.gd" id="14_yard"]
 [ext_resource type="Script" path="res://ui/toast.gd" id="15_toast"]
+[ext_resource type="Script" path="res://ui/orders_panel.gd" id="16_orders"]
+[ext_resource type="Script" path="res://ui/finance_panel.gd" id="17_finance"]
+[ext_resource type="Script" path="res://ui/map_mode_bar.gd" id="18_mapmode"]
+[ext_resource type="Script" path="res://ui/floating_numbers.gd" id="19_float"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("7_sky")
@@ -49,6 +53,9 @@ script = ExtResource("3_camera")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
+[node name="FloatingNumbers" type="Control" parent="UI"]
+script = ExtResource("19_float")
+
 [node name="Hud" type="Control" parent="UI"]
 script = ExtResource("6_hud")
 
@@ -64,6 +71,9 @@ script = ExtResource("10_clock")
 [node name="FleetPanel" type="PanelContainer" parent="UI"]
 script = ExtResource("13_fleet")
 
+[node name="MapModeBar" type="HBoxContainer" parent="UI"]
+script = ExtResource("18_mapmode")
+
 [node name="Toast" type="VBoxContainer" parent="UI"]
 script = ExtResource("15_toast")
 
@@ -73,7 +83,7 @@ script = ExtResource("5_debug")
 [node name="SystemView" type="Control" parent="UI"]
 script = ExtResource("9_view")
 
-[node name="ShipyardDim" type="ColorRect" parent="UI"]
+[node name="OverlayDim" type="ColorRect" parent="UI"]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -82,6 +92,12 @@ color = Color(0.01, 0.015, 0.03, 0.6)
 
 [node name="ShipyardPanel" type="PanelContainer" parent="UI"]
 script = ExtResource("14_yard")
+
+[node name="OrdersPanel" type="PanelContainer" parent="UI"]
+script = ExtResource("16_orders")
+
+[node name="FinancePanel" type="PanelContainer" parent="UI"]
+script = ExtResource("17_finance")
 
 [node name="Tooltip" type="PanelContainer" parent="UI"]
 script = ExtResource("4_tooltip")

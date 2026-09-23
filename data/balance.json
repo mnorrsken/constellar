@@ -28,6 +28,11 @@
 		"start_ship": { "hull": "packet", "name": "Wanderer" }
 	},
 	"shipyards": { "archetypes": ["industrial", "core", "military", "robot"], "archetype_min_tech": 8, "any_min_tech": 10 },
+	"trade": {
+		"docking_fee": 400, "docking_fee_per_slot": 150,
+		"fuel_commodity": "fuel", "fuel_without_market": 1.5,
+		"wait_full_max_days": 28, "ledger_months": 24
+	},
 	"ships": { "sell_share": 0.6, "module_resale": 0.5, "refit_days_base": 3, "refit_days_per_slot": 2 },
 	"forced_settlements": {
 		"sol": {

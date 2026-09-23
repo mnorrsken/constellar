@@ -73,15 +73,17 @@ func market_at(system_index: int) -> Market:
 
 ## Called every game day; the markets move once every update_days (the last
 ## day of each week): production and consumption, traffic, price history.
-func tick_day(day: int) -> void:
+## Returns true on those days.
+func tick_day(day: int) -> bool:
 	var every := int(_cfg.get("update_days", 7))
 	if (day + 1) % every != 0:
-		return
+		return false
 	for m in markets:
 		m.tick(every)
 	run_traffic()
 	for m in markets:
 		m.record_week()
+	return true
 
 ## Moves goods along market links toward higher prices.
 func run_traffic() -> void:

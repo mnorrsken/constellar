@@ -3,7 +3,7 @@
 Milestone-by-milestone status. See [`constellar-plan.md`](../constellar-plan.md)
 for the plan and acceptance criteria this tracks.
 
-Current test count: **80 tests, 2377 assertions, 0 failures** (`make test`).
+Current test count: **92 tests, 2428 assertions, 0 failures** (`make test`).
 
 - **M0 — Project skeleton — done.** Godot 4.7 project setup, autoloads
   (`Events`/`Defs`/`Sim`), `data/commodities.json`, Makefile, headless test
@@ -39,7 +39,11 @@ Current test count: **80 tests, 2377 assertions, 0 failures** (`make test`).
   preview on the map; fleet list, shipyard panel, send controls, notices.
   Fog of war (charted systems per company), auto-pause and focus on
   arrivals, F2 cheat.
-- **M6 — Trading and routes — pending.**
+- **M6 — Trading and routes — done.** Cargo by class, buying/selling,
+  fuel and docking fees, monthly crew/maintenance/interest, a
+  ledger by category and ship; per-company price knowledge with age; route
+  orders (sell, buy, wait for full load, auto-trade). A test route runs 5
+  years unattended. Market trading UI, route editor, finances, price map.
 - **M7 — Passengers, mail and contracts — pending.**
 - **M8 — Events, governments and news — pending.**
 - **M9 — Real UI and finance — pending.**

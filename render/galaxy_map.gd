@@ -17,6 +17,7 @@ const LANE_COLOR := Color(0.25, 0.77, 0.85, 0.32)
 @export var deep_lane_ly := 12.0
 const DEEP_LANE_COLOR := Color(0.62, 0.45, 0.95, 0.22)
 const HOVER_COLOR := Color(0.35, 0.85, 1.0, 0.9)
+const LABEL_COLOR := Color(0.78, 0.86, 0.96)
 const SELECT_COLOR := Color(1.0, 0.72, 0.28, 1.0)
 ## Radius (ly) of the stylised circle multiple stars move on.
 const MULTI_RADIUS := 0.32
@@ -34,6 +35,8 @@ var _orbits: Array = []
 ## Per MultiMesh instance: its system and where it is drawn right now.
 var _instance_system := PackedInt32Array()
 var _instance_pos := PackedVector3Array()
+## Each star's own colour, to restore after a map-mode tint.
+var _base_colors := PackedColorArray()
 var _labels: Array[Label3D] = []
 var _label_ranges := PackedFloat32Array()
 var _hover_ring: MeshInstance3D
@@ -69,6 +72,17 @@ func set_known(known: PackedByteArray) -> void:
 	_known = known.duplicate()
 	_build_lanes()
 	_build_drop_lines()
+
+## Map mode: tints every star of a system (system index -> Color); an empty
+## dictionary restores the real star colours.
+func set_tints(tints: Dictionary) -> void:
+	for i in _base_colors.size():
+		_stars.set_instance_color(i, tints.get(_instance_system[i], _base_colors[i]) if not tints.is_empty()
+			else _base_colors[i])
+	# Names take the tint too: much easier to read than the star glow.
+	for s in _labels.size():
+		var c: Color = tints.get(s, LABEL_COLOR) if not tints.is_empty() else LABEL_COLOR
+		_labels[s].modulate = Color(c, _labels[s].modulate.a)
 
 func is_known(i: int) -> bool:
 	return _known.is_empty() or _known[i] != 0
@@ -194,6 +208,7 @@ func _build_stars() -> void:
 	_stars.instance_count = count
 	_instance_system.resize(count)
 	_instance_pos.resize(count)
+	_base_colors.resize(count)
 	var i := 0
 	for s in galaxy.systems:
 		var centre := system_position(s.index)
@@ -206,7 +221,8 @@ func _build_stars() -> void:
 			_stars.set_instance_transform(i, Transform3D(Basis.IDENTITY, centre))
 			_instance_system[i] = s.index
 			_instance_pos[i] = centre
-			_stars.set_instance_color(i, StarLook.color(star.get("class", ""), star.get("subclass")))
+			_base_colors[i] = StarLook.color(star.get("class", ""), star.get("subclass"))
+			_stars.set_instance_color(i, _base_colors[i])
 			_stars.set_instance_custom_data(i, Color(
 				StarLook.size(lum), StarLook.brightness(lum), StarLook.min_pixels(lum), 0.0))
 			if s.is_multiple():
@@ -241,7 +257,7 @@ func _build_labels() -> void:
 		label.font_size = 26
 		label.outline_size = 8
 		label.outline_modulate = Color(0.02, 0.03, 0.07, 0.85)
-		label.modulate = Color(0.78, 0.86, 0.96)
+		label.modulate = LABEL_COLOR
 		label.pixel_size = 0.0007
 		label.fixed_size = true
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED

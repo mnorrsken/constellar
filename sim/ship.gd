@@ -25,6 +25,25 @@ var arrival_day := 0
 ## Refitting until this day.
 var busy_until := 0
 var bought_day := 0
+## Cargo: commodity index -> tonnes, and what was paid for it in total.
+var cargo: Dictionary = {}
+var cargo_cost: Dictionary = {}
+## Route orders: looping stops, each {system, sell_all, buy: [{commodity,
+## amount (0 = fill)}], wait_full, auto}. See Trading.process_orders.
+var orders: Array[Dictionary] = []
+var order_index := 0
+var orders_active := false
+## At the current stop: trades done, and the day loading started.
+var stop_handled := false
+var wait_start := 0
+## The player restarted the route here: sell even at a loss this once.
+var allow_loss := false
+
+func cargo_tonnes() -> float:
+	var t := 0.0
+	for c in cargo:
+		t += cargo[c]
+	return t
 
 func destination() -> int:
 	return route[route.size() - 1] if status == Status.TRAVELING else system
@@ -35,4 +54,6 @@ func to_dict() -> Dictionary:
 		"status": status, "system": system, "route": Array(route), "leg": leg,
 		"leg_progress": snappedf(leg_progress, 0.0001), "departed_day": departed_day,
 		"arrival_day": arrival_day, "busy_until": busy_until, "bought_day": bought_day,
+		"cargo": cargo.duplicate(), "orders": orders.duplicate(true), "order_index": order_index,
+		"orders_active": orders_active,
 	}

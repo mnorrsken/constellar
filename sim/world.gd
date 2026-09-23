@@ -20,6 +20,8 @@ var start_system := -1
 var day := 0
 var start_year := 3400
 var economy: Economy
+## The loaded data (commodities, hulls, balance ...), for the trade rules.
+var content: Dictionary
 var companies: Array[Company] = []
 var fleet: Fleet
 ## Things that happened since the last drain_events().
@@ -30,6 +32,7 @@ var _warmup_days := 0
 static func create(world_seed: int, stars_data: Dictionary, content: Dictionary) -> World:
 	var w := World.new()
 	w.world_seed = world_seed
+	w.content = content
 	w.galaxy = Galaxy.from_dict(stars_data)
 	var balance: Dictionary = content.balance
 	var forced: Dictionary = balance.get("forced_settlements", {})
@@ -54,6 +57,8 @@ static func create(world_seed: int, stars_data: Dictionary, content: Dictionary)
 	var start_ship: Dictionary = company_cfg.get("start_ship", {})
 	if w.start_system >= 0 and start_ship.has("hull"):
 		w.fleet.add_ship(0, start_ship.hull, w.start_system, 0, start_ship.get("name", ""))
+		for c in w.companies:
+			Trading.observe(w, c.id, w.start_system)
 	w._warmup_days = int(balance.get("economy", {}).get("warmup_days", 0))
 	return w
 
@@ -63,16 +68,32 @@ func warm_up() -> void:
 	for i in _warmup_days:
 		economy.tick_day(i)
 
-## One game day.
+## One game day: markets (weekly), ships move, arrivals pay docking and
+## learn prices, month-start costs, then route orders run.
 func advance_day() -> void:
-	economy.tick_day(day)
+	var markets_moved := economy.tick_day(day)
 	day += 1
+	if markets_moved:
+		Trading.observe_docked(self)
 	var moved := fleet.advance_day(day)
 	events.append_array(moved)
-	# Ships chart what they reach: the system itself and one jump around it.
 	for e in moved:
+		var s := fleet.get_ship(e.ship)
 		if e.type == "arrived" or e.type == "passed":
-			reveal(fleet.get_ship(e.ship).company, e.system)
+			# Ships chart what they reach: the system and one jump around it.
+			reveal(s.company, e.system)
+		if e.type == "arrived":
+			s.stop_handled = false
+			if galaxy.systems[e.system].settlement:
+				companies[s.company].book("docking", -Trading.docking_fee(self, s), month(), s.id)
+				Trading.observe(self, s.company, e.system)
+	if Calendar.date(day, 0).day == 1:
+		Trading.monthly_costs(self)
+	Trading.process_orders(self)
+
+## Months since the start (ledger key).
+func month() -> int:
+	return Calendar.month_index(day)
 
 func year() -> int:
 	return start_year + day / Calendar.DAYS_PER_YEAR
@@ -94,7 +115,7 @@ func sell_ship(company_id: int, ship_id: int) -> Dictionary:
 	var s := _own_ship(company_id, ship_id)
 	if s == null:
 		return {"ok": false, "error": "Not your ship"}
-	var r := fleet.sell(companies[company_id], s)
+	var r := fleet.sell(companies[company_id], s, day)
 	if r.ok:
 		events.append({"type": "sold", "ship": ship_id, "company": company_id})
 	return r
@@ -115,14 +136,87 @@ func plan_route(company_id: int, ship_id: int, target_system: int) -> Dictionary
 		return {"ok": false, "error": "Not your ship"}
 	return fleet.plan_route(s, target_system, companies[company_id].known)
 
+## Sends a ship by hand (this stops its route orders).
 func send_ship(company_id: int, ship_id: int, target_system: int) -> Dictionary:
 	var s := _own_ship(company_id, ship_id)
 	if s == null:
 		return {"ok": false, "error": "Not your ship"}
-	var r := fleet.send(s, target_system, day, companies[company_id].known)
+	var r := depart(s, target_system)
 	if r.ok:
-		events.append({"type": "departed", "ship": ship_id, "company": company_id})
+		s.orders_active = false
 	return r
+
+## Buys fuel for the trip and sends the ship over its company's charted
+## systems. Used by send_ship and by route orders.
+func depart(s: Ship, target_system: int) -> Dictionary:
+	var known := companies[s.company].known
+	if s.status != Ship.Status.DOCKED:
+		return fleet.send(s, target_system, day, known)  # the refusal
+	var plan := fleet.plan_route(s, target_system, known)
+	if not plan.ok:
+		return plan
+	var fuel := Trading.fuel_quote(self, s, plan.length)
+	if companies[s.company].cash < fuel.cost:
+		return {"ok": false, "error": "Not enough cash for fuel (%s cr)" % Format.thousands(roundi(fuel.cost))}
+	Trading.pay_fuel(self, s, fuel)
+	var r := fleet.send(s, target_system, day, known)
+	if r.ok:
+		r.fuel = fuel
+		events.append({"type": "departed", "ship": s.id, "company": s.company})
+	return r
+
+func buy_cargo(company_id: int, ship_id: int, commodity_id: String, qty: float) -> Dictionary:
+	var s := _own_ship(company_id, ship_id)
+	if s == null:
+		return {"ok": false, "error": "Not your ship"}
+	return Trading.buy(self, s, economy.index_of(commodity_id), qty)
+
+func sell_cargo(company_id: int, ship_id: int, commodity_id: String, qty: float) -> Dictionary:
+	var s := _own_ship(company_id, ship_id)
+	if s == null:
+		return {"ok": false, "error": "Not your ship"}
+	return Trading.sell(self, s, economy.index_of(commodity_id), qty)
+
+## Replaces a ship's route orders (stops must be charted); they are off
+## until start_orders.
+func set_orders(company_id: int, ship_id: int, orders: Array) -> Dictionary:
+	var s := _own_ship(company_id, ship_id)
+	if s == null:
+		return {"ok": false, "error": "Not your ship"}
+	for stop in orders:
+		if not companies[company_id].is_known(int(stop.system)):
+			return {"ok": false, "error": "Stops must be charted systems"}
+	s.orders.assign(orders)
+	s.order_index = 0
+	s.stop_handled = false
+	s.orders_active = false
+	events.append({"type": "orders", "ship": ship_id, "company": company_id})
+	return {"ok": true}
+
+func start_orders(company_id: int, ship_id: int) -> Dictionary:
+	var s := _own_ship(company_id, ship_id)
+	if s == null:
+		return {"ok": false, "error": "Not your ship"}
+	if s.orders.size() < 2:
+		return {"ok": false, "error": "A route needs at least two stops"}
+	# Restarting where the route stopped over a loss: the owner accepts it.
+	s.allow_loss = s.status == Ship.Status.DOCKED and s.system == int(s.orders[s.order_index].system)
+	s.orders_active = true
+	events.append({"type": "orders", "ship": ship_id, "company": company_id})
+	Trading.process_orders(self)
+	return {"ok": true}
+
+func stop_orders(company_id: int, ship_id: int) -> Dictionary:
+	var s := _own_ship(company_id, ship_id)
+	if s == null:
+		return {"ok": false, "error": "Not your ship"}
+	s.orders_active = false
+	events.append({"type": "orders", "ship": ship_id, "company": company_id})
+	return {"ok": true}
+
+## What a company knows of a market: {day, price} or {} (never seen).
+func known_prices(company_id: int, system_index: int) -> Dictionary:
+	return companies[company_id].prices.get(system_index, {})
 
 func take_loan(company_id: int, amount: float) -> Dictionary:
 	var r := companies[company_id].take_loan(amount)

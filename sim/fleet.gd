@@ -123,15 +123,16 @@ func buy(company: Company, hull_id: String, system_index: int, day: int, year: i
 		price += float(_modules[m].price)
 	if company.cash < price:
 		return {"ok": false, "error": "Not enough cash (%s needed)" % Format.thousands(roundi(price))}
-	company.cash -= price
 	var s := add_ship(company.id, hull_id, system_index, day)
+	company.book("ships", -price, Calendar.month_index(day), s.id)
 	return {"ok": true, "ship": s, "cost": price}
 
-func sell(company: Company, ship: Ship) -> Dictionary:
+## Sells the ship (and whatever cargo is aboard) at a shipyard.
+func sell(company: Company, ship: Ship, day: int) -> Dictionary:
 	if ship.status != Ship.Status.DOCKED or not is_shipyard(ship.system):
 		return {"ok": false, "error": "Ships can only be sold docked at a shipyard"}
 	var income := sale_value(ship)
-	company.cash += income
+	company.book("ships", income, Calendar.month_index(day), ship.id)
 	ships.erase(ship)
 	return {"ok": true, "income": income}
 
@@ -153,7 +154,7 @@ func refit(company: Company, ship: Ship, new_modules: Array, day: int) -> Dictio
 		return {"ok": false, "error": "Nothing to change"}
 	if company.cash < quote.cost:
 		return {"ok": false, "error": "Not enough cash (%s needed)" % Format.thousands(roundi(quote.cost))}
-	company.cash -= quote.cost
+	company.book("ships", -quote.cost, Calendar.month_index(day), ship.id)
 	ship.modules.assign(new_modules)
 	ship.status = Ship.Status.REFITTING
 	ship.busy_until = day + quote.days

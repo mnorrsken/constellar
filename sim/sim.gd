@@ -83,14 +83,38 @@ func refit_ship(ship_id: int, modules: Array) -> Dictionary:
 func send_ship(ship_id: int, target_system: int) -> Dictionary:
 	var r := _run(world.send_ship(PLAYER, ship_id, target_system))
 	if r.ok:
-		waiting.erase(ship_id)
-		if waiting.is_empty():
-			if speed == 0:
-				set_speed(_resume_speed)
-		else:
-			var next := world.fleet.get_ship(waiting[0])
-			Events.attention.emit(next.id, next.system)
+		_given_orders(ship_id)
 	return r
+
+## A waiting ship got orders: resume if none waits any more, else point at
+## the next one.
+func _given_orders(ship_id: int) -> void:
+	waiting.erase(ship_id)
+	if waiting.is_empty():
+		if speed == 0:
+			set_speed(_resume_speed)
+	else:
+		var next := world.fleet.get_ship(waiting[0])
+		Events.attention.emit(next.id, next.destination())
+
+func buy_cargo(ship_id: int, commodity_id: String, qty: float) -> Dictionary:
+	return _run(world.buy_cargo(PLAYER, ship_id, commodity_id, qty))
+
+func sell_cargo(ship_id: int, commodity_id: String, qty: float) -> Dictionary:
+	return _run(world.sell_cargo(PLAYER, ship_id, commodity_id, qty))
+
+func set_orders(ship_id: int, orders: Array) -> Dictionary:
+	return _run(world.set_orders(PLAYER, ship_id, orders))
+
+## Starts route orders; like a send, this may resume the game.
+func start_orders(ship_id: int) -> Dictionary:
+	var r := _run(world.start_orders(PLAYER, ship_id))
+	if r.ok:
+		_given_orders(ship_id)
+	return r
+
+func stop_orders(ship_id: int) -> Dictionary:
+	return _run(world.stop_orders(PLAYER, ship_id))
 
 ## Route a player ship could fly (charted systems only); a query, no events.
 func plan_route(ship_id: int, target_system: int) -> Dictionary:
@@ -126,10 +150,23 @@ func _flush_events() -> void:
 	var cash_changed := {}
 	var charted := {}
 	var attention := []
+	var profits := {}  # player ship id -> summed profit
 	for e in world.drain_events():
 		match e.type:
 			"charted":
 				charted[e.company] = true
+			"cargo", "orders":
+				fleet_moved = true
+				cash_changed[e.company] = true
+			"sale":
+				if e.company == PLAYER:
+					profits[e.ship] = profits.get(e.ship, 0.0) + e.profit
+			"orders_stopped":
+				fleet_moved = true
+				var stopped := world.fleet.get_ship(e.ship)
+				if stopped and stopped.company == PLAYER:
+					Events.notice.emit("%s stopped its route: %s" % [stopped.name, e.reason])
+					attention.append([stopped.id, stopped.destination()])
 			"arrived", "refitted", "departed", "bought", "sold", "refitting":
 				fleet_moved = true
 				if e.type == "sold":
@@ -137,7 +174,10 @@ func _flush_events() -> void:
 				if e.type in ["bought", "sold", "refitting"]:
 					cash_changed[e.company] = true
 				var ship := world.fleet.get_ship(e.ship)
-				if ship and ship.company == PLAYER:
+				if ship and e.type in ["departed", "arrived"]:
+					cash_changed[ship.company] = true  # fuel, docking fee
+				# Ships on route orders need nobody's attention.
+				if ship and ship.company == PLAYER and not ship.orders_active:
 					if e.type == "arrived":
 						var here := galaxy.systems[e.system]
 						Events.notice.emit(("%s docked at %s" if here.settlement else "%s is holding at %s (no spaceport)")
@@ -150,6 +190,8 @@ func _flush_events() -> void:
 				cash_changed[e.company] = true
 	for c in charted:
 		Events.charted.emit(c)
+	for id in profits:
+		Events.profit.emit(id, profits[id])
 	if fleet_moved:
 		Events.fleet_changed.emit()
 	for c in cash_changed:
