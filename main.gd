@@ -9,6 +9,10 @@ const PICK_RADIUS_PX := 16.0
 @onready var debug_overlay: DebugOverlay = $UI/DebugOverlay
 @onready var panel: SystemPanel = $UI/SystemPanel
 @onready var system_view: SystemView = $UI/SystemView
+@onready var market_panel: MarketPanel = $UI/MarketPanel
+
+## Market panel wanted open (it follows the selection while on).
+var _market_open := false
 
 ## Last mouse position from motion events, in the same space as clicks and
 ## Camera3D.unproject_position. OFF_SCREEN while the mouse is outside.
@@ -21,6 +25,7 @@ func _ready() -> void:
 	camera.clicked.connect(_on_clicked)
 	camera.double_clicked.connect(_on_double_clicked)
 	panel.view_requested.connect(open_system_view)
+	panel.market_requested.connect(toggle_market)
 	system_view.closed.connect(func(): camera.input_enabled = true)
 
 func _process(_delta: float) -> void:
@@ -69,8 +74,18 @@ func select(i: int) -> void:
 	if i >= 0:
 		camera.fly_to(map.system_position(i))
 		panel.show_system(map.galaxy.systems[i])
+		if _market_open:
+			market_panel.show_system(map.galaxy.systems[i])
 	else:
 		panel.visible = false
+		market_panel.visible = false
+
+func toggle_market() -> void:
+	_market_open = not _market_open
+	if _market_open and map.selected >= 0:
+		market_panel.show_system(map.galaxy.systems[map.selected])
+	else:
+		market_panel.visible = false
 
 func open_system_view() -> void:
 	if map.selected < 0:
@@ -92,3 +107,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_ENTER, KEY_KP_ENTER:
 			if not system_view.visible:
 				open_system_view()
+		KEY_M:
+			if not system_view.visible:
+				toggle_market()
+		KEY_SPACE:
+			Sim.toggle_pause()
+		KEY_1, KEY_2, KEY_3, KEY_4:
+			Sim.set_speed(k.physical_keycode - KEY_0)

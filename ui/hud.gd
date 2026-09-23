@@ -23,7 +23,7 @@ func _ready() -> void:
 	add_child(sub)
 
 	var hints := Label.new()
-	hints.text = "Drag  rotate    ·    Right-drag  pan    ·    Scroll  zoom    ·    Click  select    ·    Home  Sol    ·    F1  debug"
+	hints.text = "Drag  rotate   ·   Right-drag  pan   ·   Scroll  zoom   ·   Click  select   ·   M  market   ·   Space  pause   ·   1–4  speed   ·   Home  Sol   ·   F1  debug"
 	hints.add_theme_font_size_override("font_size", 14)
 	hints.add_theme_color_override("font_color", Color(0.55, 0.64, 0.78, 0.8))
 	# Full-width strip along the bottom edge.

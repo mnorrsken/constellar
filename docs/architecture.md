@@ -26,9 +26,13 @@ this order:
    `World.create` needs). `archetype_name`/`government_name`/`planet_type`
    helpers look up a definition by id.
 3. **`Sim`** (`sim/sim.gd`) — owns the world. Builds
-   `Sim.world = World.create(seed, Defs.stars, Defs.world_content)` and
-   `Sim.galaxy = world.galaxy` in `_ready`, seed from `balance.json`
-   `world_seed`; the day clock and tick loop arrive in Milestone 4.
+   `Sim.world = World.create(seed, Defs.stars, Defs.world_content)`, runs
+   `world.warm_up()` and sets `Sim.galaxy = world.galaxy` in `_ready`, seed
+   from `balance.json` `world_seed`. Drives the day clock: `set_speed`/
+   `toggle_pause` pick an index into `SPEEDS` (days per second, `[0, 1, 2, 4,
+   8]`), `_process` accumulates delta time and calls `world.advance_day()`
+   for each day owed (capped at 8 a frame), emitting `Events.day_passed`;
+   `Events.speed_changed` fires on `set_speed`.
 
 The viewport is 1920×1080 with `canvas_items` stretch mode and a 1.25x UI
 scale (`window/stretch/scale`), so logical UI space is 1536×864.
@@ -55,16 +59,22 @@ economy archetypes (`body_weights` by planet type, `"*"` default and
 `"station"` for deep-space stations; `region_weights` by core/inner/rim;
 `population_factor`; `tech_bonus`) plus a `robot` archetype (`region_weights`
 all 0 so the normal draw never picks it; own `population_log10`,
-`robots_log10` and `tech_level` ranges, government `custodians`).
+`robots_log10` and `tech_level` ranges, government `custodians`). Each
+archetype also lists `industries` (recipes of `{in, out}` commodity ids to
+per-market-size-unit-per-day amounts) and `needs` (commodity id to per-size
+rate; `"*"` means every commodity, for free ports) — see `Economy` below.
 `data/governments.json` lists 7 governments (stability, region/archetype
 weights) plus `custodians` (stability 0.92, never picked by region — robot
 worlds only). `data/names.json` holds settlement name pools, plus
 `robot_suffixes` for robot world names. `data/balance.json` has
-`world_seed`, `start_system`, region radii, settlement population/tech
-ranges by region, `settlements.robot_world_chance` (odds an uninhabited
-system becomes a robot world, higher for dead ends), and
+`world_seed`, `start_system`, `start_year`, region radii, settlement
+population/tech ranges by region, `settlements.robot_world_chance` (odds an
+uninhabited system becomes a robot world, higher for dead ends),
 `forced_settlements` (pins fields for specific systems, e.g. Sol and the
-start world).
+start world), and an `economy` section (market size log curve, stock cover
+days, transit stock rate, price elasticity/clamps, producer overstock
+slowdown, surplus decay, warmup days, history length, population needs,
+weekly background traffic, and `soak` limits) — see `Economy` below.
 
 ## Star data pipeline
 
@@ -164,6 +174,68 @@ changes another's roll. `snapshot()` dumps everything generated as plain
 data (for tests and, later, saves); `settlements()` lists all inhabited
 systems.
 
+## Economy
+
+`sim/calendar.gd` (`Calendar`) turns a day count into a date: day 0 is 1
+January of `start_year`, 365-day years, no leap days. `date()` returns
+`{year, month, day}`; `format()` renders "13 Jan 3400".
+
+`sim/market.gd` (`Market`) is one settlement's stock, target stock, price,
+supply/demand rate and recipes for every commodity (packed arrays indexed
+like `Economy.commodity_ids`). `add_recipe` takes per-day input/output
+amounts (already scaled by market size and `volume_scale`, so stocks run to
+thousands-to-tens-of-thousands of tonnes — Earth holds ~28,000 t of grain);
+`settle()` sets each traded good's target from its recipes (at least a
+small transit stock, `transit_rate` x size x `volume_scale`, so traders can
+carry goods through a market that neither makes nor needs them) and starts
+stock at target (base price). `tick(days)` runs every recipe for that many
+days at once, at the rate its scarcest input allows, but each output then
+throttles on its own as its warehouse fills (`overstock_start`/`stop`), so
+a multi-output recipe doesn't stall just because one output is full; stock
+above target decays slowly (`decay_per_day` x days). Prices depend only on
+stock vs target, not on `volume_scale`, so balance is unchanged.
+`price_at(c, s)` is
+`base_price x (target/stock)^elasticity`, clamped to `price_min`/`price_max`.
+`quote_buy`/`quote_sell` integrate price over the stock change (`_integrate`,
+a 24-step midpoint rule) so a big lot costs more, or earns less, per unit
+than a small one; `buy`/`sell` apply that and move stock/price. `record_week`
+appends a price sample to `history`, capped at `history_weeks`.
+
+`sim/economy.gd` (`Economy`) builds one `Market` per settlement:
+`build()` reads each settlement's archetype `industries` and `needs` from
+`content.archetypes` (scaled by `size_of()`, a log10 curve of population +
+robots for industry, population alone for human needs) plus
+`balance.json economy.population_needs`, then calls `Market.settle()`.
+`links` holds every pair of markets up to `traffic.max_hops` lanes apart
+(BFS per market, shortest route length in ly). `tick_day(day)` does nothing
+except on the last day of each `update_days` week (default 7), when it runs
+every market's `tick(update_days)` (a week of production and consumption in
+one step), then `run_traffic()`, then records history. `run_traffic()`
+moves goods along each link from the cheaper market to the dearer one when
+the price ratio beats `1 + friction + per_ly x distance`, capped by
+`capacity x volume_scale x` the smaller market's size, a `max_share` of the
+source's stock, and the destination's target headroom — this is background
+NPC trade so prices don't drift to extremes; real rival companies take over
+part of this job later. Player trades (`buy`/`sell`) still move prices
+immediately, between weekly ticks.
+
+`sim/world.gd` (`World`) now carries `day`, `start_year` and `economy`
+alongside the galaxy. `World.create` builds the `Economy` after generation
+and reads `economy.warmup_days`. `advance_day()` is the one sim tick: ticks
+the economy, then increments `day`. `warm_up()` runs `economy.tick_day` for
+`warmup_days` before day 0 so markets aren't freshly settled when the player
+arrives; it's called by `Sim` and `tools/soak.gd`, not by tests, so tests
+stay fast. `date_string()` is `Calendar.format(day, start_year)`.
+
+`tools/soak.gd` (`godot --headless --script res://tools/soak.gd`, wrapped by
+`make soak`) builds the world, warms it up, then runs `years` (default from
+`balance.json economy.soak.years`) game years of `advance_day()` with no
+trading, sampling every traded commodity's price weekly. It prints
+per-commodity supply/demand at full rate, average price vs base, and the
+share of samples at each clamp, then fails (exit 1) if more than
+`soak.max_clamp_share` of samples sit at a price clamp or any market's stock
+exceeds `soak.max_stock_ratio` x its target.
+
 ## Render layer
 
 `render/star_look.gd` (`StarLook`) is pure functions from a star's spectral
@@ -242,8 +314,10 @@ Robots row for robot worlds)/tech/government/stability, or "Uninhabited";
 shared by the map's system panel and the
 system view. `ui/system_panel.gd` (`SystemPanel`) is the card on the right
 of the map for the selected system (star types, distance, region, body
-count, a `SettlementCard`, and a "View system" button); `view_requested`
-tells `main.gd` to open the system view. `ui/system_view.gd` (`SystemView`)
+count, a `SettlementCard`, and "View system"/"Market" buttons, the latter
+disabled for uninhabited systems); `view_requested`/`market_requested` tell
+`main.gd` to open the system view or toggle the market panel.
+`ui/system_view.gd` (`SystemView`)
 is the full-screen orrery: one glowing row per host star (`StarLook`
 colour), orbit arcs, planet discs coloured by type with gas-giant bands
 and tidally-locked shading, belts as dots, the habitable zone band and
@@ -256,16 +330,30 @@ room, and a label matching the settlement's name is skipped. Hovering a
 body shows its details in the footer; `closed` signal fires on Esc or the
 close button.
 
+`ui/clock_bar.gd` (`ClockBar`) sits top-centre: the date and toggle buttons
+for pause/1x/2x/4x/8x, each calling `Sim.set_speed`; refreshes on
+`Events.day_passed`/`speed_changed`. `ui/market_panel.gd` (`MarketPanel`,
+temporary until Milestone 9 builds the real trading UI) lists a system's
+market on the left: every commodity's price, % change vs base, stock,
+an export/import tag (from `supply_rate`/`demand_rate`), and a
+`ui/sparkline.gd` (`Sparkline`) of its last 26 weekly prices (green below
+base, amber above, faint line at base); `show_system(s)` switches market
+and hides for an uninhabited system, and it refreshes on every
+`Events.day_passed`.
+
 ## Main scene
 
 `main.tscn` is a `Node3D` with a `WorldEnvironment` (sky shader
 background, filmic tonemap, glow enabled), a `Camera3D`, and the
-`SystemPanel`/`SystemView` UI. `main.gd` wires `GalaxyMap`, `MapCamera` and
-picking together, and shows the hover tooltip. `select()` handles a click
-(ring on the map, `SystemPanel`, fly-to); `open_system_view()` opens the
-`SystemView` for the selected system, disabling `MapCamera.input_enabled`
-so keys don't move the map underneath it. Double-click or Enter opens the
-system view; Esc closes the view first, then deselects.
+`SystemPanel`/`SystemView`/`MarketPanel`/`ClockBar` UI. `main.gd` wires
+`GalaxyMap`, `MapCamera` and picking together, and shows the hover tooltip.
+`select()` handles a click (ring on the map, `SystemPanel`, fly-to, and the
+market panel if it's open); `open_system_view()` opens the `SystemView` for
+the selected system, disabling `MapCamera.input_enabled` so keys don't move
+the map underneath it. Double-click or Enter opens the system view; Esc
+closes the view first, then deselects. `toggle_market()` shows/hides
+`MarketPanel` for the current selection (key M, or `SystemPanel`'s Market
+button); Space calls `Sim.toggle_pause()`; keys 1-4 call `Sim.set_speed()`.
 
 ## Tests
 
@@ -305,3 +393,14 @@ geography, rolled planets staying inside companion orbit limits, Castor's
 robot worlds, unique settlement names (including unique name roots across
 5 seeds), inhabited share and regions, `Format`, and `OrreryLayout` for
 every system in `data/stars.json`.
+
+`tests/test_economy.gd` covers `Calendar` dates; `Market` price vs stock
+and clamps, big lots costing more/earning less per unit (buy and sell),
+buy/sell moving stock and price, a recipe running at its scarcest input,
+outputs throttling separately (regression: a multi-output recipe used to
+stall when any one output was full), a week of production in one `tick(7)`
+matching 7x `tick(1)`, and surplus-only decay; `Economy` markets moving
+prices only once a week, stocks landing in the thousands of tonnes,
+traffic flowing to the dearer market (never across equal prices) and price
+history capping; and `World`'s day/date and determinism, plus a one-year
+health check.

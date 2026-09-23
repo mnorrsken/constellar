@@ -8,6 +8,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Calendar and markets: `data/archetypes.json` archetypes now list `industries`
+  (input/output recipes, per market size) and `needs` (including `"*"` for
+  free ports, which need every good); `data/balance.json` gets an `economy`
+  section (market size from population + robots, `volume_scale` 20x on
+  production/needs/transit stock/traffic capacity so stocks run to
+  thousands-to-tens-of-thousands of tonnes, 30-day stock cover, price
+  elasticity and clamps, a small transit stock of every good, weekly
+  background traffic, soak limits). `Calendar` turns a day count into a date
+  ("13 Jan 3400"); `Market.tick(days)` runs a settlement's recipes for that
+  many days at once — each recipe runs at its scarcest input's rate and each
+  output throttles separately as its stock fills, price follows stock vs
+  target with clamps, and buying/selling a big lot moves the price along the
+  way — and keeps a weekly price history. `Economy` builds one market per
+  settlement from its archetype; `tick_day(day)` does nothing except on the
+  last day of each `update_days` week, when it runs every market a week at a
+  time, then moves weekly background traffic between markets up to 2 lanes
+  apart, from cheap to dear, then samples prices. Player trades still move
+  prices immediately. `World` now has a day clock (`advance_day`,
+  `date_string`, `warm_up` to settle markets before day 0) and `Sim` drives
+  it with a pause/1x/2x/4x/8x speed clock, emitting
+  `Events.day_passed`/`speed_changed`.
+- `make soak`: runs the economy headless for 20 game years and fails if
+  prices sit at their clamps too often or a market's stock runs away; use it
+  to tune `data/archetypes.json`/`balance.json`.
+- UI: a clock bar (date, pause/1x-8x buttons, top centre) and a temporary
+  market panel (every good's price, change vs base, stock, export/import,
+  26-week sparkline) toggled by M or the system panel's Market button; Space
+  pauses/resumes, keys 1-4 pick a speed.
 - Planets and settlements: `data/known_planets.json` (real planets after the
   NASA Exoplanet Archive, ~30 systems), `data/planet_types.json`,
   `data/archetypes.json` (10 economy archetypes plus `robot`),

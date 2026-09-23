@@ -15,6 +15,7 @@ make run       # run the game
 make editor    # open the Godot editor
 make test      # headless test suite
 make import    # headless import; catches script/asset errors
+make soak      # run the economy 20 game years headless and check market health
 make stars     # rebuild data/stars.json from the HYG star catalogue
 make clean     # remove the .godot/ cache
 ```
@@ -30,6 +31,10 @@ the debug overlay.
 
 Double-click a star, or select it and press Enter, to open its system view.
 Esc closes the system view first, then deselects.
+
+Press M, or the system panel's Market button, to see the selected system's
+market. Space pauses/resumes the game clock; 1-4 set its speed (also
+buttons on the clock bar, top centre).
 
 ## Documentation
 

@@ -10,7 +10,7 @@ HYG := build/hyg_v44.csv.gz
 
 .DEFAULT_GOAL := help
 
-.PHONY: help run editor build import test stars clean
+.PHONY: help run editor build import test soak stars clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -29,6 +29,9 @@ import: ## Headless import: build the .godot cache and catch script/asset errors
 
 test: ## Run headless sim tests (non-zero exit on failure)
 	$(GODOT) --headless --path $(PROJECT) --script res://tests/run_tests.gd
+
+soak: ## Run the economy for 20 game years headless and check market health
+	$(GODOT) --headless --path $(PROJECT) --script res://tools/soak.gd
 
 stars: $(HYG) ## Rebuild data/stars.json (systems + lanes) from the HYG catalogue
 	python3 tools/build_stars.py $(HYG)

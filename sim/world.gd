@@ -1,8 +1,8 @@
 class_name World
 extends RefCounted
-## The whole game world. For now: the star map with its planets and
-## settlements, generated from a seed. The day clock, markets and companies
-## join in later milestones.
+## The whole game world: the star map with its planets and settlements
+## (generated from a seed), the calendar and the economy. Companies join in
+## later milestones. advance_day() is the one sim tick.
 ##
 ## Generation is deterministic: every system draws from its own RNG streams,
 ## seeded from (world seed, system id, stream name). So editing one system's
@@ -12,6 +12,12 @@ var world_seed: int
 var galaxy: Galaxy
 ## Index of the fixed rim start world (balance.json "start_system"), or -1.
 var start_system := -1
+## Days since 1 January of start_year.
+var day := 0
+var start_year := 3400
+var economy: Economy
+
+var _warmup_days := 0
 
 static func create(world_seed: int, stars_data: Dictionary, content: Dictionary) -> World:
 	var w := World.new()
@@ -26,7 +32,24 @@ static func create(world_seed: int, stars_data: Dictionary, content: Dictionary)
 		s.settlement = SettlementGen.generate(s, stream(world_seed, s.id, "settlement"),
 			content, forced.get(s.id, {}), w.galaxy.lanes_of(s.index).size())
 	_assign_names(w, content.names)
+	w.start_year = int(balance.get("start_year", 3400))
+	w.economy = Economy.build(w.galaxy, content)
+	w._warmup_days = int(balance.get("economy", {}).get("warmup_days", 0))
 	return w
+
+## Lets the markets settle (balance economy.warmup_days) before the player
+## arrives; the calendar stays at day 0. Called by Sim and the soak run.
+func warm_up() -> void:
+	for i in _warmup_days:
+		economy.tick_day(i)
+
+## One game day.
+func advance_day() -> void:
+	economy.tick_day(day)
+	day += 1
+
+func date_string() -> String:
+	return Calendar.format(day, start_year)
 
 ## A fresh RNG for one system and purpose.
 static func stream(world_seed: int, system_id: String, purpose: String) -> RandomNumberGenerator:

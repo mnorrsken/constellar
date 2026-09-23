@@ -20,6 +20,9 @@ Godot is installed via Homebrew (`brew install --cask godot`), on PATH as
 - `make test` — headless test suite (exits non-zero on failure)
 - `make import` / `make build` — headless import. **Exits 0 even on script
   errors**: grep its output for `ERROR`/`SCRIPT`/`WARNING`
+- `make soak` — 20 game years of the economy headless; fails if markets sit
+  at the price clamps too often or stock runs away (limits in
+  `data/balance.json` economy.soak). Run it after changing economy data.
 - `make clean` — remove the `.godot/` cache
 
 Override the binary if needed: `make test GODOT=/path/to/godot`.

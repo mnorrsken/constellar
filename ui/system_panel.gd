@@ -3,6 +3,7 @@ extends PanelContainer
 ## Card on the right of the map for the selected star system.
 
 signal view_requested
+signal market_requested
 
 const WIDTH := 380.0
 
@@ -11,6 +12,7 @@ var _facts := Label.new()
 var _bodies := Label.new()
 var _card := SettlementCard.new()
 var _button := Button.new()
+var _market_button := Button.new()
 
 func _ready() -> void:
 	visible = false
@@ -32,9 +34,18 @@ func _ready() -> void:
 	_button.text = "View system   ⏎"
 	_button.focus_mode = Control.FOCUS_NONE
 	_button.pressed.connect(func(): view_requested.emit())
+	_market_button.text = "Market   M"
+	_market_button.focus_mode = Control.FOCUS_NONE
+	_market_button.pressed.connect(func(): market_requested.emit())
+	var buttons := HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 8)
+	_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_market_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	buttons.add_child(_button)
+	buttons.add_child(_market_button)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
-	for c in [_title, _facts, HSeparator.new(), _card, HSeparator.new(), _bodies, _button]:
+	for c in [_title, _facts, HSeparator.new(), _card, HSeparator.new(), _bodies, buttons]:
 		box.add_child(c)
 	add_child(box)
 
@@ -51,6 +62,7 @@ func show_system(s: StarSystem) -> void:
 	var belts := s.planets.size() - planets
 	_bodies.text = "%d planet%s%s" % [planets, "" if planets == 1 else "s",
 		"" if belts == 0 else "  ·  %d belt%s" % [belts, "" if belts == 1 else "s"]]
+	_market_button.disabled = s.settlement == null
 	visible = true
 	_fit.call_deferred()
 
