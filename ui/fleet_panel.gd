@@ -49,8 +49,10 @@ func refresh() -> void:
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.focus_mode = Control.FOCUS_NONE
 		var cargo := s.cargo_tonnes()
-		b.text = "%s   ·   %s%s%s" % [s.name, status_text(world, s),
+		var jobs := Contracts.active_for(world, s).size()
+		b.text = "%s   ·   %s%s%s%s" % [s.name, status_text(world, s),
 			"   ·   %s t aboard" % Format.thousands(roundi(cargo)) if cargo >= 1.0 else "",
+			"   ·   %d contract%s" % [jobs, "" if jobs == 1 else "s"] if jobs > 0 else "",
 			"   ·   awaiting orders" if Sim.waiting.has(s.id) else ""]
 		b.tooltip_text = "%s  ·  %s t cargo  ·  %.2f ly/day  ·  %.0f ly jump" % [
 			world.fleet.hull_def(s).name, Format.thousands(roundi(world.fleet.total_capacity(s))),

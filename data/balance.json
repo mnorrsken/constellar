@@ -33,6 +33,15 @@
 		"fuel_commodity": "fuel", "fuel_without_market": 1.5,
 		"wait_full_max_days": 28, "ledger_months": 24
 	},
+	"contracts": {
+		"offers_per_size": 1.0, "max_offers": 12, "offer_weeks": 3, "max_hops": 5,
+		"kinds": { "freight": 0.5, "passengers": 0.35, "mail": 0.15 },
+		"freight_tonnes": [100, 600], "freight_rate": 8.0, "freight_base": 8000,
+		"freight_classes": { "container": 0.5, "bulk": 0.25, "liquid": 0.1, "cold": 0.1, "secure": 0.05 },
+		"pax_group": [8, 60], "pax_rate": 100, "lux_rate": 400, "lux_share": 0.25,
+		"mail_sacks": [4, 20], "mail_rate": 250, "mail_per_bay": 20,
+		"penalty_share": 0.3, "deadline_speed": 0.25, "deadline_slack": 1.4, "deadline_buffer": 10
+	},
 	"ships": { "sell_share": 0.6, "module_resale": 0.5, "refit_days_base": 3, "refit_days_per_slot": 2 },
 	"forced_settlements": {
 		"sol": {

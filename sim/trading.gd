@@ -19,10 +19,11 @@ static func docking_fee(w: World, ship: Ship) -> float:
 	var t := cfg(w)
 	return float(t.get("docking_fee", 0)) + float(t.get("docking_fee_per_slot", 0)) * int(w.fleet.hull_def(ship).slots)
 
-## Tonnes of hold space of the commodity's cargo class still free.
+## Tonnes of hold space of the commodity's cargo class still free (freight
+## charters take their share).
 static func free_space(w: World, ship: Ship, c: int) -> float:
 	var cls := commodity_class(w, c)
-	var used := 0.0
+	var used := Contracts.freight_reserved(w, ship, cls)
 	for k in ship.cargo:
 		if commodity_class(w, k) == cls:
 			used += ship.cargo[k]

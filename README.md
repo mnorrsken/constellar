@@ -58,6 +58,11 @@ Press M, or the system panel's Market button, to see the selected system's
 market. Space pauses/resumes the game clock; 1-4 set its speed (also
 buttons on the clock bar, top centre).
 
+Contracts: C, or the system card's Contracts button, shows a market's job
+board (freight, passengers, mail) for a docked ship, and your running jobs
+with Abandon. Deliver on time for the reward; miss the deadline or abandon
+and you pay the penalty.
+
 ## Documentation
 
 - [`constellar-plan.md`](constellar-plan.md) — the authoritative design and

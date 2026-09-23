@@ -15,6 +15,7 @@ const PICK_RADIUS_PX := 16.0
 @onready var shipyard: ShipyardPanel = $UI/ShipyardPanel
 @onready var orders_panel: OrdersPanel = $UI/OrdersPanel
 @onready var finance_panel: FinancePanel = $UI/FinancePanel
+@onready var contracts_panel: ContractsPanel = $UI/ContractsPanel
 @onready var map_mode: MapModeBar = $UI/MapModeBar
 @onready var overlay_dim: ColorRect = $UI/OverlayDim
 @onready var floating: FloatingNumbers = $UI/FloatingNumbers
@@ -45,11 +46,12 @@ func _ready() -> void:
 	panel.market_requested.connect(toggle_market)
 	panel.send_requested.connect(send_selected_ship)
 	panel.shipyard_requested.connect(open_shipyard)
+	panel.contracts_requested.connect(open_contracts)
 	fleet_panel.ship_selected.connect(select_ship)
 	fleet_panel.orders_requested.connect(open_orders)
 	map_mode.mode_changed.connect(_apply_price_map)
 	system_view.closed.connect(func(): camera.input_enabled = true)
-	for p in [shipyard, orders_panel, finance_panel]:
+	for p in [shipyard, orders_panel, finance_panel, contracts_panel]:
 		p.closed.connect(_overlay_closed)
 	Events.fleet_changed.connect(_update_preview)
 	for sig in [Events.day_passed, Events.company_changed, Events.charted]:
@@ -195,6 +197,18 @@ func open_shipyard() -> void:
 	_overlay_opened()
 	shipyard.open(map.selected)
 
+## The contract board of the selected system, else of the selected ship's.
+func open_contracts() -> void:
+	var i := map.selected
+	var ship: Ship = Sim.world.fleet.get_ship(selected_ship) if selected_ship >= 0 else null
+	if i < 0 and ship and ship.status != Ship.Status.TRAVELING:
+		i = ship.system
+	if i < 0 or not Sim.player().is_known(i) or Sim.world.economy.market_at(i) == null:
+		Events.notice.emit("Select a charted system with a market")
+		return
+	_overlay_opened()
+	contracts_panel.open(i, selected_ship)
+
 func open_orders(ship_id: int) -> void:
 	if ship_id < 0:
 		Events.notice.emit("Select a ship first")
@@ -207,9 +221,10 @@ func open_finance() -> void:
 	_overlay_opened()
 	finance_panel.open()
 
-## Modal panels (shipyard, orders, finance): dim the map and stop the camera.
+## Modal panels (shipyard, orders, finance, contracts): dim the map and
+## stop the camera.
 func _overlay_opened() -> void:
-	for p in [shipyard, orders_panel, finance_panel]:
+	for p in [shipyard, orders_panel, finance_panel, contracts_panel]:
 		if p.visible:
 			p.visible = false
 	tooltip.visible = false
@@ -217,12 +232,13 @@ func _overlay_opened() -> void:
 	overlay_dim.visible = true
 
 func _overlay_closed() -> void:
-	if not (shipyard.visible or orders_panel.visible or finance_panel.visible):
+	if not (shipyard.visible or orders_panel.visible or finance_panel.visible or contracts_panel.visible):
 		overlay_dim.visible = false
 		camera.input_enabled = not system_view.visible
 
 func _overlay_open() -> bool:
-	return system_view.visible or shipyard.visible or orders_panel.visible or finance_panel.visible
+	return system_view.visible or shipyard.visible or orders_panel.visible or finance_panel.visible \
+		or contracts_panel.visible
 
 ## Price map mode: stars tinted by the known price of one good (-1 = off).
 func _apply_price_map(c: int) -> void:
@@ -254,6 +270,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				orders_panel.close_panel()
 			elif finance_panel.visible:
 				finance_panel.close_panel()
+			elif contracts_panel.visible:
+				contracts_panel.close_panel()
 			elif system_view.visible:
 				system_view.close_view()
 			elif map.selected >= 0:
@@ -277,6 +295,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				finance_panel.close_panel()
 			elif not overlay:
 				open_finance()
+		KEY_C:
+			if contracts_panel.visible:
+				contracts_panel.close_panel()
+			elif not overlay:
+				open_contracts()
 		KEY_P:
 			if not overlay:
 				map_mode.cycle()

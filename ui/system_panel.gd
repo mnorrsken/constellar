@@ -8,6 +8,7 @@ signal view_requested
 signal market_requested
 signal shipyard_requested
 signal send_requested
+signal contracts_requested
 
 const WIDTH := 380.0
 
@@ -18,6 +19,7 @@ var _card := SettlementCard.new()
 var _button := Button.new()
 var _market_button := Button.new()
 var _yard_button := Button.new()
+var _contracts_button := Button.new()
 var _send_info := Label.new()
 var _send_button := Button.new()
 var _send_box := VBoxContainer.new()
@@ -53,6 +55,8 @@ func _ready() -> void:
 	_yard_button.text = "Shipyard"
 	_yard_button.focus_mode = Control.FOCUS_NONE
 	_yard_button.pressed.connect(func(): shipyard_requested.emit())
+	_contracts_button.focus_mode = Control.FOCUS_NONE
+	_contracts_button.pressed.connect(func(): contracts_requested.emit())
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 8)
 	for b in [_button, _market_button, _yard_button]:
@@ -69,11 +73,12 @@ func _ready() -> void:
 	_send_box.add_child(_send_button)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
-	_details = [HSeparator.new(), _card, HSeparator.new(), _bodies, buttons]
+	_details = [HSeparator.new(), _card, HSeparator.new(), _bodies, buttons, _contracts_button]
 	for c in [_title, _facts] + _details + [_send_box]:
 		box.add_child(c)
 	add_child(box)
 	Events.fleet_changed.connect(func(): if visible and _system: show_system(_system))
+	Events.contracts_changed.connect(func(): if visible and _system: show_system(_system))
 	# Arrival dates in the send line move on with the calendar.
 	Events.day_passed.connect(func(_d): if visible and _system and ship_id >= 0: _update_send())
 
@@ -110,6 +115,9 @@ func show_system(s: StarSystem) -> void:
 	_system = s
 	_market_button.disabled = s.settlement == null
 	_yard_button.disabled = not Sim.world.fleet.is_shipyard(s.index)
+	var offers := Contracts.offers_at(Sim.world, s.index).size()
+	_contracts_button.text = "Contracts  ·  %d on the board   C" % offers
+	_contracts_button.disabled = s.settlement == null
 	_update_send()
 	visible = true
 	_fit.call_deferred()

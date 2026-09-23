@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Passengers, mail and contracts: every market posts a weekly board of jobs
+  (`Contract`/`Contracts`) — freight charters (the client's own cargo of an
+  export good, taking hold space of its cargo class), passenger groups
+  (economy berths or luxury suites, none from robot worlds) and mail sacks —
+  to destinations up to 5 lanes away, weighted to near and (for people/mail)
+  big places. Reward scales with load and route length, penalty is 30% of
+  the reward, and the deadline allows a slow ship plus slack. Accepting
+  needs a ship docked at the origin with room and a charted destination;
+  arriving pays the reward, missing the deadline or abandoning (or selling
+  the ship) charges the penalty and drops the job. UI: Contracts panel (key
+  C, or the system card's board button) with the market's offers, why a ship
+  can't take one, and the player's running jobs with Abandon; fleet list
+  shows each ship's contract count; finance panel gets Contracts and
+  Penalties rows; market panel's hold line counts charter freight.
 - Trading and routes: ships carry cargo (`Ship.cargo`, cost basis) in holds
   of the right cargo class; `Trading` buys and sells at the docked market
   (big lots move the price; no sales tax until tariffs and smuggling come

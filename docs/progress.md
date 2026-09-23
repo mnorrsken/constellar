@@ -3,7 +3,7 @@
 Milestone-by-milestone status. See [`constellar-plan.md`](../constellar-plan.md)
 for the plan and acceptance criteria this tracks.
 
-Current test count: **92 tests, 2428 assertions, 0 failures** (`make test`).
+Current test count: **99 tests, 3464 assertions, 0 failures** (`make test`).
 
 - **M0 — Project skeleton — done.** Godot 4.7 project setup, autoloads
   (`Events`/`Defs`/`Sim`), `data/commodities.json`, Makefile, headless test
@@ -44,7 +44,11 @@ Current test count: **92 tests, 2428 assertions, 0 failures** (`make test`).
   ledger by category and ship; per-company price knowledge with age; route
   orders (sell, buy, wait for full load, auto-trade). A test route runs 5
   years unattended. Market trading UI, route editor, finances, price map.
-- **M7 — Passengers, mail and contracts — pending.**
+- **M7 — Passengers, mail and contracts — done.** Weekly job boards per
+  market (`Contract`/`Contracts`): freight, passenger and mail charters,
+  reward vs deadline penalty, hold/berth/mail-bay capacity. Contracts panel
+  (C) to accept/abandon; fleet, finance and market UI show job counts,
+  ledger rows and reserved hold space.
 - **M8 — Events, governments and news — pending.**
 - **M9 — Real UI and finance — pending.**
 - **M10 — Influence and goals — pending.**

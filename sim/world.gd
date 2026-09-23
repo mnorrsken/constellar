@@ -26,6 +26,17 @@ var companies: Array[Company] = []
 var fleet: Fleet
 ## Things that happened since the last drain_events().
 var events: Array[Dictionary] = []
+## Contract offers and accepted jobs (see Contracts); finished ones are
+## dropped at the next weekly board update.
+var contracts: Array[Contract] = []
+## ship id -> Array of its accepted Contracts (index kept by Contracts).
+var jobs: Dictionary = {}
+## Contracts cache (the lanes never change): [origin, people?] ->
+## destination weights, Vector2i(origin, dest) -> route length in ly.
+var contract_cache: Dictionary = {}
+var next_contract_id := 0
+## World-level randomness (contract offers), seeded from the world seed.
+var rng: RandomNumberGenerator
 
 var _warmup_days := 0
 
@@ -46,6 +57,7 @@ static func create(world_seed: int, stars_data: Dictionary, content: Dictionary)
 	w.start_year = int(balance.get("start_year", 3400))
 	w.economy = Economy.build(w.galaxy, content)
 	w.fleet = Fleet.new(w.galaxy, content)
+	w.rng = stream(world_seed, "world", "contracts")
 	var company_cfg: Dictionary = balance.get("company", {})
 	w.companies.append(Company.from_dict(0, company_cfg))
 	for c in w.companies:
@@ -60,6 +72,8 @@ static func create(world_seed: int, stars_data: Dictionary, content: Dictionary)
 		for c in w.companies:
 			Trading.observe(w, c.id, w.start_system)
 	w._warmup_days = int(balance.get("economy", {}).get("warmup_days", 0))
+	Contracts.post_offers(w)
+	w.events.clear()
 	return w
 
 ## Lets the markets settle (balance economy.warmup_days) before the player
@@ -75,6 +89,8 @@ func advance_day() -> void:
 	day += 1
 	if markets_moved:
 		Trading.observe_docked(self)
+		Contracts.post_offers(self)
+		events.append({"type": "contracts"})
 	var moved := fleet.advance_day(day)
 	events.append_array(moved)
 	for e in moved:
@@ -84,9 +100,11 @@ func advance_day() -> void:
 			reveal(s.company, e.system)
 		if e.type == "arrived":
 			s.stop_handled = false
+			Contracts.deliver(self, s, e.system)
 			if galaxy.systems[e.system].settlement:
 				companies[s.company].book("docking", -Trading.docking_fee(self, s), month(), s.id)
 				Trading.observe(self, s.company, e.system)
+	Contracts.check_deadlines(self)
 	if Calendar.date(day, 0).day == 1:
 		Trading.monthly_costs(self)
 	Trading.process_orders(self)
@@ -115,6 +133,11 @@ func sell_ship(company_id: int, ship_id: int) -> Dictionary:
 	var s := _own_ship(company_id, ship_id)
 	if s == null:
 		return {"ok": false, "error": "Not your ship"}
+	if s.status != Ship.Status.DOCKED or not fleet.is_shipyard(s.system):
+		return fleet.sell(companies[company_id], s, day)  # the refusal
+	# Its jobs can't be done any more: they fail with their penalties.
+	for c in Contracts.active_for(self, s):
+		Contracts.abandon(self, c)
 	var r := fleet.sell(companies[company_id], s, day)
 	if r.ok:
 		events.append({"type": "sold", "ship": ship_id, "company": company_id})
@@ -213,6 +236,33 @@ func stop_orders(company_id: int, ship_id: int) -> Dictionary:
 	s.orders_active = false
 	events.append({"type": "orders", "ship": ship_id, "company": company_id})
 	return {"ok": true}
+
+func accept_contract(company_id: int, contract_id: int, ship_id: int) -> Dictionary:
+	var s := _own_ship(company_id, ship_id)
+	var c := get_contract(contract_id)
+	if s == null or c == null:
+		return {"ok": false, "error": "No such ship or contract"}
+	return Contracts.accept(self, company_id, c, s)
+
+func abandon_contract(company_id: int, contract_id: int) -> Dictionary:
+	var c := get_contract(contract_id)
+	if c == null or c.company != company_id:
+		return {"ok": false, "error": "Not your contract"}
+	return Contracts.abandon(self, c)
+
+func get_contract(contract_id: int) -> Contract:
+	for c in contracts:
+		if c.id == contract_id:
+			return c
+	return null
+
+## A company's accepted, unfinished jobs.
+func contracts_of(company_id: int) -> Array[Contract]:
+	var out: Array[Contract] = []
+	for c in contracts:
+		if c.company == company_id and c.status == Contract.Status.ACCEPTED:
+			out.append(c)
+	return out
 
 ## What a company knows of a market: {day, price} or {} (never seen).
 func known_prices(company_id: int, system_index: int) -> Dictionary:

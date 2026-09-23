@@ -1,7 +1,8 @@
 class_name FloatingNumbers
 extends Control
-## Profit pop-ups: when a player ship sells cargo, "+12,340 cr" (green) or
-## "-3,100 cr" (red) rises from the ship on the map and fades out.
+## Profit pop-ups: when a player ship sells cargo or delivers a contract,
+## "+12,340 cr" (green) or "-3,100 cr" (red) rises from the ship on the map
+## and fades out.
 
 const LIFE := 2.8
 const RISE_PX := 70.0

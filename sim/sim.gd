@@ -116,6 +116,14 @@ func start_orders(ship_id: int) -> Dictionary:
 func stop_orders(ship_id: int) -> Dictionary:
 	return _run(world.stop_orders(PLAYER, ship_id))
 
+## Takes a job from the board for a player ship docked at its origin.
+func accept_contract(contract_id: int, ship_id: int) -> Dictionary:
+	return _run(world.accept_contract(PLAYER, contract_id, ship_id))
+
+## Gives a job up: the penalty is charged.
+func abandon_contract(contract_id: int) -> Dictionary:
+	return _run(world.abandon_contract(PLAYER, contract_id))
+
 ## Route a player ship could fly (charted systems only); a query, no events.
 func plan_route(ship_id: int, target_system: int) -> Dictionary:
 	return world.plan_route(PLAYER, ship_id, target_system)
@@ -144,6 +152,22 @@ func _run(result: Dictionary) -> Dictionary:
 	_flush_events()
 	return result
 
+func _contract_notice(e: Dictionary) -> void:
+	var c := world.get_contract(e.contract)
+	if c == null:
+		return
+	var what := c.describe(Defs.commodities.get(c.commodity, {}).get("name", ""))
+	var to := galaxy.systems[c.destination].name
+	match e.type:
+		"contract_accepted":
+			Events.notice.emit("Contract taken: %s to %s by %s" % [what, to,
+				Calendar.format(c.deadline, world.start_year)])
+		"contract_done":
+			Events.notice.emit("Delivered %s to %s: +%s cr" % [what, to, Format.thousands(roundi(e.reward))])
+		"contract_failed":
+			Events.notice.emit("Contract failed: %s to %s, penalty %s cr" % [what, to,
+				Format.thousands(roundi(e.penalty))])
+
 ## Turns world events into signals and player notices.
 func _flush_events() -> void:
 	var fleet_moved := false
@@ -151,6 +175,7 @@ func _flush_events() -> void:
 	var charted := {}
 	var attention := []
 	var profits := {}  # player ship id -> summed profit
+	var contracts_moved := false
 	for e in world.drain_events():
 		match e.type:
 			"charted":
@@ -188,10 +213,23 @@ func _flush_events() -> void:
 						attention.append([ship.id, e.system])
 			"cash":
 				cash_changed[e.company] = true
+			"contracts":
+				contracts_moved = true
+			"contract_accepted", "contract_done", "contract_failed":
+				contracts_moved = true
+				fleet_moved = true  # hold space and berths changed
+				if e.type != "contract_accepted":
+					cash_changed[e.company] = true
+				if e.company == PLAYER:
+					_contract_notice(e)
+					if e.type == "contract_done":
+						profits[e.ship] = profits.get(e.ship, 0.0) + e.reward
 	for c in charted:
 		Events.charted.emit(c)
 	for id in profits:
 		Events.profit.emit(id, profits[id])
+	if contracts_moved:
+		Events.contracts_changed.emit()
 	if fleet_moved:
 		Events.fleet_changed.emit()
 	for c in cash_changed:

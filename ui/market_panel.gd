@@ -117,7 +117,9 @@ func _refresh() -> void:
 		var parts := PackedStringArray()
 		var cap := w.fleet.capacity(_trade_ship)
 		for cls in cap:
-			parts.append("%s %s/%s t" % [cls, Format.thousands(roundi(used.get(cls, 0.0))), Format.thousands(roundi(cap[cls]))])
+			# Contract freight takes hold space too.
+			var taken: float = used.get(cls, 0.0) + Contracts.freight_reserved(w, _trade_ship, cls)
+			parts.append("%s %s/%s t" % [cls, Format.thousands(roundi(taken)), Format.thousands(roundi(cap[cls]))])
 		_hold.text = "%s  ·  %s" % [_trade_ship.name, "   ".join(parts) if not parts.is_empty() else "no cargo holds"]
 	if not _grid.visible:
 		_fit()

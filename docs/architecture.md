@@ -76,8 +76,11 @@ days, transit stock rate, price elasticity/clamps, producer overstock
 slowdown, surplus decay, warmup days, history length, population needs,
 weekly background traffic, and `soak` limits) — see `Economy` below, plus
 `company` (start cash, loan, loan limit, interest, start ship), `shipyards`
-(which settlements build ships) and `ships` (sale share, module resale,
-refit days).
+(which settlements build ships), `ships` (sale share, module resale, refit
+days) and `contracts` (board size per market size, offer lifetime, max
+lane hops to a destination, kind mix, freight tonnage/rate/cargo-class
+weights, passenger group size/rate/luxury share, mail sacks/rate/sacks per
+bay, penalty share, deadline speed/slack/buffer) — see `Contracts` below.
 
 `data/hulls.json` lists hulls (slots, tonnes per slot, speed in ly/day,
 jump range, price, crew cost, maintenance, reliability, production years,
@@ -329,6 +332,58 @@ purchases, refits and sales are booked as `ships`. Data: hull
 `trade`. `Sim` wraps the new commands; arrivals of ships on routes don't
 ask for attention.
 
+## Contracts
+
+`sim/contract.gd` (`Contract`) is one job on a market's board: `kind`
+(`freight`/`passengers`/`mail`), `origin`, `destination`, `commodity` (freight)
+or `luxury` (passengers), `amount` (tonnes, passengers or sacks), `reward`,
+`penalty`, `deadline`, `offered_until` and `status`
+(`OFFERED`/`ACCEPTED`/`DONE`/`FAILED`); `describe()` renders its load
+("400 t Machinery", "32 luxury passengers", "12 mail sacks").
+
+`sim/contracts.gd` (`Contracts`, static functions on a `World`, like
+`Trading`) runs the boards. `post_offers` (weekly, after the market tick)
+drops expired offers and posts new ones sized to each market's `size`
+(capped at `max_offers`, alive `offer_weeks`): kind is a weighted draw
+(`contracts.kinds`, passengers excluded at robot worlds), destination is a
+weighted draw over every system within `max_hops` lanes (near places
+favoured, and for people/mail, big markets too — weights and route lengths
+are cached in `World.contract_cache` since lanes never change). Freight
+picks the client's own export good of a `freight_classes`-weighted cargo
+class; passengers roll economy or luxury groups; mail rolls a sack count.
+Reward grows with load x route length; penalty is `penalty_share` of the
+reward; the deadline allows a ship at `deadline_speed` plus `deadline_slack`
+(tighter for mail) plus `deadline_buffer` days. Capacity: `fits()` checks
+freight against `Trading.free_space` (freight charters reserve hold space
+via `freight_reserved`, so player cargo can't overfill a hold that also
+carries charters), passengers against `free_berths` (economy/luxury cabin
+modules), mail against `free_mail` (mail bay modules x `mail_per_bay`).
+`accept` needs the ship docked at the origin, the destination charted and
+room, and files the job under `World.jobs[ship.id]`; `deliver` (on arrival)
+pays the reward to the `"contracts"` ledger category; `check_deadlines`
+(daily) and `abandon` fail a job, charging the penalty to `"penalties"` and
+dropping it from the ship. Selling a ship abandons its jobs first
+(`World.sell_ship`).
+
+`World` carries `contracts` (all offers/jobs), `jobs`, `contract_cache`,
+`next_contract_id` and `rng` (world-level randomness for contract offers,
+seeded from the world seed); `World.create` posts the first board.
+Commands `accept_contract`/`abandon_contract` and queries
+`get_contract`/`contracts_of` wrap `Contracts`. `Sim` adds the same command
+wrappers, `Events.contracts_changed` (board or job changes), and player
+notices for taken/delivered/failed jobs; a delivered reward joins the
+day's floating profit number over the ship (`Events.profit`).
+
+`ui/contracts_panel.gd` (`ContractsPanel`, key C or the system card's
+Contracts button) shows one market's board: Job, Load, To, Trip days (for
+the ship docked there), Deliver by, Reward, Penalty and Accept — or why
+not (uncharted, out of range, no room; "too slow" is still allowed, with a
+warning, since the penalty would apply) — plus "Your contracts" with
+Abandon (showing the penalty). `FleetPanel` shows each ship's contract
+count; `FinancePanel` has Contracts and Penalties ledger rows;
+`MarketPanel`'s hold line adds reserved charter freight; `SystemPanel`'s
+Contracts button shows the board's offer count.
+
 ## Render layer
 
 `render/star_look.gd` (`StarLook`) is pure functions from a star's spectral
@@ -558,3 +613,9 @@ crew/maintenance/interest, a manual buy-travel-sell loop that makes money
 after costs, a two-stop route running 5 years unattended, waiting for a full
 load, the auto-trader, order refusals, sale profit against cost, and a
 route stopping (cargo kept) before a loss and selling after a restart.
+
+`tests/test_contracts.gd` covers the boards (plenty of offers of all three
+kinds, deterministic), accepting (charters take hold space, no double
+accept, refusals: not docked, no cabins; berth and mail counts), delivery
+and reward, a missed deadline's penalty, abandoning, and a contracts-only
+bot that buys a second ship within three years with no failed jobs.

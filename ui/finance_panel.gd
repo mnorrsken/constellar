@@ -9,7 +9,7 @@ signal closed
 const MUTED := Color(0.55, 0.62, 0.74)
 const GREEN := Color(0.45, 0.85, 0.55)
 const RED := Color(1.0, 0.45, 0.4)
-const CATEGORIES := ["sales", "purchases", "fuel", "docking", "crew", "maintenance", "interest", "ships"]
+const CATEGORIES := ["sales", "purchases", "contracts", "penalties", "fuel", "docking", "crew", "maintenance", "interest", "ships"]
 const STEP := 100000.0
 
 var _title := Label.new()
