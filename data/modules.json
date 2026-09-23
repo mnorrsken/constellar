@@ -1,0 +1,14 @@
+[
+	{ "id": "container", "name": "Container hold", "cargo_class": "container", "capacity": 1.0, "price": 40000 },
+	{ "id": "bulk", "name": "Bulk hold", "cargo_class": "bulk", "capacity": 1.2, "price": 30000 },
+	{ "id": "cold", "name": "Cold hold", "cargo_class": "cold", "capacity": 0.7, "price": 70000 },
+	{ "id": "tank", "name": "Tank", "cargo_class": "liquid", "capacity": 1.0, "price": 50000 },
+	{ "id": "secure", "name": "Secure vault", "cargo_class": "secure", "capacity": 0.3, "price": 120000 },
+	{ "id": "cabins", "name": "Economy cabins", "passengers": 40, "price": 60000 },
+	{ "id": "suites", "name": "Luxury suites", "passengers": 8, "luxury": true, "price": 110000 },
+	{ "id": "mail", "name": "Mail bay", "mail": 1, "price": 25000 },
+	{ "id": "armour", "name": "Armour plating", "armour": 1, "price": 80000 },
+	{ "id": "drive_tune", "name": "Drive tune", "speed_mult": 1.15, "price": 150000 },
+	{ "id": "jump_extender", "name": "Jump extender", "range_add": 2.0, "price": 200000 },
+	{ "id": "auto_trader", "name": "Auto-trader computer", "auto_trade": true, "price": 90000 }
+]

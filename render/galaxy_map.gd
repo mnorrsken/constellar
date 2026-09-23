@@ -5,9 +5,10 @@ extends Node3D
 ## star to the plane (the Elite II depth cue), the stars themselves, name
 ## labels, and hover/selection rings. Multiple stars circle their system's
 ## centre so pairs separate when zoomed in (cosmetic, not to scale).
+## Fog of war: every star glows, but names, drop lines and lanes appear only
+## for systems in `known` (set_known; lanes need both ends charted).
 
 const STAR_SHADER := preload("res://render/shaders/star.gdshader")
-const LANE_SHADER := preload("res://render/shaders/lane.gdshader")
 const GRID_SHADER := preload("res://render/shaders/grid.gdshader")
 const RING_SHADER := preload("res://render/shaders/ring.gdshader")
 
@@ -38,6 +39,16 @@ var _label_ranges := PackedFloat32Array()
 var _hover_ring: MeshInstance3D
 var _select_ring: MeshInstance3D
 var _time := 0.0
+## One byte per system, 1 = charted. Empty = everything visible.
+var _known := PackedByteArray()
+var _lanes_mi: MeshInstance3D
+var _drops_mi: MeshInstance3D
+## Drop lines ("z rods") from stars to the galactic plane; Z toggles them.
+var show_drop_lines := true:
+	set(value):
+		show_drop_lines = value
+		if _drops_mi:
+			_drops_mi.visible = value
 
 func build(g: Galaxy) -> void:
 	galaxy = g
@@ -52,6 +63,15 @@ func build(g: Galaxy) -> void:
 	_build_labels()
 	_hover_ring = _make_ring(HOVER_COLOR, 30.0, 0.0, 0.0)
 	_select_ring = _make_ring(SELECT_COLOR, 40.0, 10.0, 0.8)
+
+## Shows only what the player has charted; call again whenever it grows.
+func set_known(known: PackedByteArray) -> void:
+	_known = known.duplicate()
+	_build_lanes()
+	_build_drop_lines()
+
+func is_known(i: int) -> bool:
+	return _known.is_empty() or _known[i] != 0
 
 ## World position of a system's centre.
 func system_position(i: int) -> Vector3:
@@ -96,47 +116,37 @@ func _build_grid() -> void:
 	add_child(mi)
 
 func _build_lanes() -> void:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	st.set_custom_format(0, SurfaceTool.CUSTOM_RGBA_FLOAT)
+	if _lanes_mi:
+		_lanes_mi.queue_free()
+	var st := Ribbon.begin()
+	var any := false
 	for lane in galaxy.lanes:
-		var a := system_position(lane.a)
-		var b := system_position(lane.b)
+		if not (is_known(lane.a) and is_known(lane.b)):
+			continue
 		var c := DEEP_LANE_COLOR if lane.length > deep_lane_ly else LANE_COLOR
-		# Corners: (end, other end, side flag, uv). The side flag flips at the
-		# far end because the shader measures direction toward the other end.
-		var corners := [
-			[a, b, -1.0, Vector2(0.0, -1.0)],
-			[a, b, 1.0, Vector2(0.0, 1.0)],
-			[b, a, -1.0, Vector2(lane.length, 1.0)],
-			[b, a, 1.0, Vector2(lane.length, -1.0)],
-		]
-		for k in [0, 1, 2, 0, 2, 3]:
-			var v: Array = corners[k]
-			var other: Vector3 = v[1]
-			st.set_color(c)
-			st.set_uv(v[3])
-			st.set_custom(0, Color(other.x, other.y, other.z, v[2]))
-			st.add_vertex(v[0])
-	var mat := ShaderMaterial.new()
-	mat.shader = LANE_SHADER
-	var mi := MeshInstance3D.new()
-	mi.name = "Lanes"
-	mi.mesh = st.commit()
-	mi.material_override = mat
-	mi.custom_aabb = AABB(Vector3(-80, -80, -80), Vector3(160, 160, 160))
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mi)
+		Ribbon.add_segment(st, system_position(lane.a), system_position(lane.b), c)
+		any = true
+	_lanes_mi = Ribbon.make_instance(2.0)
+	_lanes_mi.name = "Lanes"
+	if any:
+		_lanes_mi.mesh = st.commit()
+	add_child(_lanes_mi)
 
 func _build_drop_lines() -> void:
+	if _drops_mi:
+		_drops_mi.queue_free()
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_LINES)
+	var any := false
 	for s in galaxy.systems:
+		if not is_known(s.index):
+			continue
+		any = true
 		var top := system_position(s.index)
 		var foot := Vector3(top.x, 0.0, top.z)
 		var c := StarLook.color(s.primary().get("class", ""), s.primary().get("subclass"))
 		# Stalks fade toward the plane; stars below it get fainter ones.
-		c.a = 0.4 if top.y >= 0.0 else 0.22
+		c.a = 0.28 if top.y >= 0.0 else 0.15
 		var foot_c := Color(c, c.a * 0.3)
 		st.set_color(c)
 		st.add_vertex(top)
@@ -155,12 +165,14 @@ func _build_drop_lines() -> void:
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	mat.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
-	var mi := MeshInstance3D.new()
-	mi.name = "DropLines"
-	mi.mesh = st.commit()
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mi)
+	_drops_mi = MeshInstance3D.new()
+	_drops_mi.name = "DropLines"
+	if any:
+		_drops_mi.mesh = st.commit()
+	_drops_mi.material_override = mat
+	_drops_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_drops_mi.visible = show_drop_lines
+	add_child(_drops_mi)
 
 func _line(st: SurfaceTool, a: Vector3, b: Vector3, c: Color) -> void:
 	st.set_color(c)
@@ -288,6 +300,8 @@ func _update_labels() -> void:
 		var a := 1.0 - smoothstep(r * 0.75, r, d)
 		if i == hovered or i == selected:
 			a = 1.0
+		if not is_known(i):
+			a = 0.0
 		label.visible = a > 0.01
 		label.modulate.a = a
 		label.outline_modulate.a = a * 0.85

@@ -95,9 +95,11 @@ func is_fully_connected(max_jump: float = INF) -> bool:
 	return seen.size() == systems.size()
 
 ## Shortest route by distance (A*) from `from` to `to` using only lanes no
-## longer than `max_jump`. Returns the system indices including both ends,
-## [from] when from == to, or an empty array when there is no route.
-func find_path(from: int, to: int, max_jump: float = INF) -> PackedInt32Array:
+## longer than `max_jump`, and (when `allowed` is given, one byte per system)
+## only systems whose byte is non-zero. Returns the system indices including
+## both ends, [from] when from == to, or an empty array when there is no route.
+func find_path(from: int, to: int, max_jump: float = INF,
+		allowed := PackedByteArray()) -> PackedInt32Array:
 	if from == to:
 		return PackedInt32Array([from])
 	var goal := systems[to].position
@@ -120,7 +122,7 @@ func find_path(from: int, to: int, max_jump: float = INF) -> PackedInt32Array:
 			if lane.length > max_jump:
 				continue
 			var v: int = lane.other(u)
-			if closed.has(v):
+			if closed.has(v) or (not allowed.is_empty() and allowed[v] == 0):
 				continue
 			var cost: float = g_cost[u] + lane.length
 			if cost < g_cost.get(v, INF):

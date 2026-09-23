@@ -26,11 +26,23 @@ Override the binary if needed: `make test GODOT=/path/to/godot`.
 
 Drag to orbit, right/middle-drag to pan, scroll or trackpad swipe/pinch to
 zoom, click a star to select and fly to it, Esc to deselect, Home to return
-to Sol. Keyboard: WASD/arrows pan, Q/E orbit, R/F tilt, -/= zoom, F1 toggles
+to Sol, Z to hide/show the drop lines from stars to the galactic plane. Keyboard: WASD/arrows pan, Q/E orbit, R/F tilt, -/= zoom, F1 toggles
 the debug overlay.
 
 Double-click a star, or select it and press Enter, to open its system view.
 Esc closes the system view first, then deselects.
+
+Ships: click a ship's chevron on the map or its row in the fleet list
+(bottom left), select a star, and press S (or the card's Send button) to
+send it there; the card shows jumps, days and the arrival date, or why the
+ship can't go. The system card's Shipyard button opens the shipyard (buy,
+refit, sell) at industrial and high-tech worlds. The game pauses and flies
+to a ship when it arrives or leaves the yard; sending it on resumes the
+game, unless other ships are still awaiting orders.
+
+Fog of war: you only see the glow of distant stars. A system and everything
+one jump from it are charted once one of your ships gets there; routes only
+use charted systems. F2 (cheat) charts everything and adds 10,000,000 cr.
 
 Press M, or the system panel's Market button, to see the selected system's
 market. Space pauses/resumes the game clock; 1-4 set its speed (also

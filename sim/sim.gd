@@ -6,6 +6,9 @@ extends Node
 ## testable; this autoload only wraps it, advances it one game day per tick
 ## and emits `Events`.
 
+## The player's company id.
+const PLAYER := 0
+
 ## Game speeds in days per second; index 0 = paused.
 const SPEEDS := [0, 1, 2, 4, 8]
 
@@ -14,6 +17,16 @@ var world: World
 var galaxy: Galaxy
 ## Index into SPEEDS.
 var speed := 1
+## Pause when a player ship needs orders (arrived, out of the yard). Will be
+## a menu option.
+var auto_pause := true
+## Player ships that arrived or left the yard and have had no new orders
+## yet, oldest first.
+var waiting: Array[int] = []
+## Speed to resume at after an auto-pause.
+var _resume_speed := 1
+## Money the F2 cheat adds.
+const CHEAT_CASH := 10000000.0
 
 var _accumulator := 0.0
 
@@ -29,6 +42,8 @@ func _ready() -> void:
 
 func set_speed(index: int) -> void:
 	speed = clampi(index, 0, SPEEDS.size() - 1)
+	if speed > 0:
+		_resume_speed = speed
 	_accumulator = 0.0
 	Events.speed_changed.emit(speed)
 
@@ -46,3 +61,104 @@ func _process(delta: float) -> void:
 		steps += 1
 		world.advance_day()
 		Events.day_passed.emit(world.day)
+		_flush_events()
+
+## How far into the current day the clock is (0..1), for smooth drawing.
+func day_fraction() -> float:
+	return clampf(_accumulator, 0.0, 1.0) if speed > 0 else 0.0
+
+# --- player commands (company 0) ---------------------------------------------------
+
+func buy_ship(hull_id: String, system_index: int) -> Dictionary:
+	return _run(world.buy_ship(PLAYER, hull_id, system_index))
+
+func sell_ship(ship_id: int) -> Dictionary:
+	return _run(world.sell_ship(PLAYER, ship_id))
+
+func refit_ship(ship_id: int, modules: Array) -> Dictionary:
+	return _run(world.refit_ship(PLAYER, ship_id, modules))
+
+## Sends a ship; the game resumes (at the speed before the pause) unless
+## other ships still wait for orders — then it points at the next one.
+func send_ship(ship_id: int, target_system: int) -> Dictionary:
+	var r := _run(world.send_ship(PLAYER, ship_id, target_system))
+	if r.ok:
+		waiting.erase(ship_id)
+		if waiting.is_empty():
+			if speed == 0:
+				set_speed(_resume_speed)
+		else:
+			var next := world.fleet.get_ship(waiting[0])
+			Events.attention.emit(next.id, next.system)
+	return r
+
+## Route a player ship could fly (charted systems only); a query, no events.
+func plan_route(ship_id: int, target_system: int) -> Dictionary:
+	return world.plan_route(PLAYER, ship_id, target_system)
+
+## F2: chart the whole map and add a lot of money.
+func cheat() -> void:
+	world.reveal_all(PLAYER)
+	player().cash += CHEAT_CASH
+	world.events.append({"type": "cash", "company": PLAYER})
+	Events.notice.emit("Cheat: everything charted, +%s cr" % Format.thousands(roundi(CHEAT_CASH)))
+	_flush_events()
+
+func take_loan(amount: float) -> Dictionary:
+	return _run(world.take_loan(PLAYER, amount))
+
+func repay_loan(amount: float) -> Dictionary:
+	return _run(world.repay_loan(PLAYER, amount))
+
+func player() -> Company:
+	return world.companies[PLAYER]
+
+## Shows refusals as notices, then publishes what the command changed.
+func _run(result: Dictionary) -> Dictionary:
+	if not result.get("ok", false):
+		Events.notice.emit(result.get("error", "Not possible"))
+	_flush_events()
+	return result
+
+## Turns world events into signals and player notices.
+func _flush_events() -> void:
+	var fleet_moved := false
+	var cash_changed := {}
+	var charted := {}
+	var attention := []
+	for e in world.drain_events():
+		match e.type:
+			"charted":
+				charted[e.company] = true
+			"arrived", "refitted", "departed", "bought", "sold", "refitting":
+				fleet_moved = true
+				if e.type == "sold":
+					waiting.erase(e.ship)
+				if e.type in ["bought", "sold", "refitting"]:
+					cash_changed[e.company] = true
+				var ship := world.fleet.get_ship(e.ship)
+				if ship and ship.company == PLAYER:
+					if e.type == "arrived":
+						var here := galaxy.systems[e.system]
+						Events.notice.emit(("%s docked at %s" if here.settlement else "%s is holding at %s (no spaceport)")
+							% [ship.name, here.name])
+						attention.append([ship.id, e.system])
+					elif e.type == "refitted":
+						Events.notice.emit("%s is out of the yard" % ship.name)
+						attention.append([ship.id, e.system])
+			"cash":
+				cash_changed[e.company] = true
+	for c in charted:
+		Events.charted.emit(c)
+	if fleet_moved:
+		Events.fleet_changed.emit()
+	for c in cash_changed:
+		Events.company_changed.emit(c)
+	if not attention.is_empty():
+		for a in attention:
+			if not waiting.has(a[0]):
+				waiting.append(a[0])
+		if auto_pause and speed != 0:
+			set_speed(0)
+		var last: Array = attention[attention.size() - 1]
+		Events.attention.emit(last[0], last[1])

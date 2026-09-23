@@ -35,6 +35,14 @@ func _ready() -> void:
 
 func show_system(g: Galaxy, i: int, mouse: Vector2) -> void:
 	var s := g.systems[i]
+	var charted: bool = Sim.player().is_known(i)
+	_facts.visible = charted
+	_settlement.visible = charted
+	_stars.visible = charted
+	if not charted:
+		_title.text = "Uncharted system"
+		_place(mouse)
+		return
 	_title.text = s.name
 	var dist := s.position.length()
 	var place := "home system" if s.id == "sol" else "%.2f ly from Sol" % dist
@@ -55,6 +63,9 @@ func show_system(g: Galaxy, i: int, mouse: Vector2) -> void:
 		lines.append("[color=#%s]●[/color]  %s  [color=#8a9ab5]%s[/color]" % [
 			c.to_html(false), star.get("name", "?"), Format.spectral(star)])
 	_stars.text = "\n".join(lines)
+	_place(mouse)
+
+func _place(mouse: Vector2) -> void:
 	visible = true
 	reset_size()
 	var vp := get_viewport_rect().size

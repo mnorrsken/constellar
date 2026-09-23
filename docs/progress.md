@@ -3,7 +3,7 @@
 Milestone-by-milestone status. See [`constellar-plan.md`](../constellar-plan.md)
 for the plan and acceptance criteria this tracks.
 
-Current test count: **65 tests, 2310 assertions, 0 failures** (`make test`).
+Current test count: **80 tests, 2377 assertions, 0 failures** (`make test`).
 
 - **M0 — Project skeleton — done.** Godot 4.7 project setup, autoloads
   (`Events`/`Defs`/`Sim`), `data/commodities.json`, Makefile, headless test
@@ -32,7 +32,13 @@ Current test count: **65 tests, 2310 assertions, 0 failures** (`make test`).
   pause/1x-8x speed clock. `make soak` runs the economy 20 game years
   headless and checks it stays healthy. Clock bar and a temporary market
   panel in the UI.
-- **M5 — Ships and travel — pending.**
+- **M5 — Ships and travel — done.** Hulls and modules from data; the
+  player's `Company` (cash, loan) with a start ship; `Fleet` shipyards,
+  buy/sell/refit, jump-range routing and daily travel (ships arrive on the
+  predicted day); `World` commands with a company id. Ship chevrons, route and
+  preview on the map; fleet list, shipyard panel, send controls, notices.
+  Fog of war (charted systems per company), auto-pause and focus on
+  arrivals, F2 cheat.
 - **M6 — Trading and routes — pending.**
 - **M7 — Passengers, mail and contracts — pending.**
 - **M8 — Events, governments and news — pending.**

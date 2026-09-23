@@ -51,7 +51,7 @@ func _ready() -> void:
 ## Shows the market of a system, or hides the panel for an uninhabited one.
 func show_system(s: StarSystem) -> void:
 	_market = Sim.world.economy.market_at(s.index)
-	if _market == null:
+	if _market == null or not Sim.player().is_known(s.index):
 		visible = false
 		return
 	_title.text = "Market  ·  %s" % s.settlement.name

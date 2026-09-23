@@ -1,9 +1,13 @@
 class_name SystemPanel
 extends PanelContainer
-## Card on the right of the map for the selected star system.
+## Card on the right of the map for the selected star system. With a ship
+## selected it also offers to send that ship here (route length, days,
+## arrival date, or why it cannot go).
 
 signal view_requested
 signal market_requested
+signal shipyard_requested
+signal send_requested
 
 const WIDTH := 380.0
 
@@ -13,6 +17,15 @@ var _bodies := Label.new()
 var _card := SettlementCard.new()
 var _button := Button.new()
 var _market_button := Button.new()
+var _yard_button := Button.new()
+var _send_info := Label.new()
+var _send_button := Button.new()
+var _send_box := VBoxContainer.new()
+var _system: StarSystem
+## Controls hidden for an uncharted system.
+var _details: Array = []
+## Selected ship id, or -1.
+var ship_id := -1
 
 func _ready() -> void:
 	visible = false
@@ -37,19 +50,51 @@ func _ready() -> void:
 	_market_button.text = "Market   M"
 	_market_button.focus_mode = Control.FOCUS_NONE
 	_market_button.pressed.connect(func(): market_requested.emit())
+	_yard_button.text = "Shipyard"
+	_yard_button.focus_mode = Control.FOCUS_NONE
+	_yard_button.pressed.connect(func(): shipyard_requested.emit())
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 8)
-	_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_market_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	buttons.add_child(_button)
-	buttons.add_child(_market_button)
+	for b in [_button, _market_button, _yard_button]:
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		buttons.add_child(b)
+	_send_info.add_theme_font_size_override("font_size", 14)
+	_send_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_send_info.custom_minimum_size = Vector2(WIDTH - 28, 0)
+	_send_button.focus_mode = Control.FOCUS_NONE
+	_send_button.pressed.connect(func(): send_requested.emit())
+	_send_box.add_theme_constant_override("separation", 6)
+	_send_box.add_child(HSeparator.new())
+	_send_box.add_child(_send_info)
+	_send_box.add_child(_send_button)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
-	for c in [_title, _facts, HSeparator.new(), _card, HSeparator.new(), _bodies, buttons]:
+	_details = [HSeparator.new(), _card, HSeparator.new(), _bodies, buttons]
+	for c in [_title, _facts] + _details + [_send_box]:
 		box.add_child(c)
 	add_child(box)
+	Events.fleet_changed.connect(func(): if visible and _system: show_system(_system))
+	# Arrival dates in the send line move on with the calendar.
+	Events.day_passed.connect(func(_d): if visible and _system and ship_id >= 0: _update_send())
+
+## Sets (or clears, with -1) the ship the send section is about.
+func set_ship(id: int) -> void:
+	ship_id = id
+	if visible and _system:
+		show_system(_system)
 
 func show_system(s: StarSystem) -> void:
+	_system = s
+	var charted: bool = Sim.player().is_known(s.index)
+	for c in _details:
+		c.visible = charted
+	if not charted:
+		_title.text = "Uncharted system"
+		_facts.text = "Send a ship within one jump to chart it."
+		_update_send()
+		visible = true
+		_fit.call_deferred()
+		return
 	_title.text = s.name
 	var types := PackedStringArray()
 	for star in s.stars:
@@ -62,9 +107,35 @@ func show_system(s: StarSystem) -> void:
 	var belts := s.planets.size() - planets
 	_bodies.text = "%d planet%s%s" % [planets, "" if planets == 1 else "s",
 		"" if belts == 0 else "  ·  %d belt%s" % [belts, "" if belts == 1 else "s"]]
+	_system = s
 	_market_button.disabled = s.settlement == null
+	_yard_button.disabled = not Sim.world.fleet.is_shipyard(s.index)
+	_update_send()
 	visible = true
 	_fit.call_deferred()
+
+func _update_send() -> void:
+	var fleet: Fleet = Sim.world.fleet
+	var ship := fleet.get_ship(ship_id) if ship_id >= 0 else null
+	_send_box.visible = ship != null
+	if ship == null:
+		return
+	_send_button.text = "Send %s here   S" % ship.name
+	var plan := Sim.plan_route(ship.id, _system.index)
+	if ship.status == Ship.Status.TRAVELING:
+		plan = {"ok": false, "error": "%s is already under way" % ship.name}
+	elif ship.status == Ship.Status.REFITTING:
+		plan = {"ok": false, "error": "%s is being refitted" % ship.name}
+	_send_button.disabled = not plan.ok
+	if plan.ok:
+		var jumps: int = plan.path.size() - 1
+		_send_info.text = "%d jump%s  ·  %.1f ly  ·  %d days  ·  arrives %s" % [
+			jumps, "" if jumps == 1 else "s", plan.length, plan.days,
+			Calendar.format(Sim.world.day + plan.days, Sim.world.start_year)]
+		_send_info.add_theme_color_override("font_color", Color(0.45, 0.9, 1.0))
+	else:
+		_send_info.text = plan.error
+		_send_info.add_theme_color_override("font_color", SettlementCard.MUTED)
 
 ## Shrinks back to the content height (Controls grow by themselves but never
 ## shrink when their content gets shorter).

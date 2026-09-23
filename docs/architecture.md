@@ -74,7 +74,18 @@ uninhabited system becomes a robot world, higher for dead ends),
 start world), and an `economy` section (market size log curve, stock cover
 days, transit stock rate, price elasticity/clamps, producer overstock
 slowdown, surplus decay, warmup days, history length, population needs,
-weekly background traffic, and `soak` limits) — see `Economy` below.
+weekly background traffic, and `soak` limits) — see `Economy` below, plus
+`company` (start cash, loan, loan limit, interest, start ship), `shipyards`
+(which settlements build ships) and `ships` (sale share, module resale,
+refit days).
+
+`data/hulls.json` lists hulls (slots, tonnes per slot, speed in ly/day,
+jump range, price, crew cost, maintenance, reliability, production years,
+tech level, allowed modules, default fit). `data/modules.json` lists
+modules: cargo holds (`cargo_class`, capacity factor per slot), cabins and
+suites (passengers), mail bay, armour, drive tune (`speed_mult`), jump
+extender (`range_add`), auto-trader. `data/names.json` also has
+`ship_names`.
 
 ## Star data pipeline
 
@@ -236,6 +247,51 @@ share of samples at each clamp, then fails (exit 1) if more than
 `soak.max_clamp_share` of samples sit at a price clamp or any market's stock
 exceeds `soak.max_stock_ratio` x its target.
 
+## Fleet
+
+`sim/company.gd` (`Company`) is a merchant house: cash, loan, loan limit,
+`take_loan` / `repay_loan`, and `known` (fog of war: one byte per system,
+`is_known`). The player is company 0.
+
+`sim/ship.gd` (`Ship`) holds owner, hull, one module per slot, and status:
+`DOCKED` or `REFITTING` at `system`, or `TRAVELING` along `route` (system
+indices) at `leg` + `leg_progress` ly, with `arrival_day`.
+
+`sim/fleet.gd` (`Fleet`) owns every ship. Specs: `speed` (drive tunes),
+`jump_range` (jump extenders), `capacity` by cargo class, `sale_value`.
+Shipyards: `is_shipyard` (archetype + tech from `balance.json`),
+`hulls_for_sale(system, year)` (production years and tech). Commands:
+`buy`, `sell`, `refit` (+ `refit_quote`: new modules paid, old ones sold at
+`module_resale`, 3 days + 2 per changed slot), `plan_route` (shortest path
+using only lanes within jump range; "Out of range" when only longer jumps
+reach), `send`. `advance_day` moves each travelling ship `speed` ly along
+its legs and returns `arrived` / `refitted` events; `travel_days` =
+ceil(length / speed), so a ship arrives on the day `send` predicted.
+`route_point(ship, extra_ly)` gives position and heading (the renderer adds
+speed x day fraction). Ship ids come from a counter, never reused.
+
+`World` owns `companies` and `fleet` (start ship at the start world) and
+has the command methods, each taking the acting company's id and checking
+ownership: `buy_ship`, `sell_ship`, `refit_ship`, `send_ship`, `take_loan`,
+`repay_loan`; `ships_of(company)`; `plan_route(company, ship, target)`.
+Fog of war: `reveal(company, system)` charts a system and every system one
+jump from it (at the start world, and whenever a ship arrives or passes
+through — `Fleet.advance_day` emits `passed` events); `reveal_all` charts
+everything. `Fleet.plan_route` / `send` take the company's `known` bytes,
+refuse uncharted targets and route only through charted systems
+(`Galaxy.find_path` has an optional `allowed` filter). Commands and ticks append to
+`world.events`; `Sim` drains them after each day and each command
+(`_flush_events`) into `Events.fleet_changed`, `company_changed` and
+`notice` (arrivals, refits, refusals). `Sim` wraps the commands for the
+player (`Sim.PLAYER` = 0) and exposes `day_fraction()` for smooth drawing.
+`charted` events become `Events.charted`. When a player ship arrives or
+leaves the yard, `Sim` pauses (if `auto_pause`) and emits
+`Events.attention(ship, system)`; those ships go into `Sim.waiting` until
+sent on. `Sim.send_ship` resumes at the speed before the pause when no
+ship is left waiting, otherwise it emits `attention` for the next one. `Sim.cheat()` (F2) reveals everything and
+adds `CHEAT_CASH`. Arrival notices say "docked" only where there is a
+settlement ("holding" otherwise).
+
 ## Render layer
 
 `render/star_look.gd` (`StarLook`) is pure functions from a star's spectral
@@ -282,6 +338,19 @@ range. No scene tree dependency, so it's tested for every system in
 `render/shaders/` holds the star, lane, grid, ring and sky shaders; `sky`
 draws faint background stars and a Milky Way band along the galactic
 plane, bulging toward +X (galactic centre).
+
+`GalaxyMap.set_known(bytes)` applies fog of war: every star still glows,
+but lanes (both ends charted), drop lines and name labels are only built
+or shown for charted systems. `show_drop_lines` (key Z) hides the drop
+lines.
+
+`render/ribbon.gd` (`Ribbon`) builds screen-width ribbons for the lane
+shader (starlanes and ship routes). `render/ship_markers.gd`
+(`ShipMarkers`) draws a chevron per ship (`shaders/chevron.gdshader`,
+company colour, pointing along its heading): travelling ships interpolated
+with `Sim.day_fraction()`, docked ships parked around their star. It draws
+the selected ship's remaining route (amber) and a preview route to the
+selected system (cyan), and gives `screen_points` for picking ships.
 
 **Picking coordinate note:** `main.gd` tracks the mouse from
 `InputEventMouse.position` (not `Viewport.get_mouse_position()`, which did not follow input events) so it stays
@@ -341,6 +410,16 @@ base, amber above, faint line at base); `show_system(s)` switches market
 and hides for an uninhabited system, and it refreshes on every
 `Events.day_passed`.
 
+`ui/fleet_panel.gd` (`FleetPanel`, bottom left) lists the player's ships
+with what each is doing; clicking a row selects it. `ui/shipyard_panel.gd`
+(`ShipyardPanel`) shows hulls for sale (Buy) and, for the player's ships
+docked there, per-slot module pickers with the refit quote, Refit and Sell;
+a dim layer sits behind it. `ui/toast.gd` (`Toast`) shows `Events.notice`
+messages under the clock bar. `ClockBar` shows cash (loan in its tooltip).
+`SystemPanel` has a Shipyard button and, with a ship selected, the send
+line (jumps, ly, days, arrival date, or why not) and "Send <ship> here",
+refreshed daily.
+
 ## Main scene
 
 `main.tscn` is a `Node3D` with a `WorldEnvironment` (sky shader
@@ -354,6 +433,15 @@ the map underneath it. Double-click or Enter opens the system view; Esc
 closes the view first, then deselects. `toggle_market()` shows/hides
 `MarketPanel` for the current selection (key M, or `SystemPanel`'s Market
 button); Space calls `Sim.toggle_pause()`; keys 1-4 call `Sim.set_speed()`.
+Clicking a ship chevron (or a fleet row) calls `select_ship()`; with a
+system selected, the route preview shows and S (or the card button) sends
+the ship. The Shipyard button opens `ShipyardPanel`. Esc closes the
+shipyard, then the system view, then the system selection, then the ship
+selection. On `Events.charted` it re-applies the map's fog; on
+`Events.attention` (if `auto_focus`) it selects the ship and its system and
+flies there. Uncharted systems: tooltip and card only say "Uncharted
+system"; market, system view and shipyard stay closed. F2 calls
+`Sim.cheat()`.
 
 ## Tests
 
@@ -404,3 +492,12 @@ prices only once a week, stocks landing in the thousands of tonnes,
 traffic flowing to the dearer market (never across equal prices) and price
 history capping; and `World`'s day/date and determinism, plus a one-year
 health check.
+
+`tests/test_fleet.gd` covers the start company and ship; buying at a
+shipyard and the refusals (no shipyard, cash, tech level, production year);
+refit cost, yard days and refusals; a ship sent three or more lanes
+arriving on exactly the predicted day; short-range ships routing around a
+deep lane or getting "Out of range"; travel days and interpolated
+positions; jump extenders; only your own ships; selling and unique ids;
+loans; fog of war (start charting, uncharted targets refused, travel charts
+one jump further, routes through charted systems only).

@@ -1,0 +1,74 @@
+[
+	{
+		"id": "courier", "name": "Swift courier", "class": "Courier",
+		"slots": 2, "slot_tonnes": 60, "speed": 0.5, "jump_range": 12.0,
+		"price": 180000, "crew_cost": 3000, "maintenance": 2000, "reliability": 0.97,
+		"year_from": 3380, "year_to": 3430, "tech": 5,
+		"allowed": ["container", "cold", "secure", "mail", "cabins", "suites", "drive_tune", "jump_extender", "armour", "auto_trader"],
+		"default_modules": ["container", "mail"]
+	},
+	{
+		"id": "packet", "name": "Packet light freighter", "class": "Light freighter",
+		"slots": 3, "slot_tonnes": 250, "speed": 0.3, "jump_range": 12.0,
+		"price": 450000, "crew_cost": 4000, "maintenance": 3000, "reliability": 0.95,
+		"year_from": 3370, "year_to": 3425, "tech": 4,
+		"allowed": ["*"],
+		"default_modules": ["container", "container", "container"]
+	},
+	{
+		"id": "hauler", "name": "Hauler medium freighter", "class": "Medium freighter",
+		"slots": 5, "slot_tonnes": 400, "speed": 0.25, "jump_range": 12.0,
+		"price": 1200000, "crew_cost": 7000, "maintenance": 6000, "reliability": 0.94,
+		"year_from": 3385, "year_to": 3440, "tech": 6,
+		"allowed": ["*"],
+		"default_modules": ["container", "container", "container", "bulk", "bulk"]
+	},
+	{
+		"id": "leviathan", "name": "Leviathan heavy freighter", "class": "Heavy freighter",
+		"slots": 8, "slot_tonnes": 600, "speed": 0.2, "jump_range": 10.0,
+		"price": 3000000, "crew_cost": 12000, "maintenance": 11000, "reliability": 0.93,
+		"year_from": 3390, "year_to": 3450, "tech": 8,
+		"allowed": ["*"],
+		"default_modules": ["container", "container", "container", "container", "bulk", "bulk", "bulk", "bulk"]
+	},
+	{
+		"id": "ore_barge", "name": "Ore barge bulk carrier", "class": "Bulk carrier",
+		"slots": 6, "slot_tonnes": 900, "speed": 0.2, "jump_range": 11.0,
+		"price": 2200000, "crew_cost": 8000, "maintenance": 7000, "reliability": 0.95,
+		"year_from": 3380, "year_to": 3450, "tech": 6,
+		"allowed": ["bulk", "armour", "drive_tune", "jump_extender", "auto_trader"],
+		"default_modules": ["bulk", "bulk", "bulk", "bulk", "bulk", "bulk"]
+	},
+	{
+		"id": "tanker", "name": "Deuteron tanker", "class": "Tanker",
+		"slots": 6, "slot_tonnes": 800, "speed": 0.22, "jump_range": 12.0,
+		"price": 2400000, "crew_cost": 8000, "maintenance": 7500, "reliability": 0.94,
+		"year_from": 3385, "year_to": 3450, "tech": 7,
+		"allowed": ["tank", "armour", "drive_tune", "jump_extender", "auto_trader"],
+		"default_modules": ["tank", "tank", "tank", "tank", "tank", "tank"]
+	},
+	{
+		"id": "liner", "name": "Starliner", "class": "Liner",
+		"slots": 6, "slot_tonnes": 300, "speed": 0.35, "jump_range": 12.0,
+		"price": 2600000, "crew_cost": 14000, "maintenance": 8000, "reliability": 0.96,
+		"year_from": 3395, "year_to": 3450, "tech": 7,
+		"allowed": ["cabins", "suites", "mail", "cold", "container", "armour", "drive_tune", "jump_extender", "auto_trader"],
+		"default_modules": ["cabins", "cabins", "cabins", "suites", "suites", "mail"]
+	},
+	{
+		"id": "pathfinder", "name": "Pathfinder long-range trader", "class": "Long-range trader",
+		"slots": 4, "slot_tonnes": 300, "speed": 0.35, "jump_range": 16.0,
+		"price": 1900000, "crew_cost": 7000, "maintenance": 6500, "reliability": 0.93,
+		"year_from": 3405, "year_to": 3460, "tech": 8,
+		"allowed": ["*"],
+		"default_modules": ["container", "container", "cold", "secure"]
+	},
+	{
+		"id": "hauler_ii", "name": "Hauler II medium freighter", "class": "Medium freighter",
+		"slots": 6, "slot_tonnes": 450, "speed": 0.32, "jump_range": 13.0,
+		"price": 1700000, "crew_cost": 7500, "maintenance": 5500, "reliability": 0.97,
+		"year_from": 3412, "year_to": 3470, "tech": 7,
+		"allowed": ["*"],
+		"default_modules": ["container", "container", "container", "container", "bulk", "bulk"]
+	}
+]

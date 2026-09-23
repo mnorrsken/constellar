@@ -29,6 +29,8 @@ static func load_object(path: String) -> Dictionary:
 static func load_world_content(dir: String) -> Dictionary:
 	return {
 		"commodities": load_list(dir + "commodities.json"),
+		"hulls": load_list(dir + "hulls.json"),
+		"modules": load_list(dir + "modules.json"),
 		"known_planets": load_object(dir + "known_planets.json"),
 		"planet_types": load_list(dir + "planet_types.json"),
 		"archetypes": load_list(dir + "archetypes.json"),

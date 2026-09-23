@@ -1,18 +1,27 @@
 extends Node3D
-## Main scene: the star map. Wires the map view, camera, picking and UI.
+## Main scene: the star map. Wires the map view, ships, camera, picking and UI.
 
 const PICK_RADIUS_PX := 16.0
 
 @onready var map: GalaxyMap = $GalaxyMap
+@onready var markers: ShipMarkers = $ShipMarkers
 @onready var camera: MapCamera = $MapCamera
 @onready var tooltip: StarTooltip = $UI/Tooltip
 @onready var debug_overlay: DebugOverlay = $UI/DebugOverlay
 @onready var panel: SystemPanel = $UI/SystemPanel
 @onready var system_view: SystemView = $UI/SystemView
 @onready var market_panel: MarketPanel = $UI/MarketPanel
+@onready var fleet_panel: FleetPanel = $UI/FleetPanel
+@onready var shipyard: ShipyardPanel = $UI/ShipyardPanel
+@onready var shipyard_dim: ColorRect = $UI/ShipyardDim
 
 ## Market panel wanted open (it follows the selection while on).
 var _market_open := false
+## Selected ship id, or -1.
+var selected_ship := -1
+## Fly the camera to a ship that needs orders (arrived, out of the yard).
+## Will be a menu option, like Sim.auto_pause.
+var auto_focus := true
 
 ## Last mouse position from motion events, in the same space as clicks and
 ## Camera3D.unproject_position. OFF_SCREEN while the mouse is outside.
@@ -20,17 +29,30 @@ var _mouse := StarPicker.OFF_SCREEN
 
 func _ready() -> void:
 	map.build(Sim.galaxy)
+	map.set_known(Sim.player().known)
+	markers.setup(Sim.world, map)
 	debug_overlay.map = map
 	debug_overlay.camera = camera
 	camera.clicked.connect(_on_clicked)
 	camera.double_clicked.connect(_on_double_clicked)
 	panel.view_requested.connect(open_system_view)
 	panel.market_requested.connect(toggle_market)
+	panel.send_requested.connect(send_selected_ship)
+	panel.shipyard_requested.connect(open_shipyard)
+	fleet_panel.ship_selected.connect(select_ship)
 	system_view.closed.connect(func(): camera.input_enabled = true)
+	shipyard.closed.connect(func():
+		camera.input_enabled = true
+		shipyard_dim.visible = false)
+	Events.fleet_changed.connect(_update_preview)
+	Events.charted.connect(_on_charted)
+	Events.attention.connect(_on_attention)
 
 func _process(_delta: float) -> void:
 	# Re-pick every frame: the camera may be moving under a still mouse.
-	var i := pick(_mouse) if _mouse != StarPicker.OFF_SCREEN and not system_view.visible else -1
+	var i := -1
+	if _mouse != StarPicker.OFF_SCREEN and not system_view.visible and not shipyard.visible:
+		i = pick(_mouse)
 	if i != map.hovered:
 		map.set_hovered(i)
 	if i >= 0:
@@ -58,8 +80,21 @@ func pick(screen_pos: Vector2) -> int:
 	var hit := StarPicker.nearest(points, screen_pos, PICK_RADIUS_PX)
 	return map.star_system(hit) if hit >= 0 else -1
 
+## Id of the ship chevron under a screen position, or -1.
+func pick_ship(screen_pos: Vector2) -> int:
+	var hits := markers.screen_points(camera)
+	var points := PackedVector2Array()
+	for h in hits:
+		points.append(h[1])
+	var i := StarPicker.nearest(points, screen_pos, PICK_RADIUS_PX * 0.8)
+	return hits[i][0] if i >= 0 else -1
+
 func _on_clicked(screen_pos: Vector2) -> void:
-	select(pick(screen_pos))
+	var ship := pick_ship(screen_pos)
+	if ship >= 0:
+		select_ship(ship)
+	else:
+		select(pick(screen_pos))
 
 func _on_double_clicked(screen_pos: Vector2) -> void:
 	var i := pick(screen_pos)
@@ -79,6 +114,49 @@ func select(i: int) -> void:
 	else:
 		panel.visible = false
 		market_panel.visible = false
+	_update_preview()
+
+## Selects one of the player's ships (-1 = none). With a system selected the
+## card then offers to send it there, and the route is previewed.
+func select_ship(ship_id: int) -> void:
+	selected_ship = ship_id
+	markers.selected_ship = ship_id
+	fleet_panel.select(ship_id)
+	panel.set_ship(ship_id)
+	if ship_id >= 0:
+		camera.fly_to(markers.ship_position(ship_id), 30.0)
+	_update_preview()
+
+func _on_charted(company_id: int) -> void:
+	if company_id != Sim.PLAYER:
+		return
+	map.set_known(Sim.player().known)
+	if map.selected >= 0:
+		panel.show_system(map.galaxy.systems[map.selected])
+
+## A player ship needs orders: select it and its system, and fly there.
+func _on_attention(ship_id: int, system_index: int) -> void:
+	if not auto_focus or system_view.visible or shipyard.visible:
+		return
+	select_ship(ship_id)
+	select(system_index)
+	camera.fly_to(map.system_position(system_index), 12.0)
+
+func send_selected_ship() -> void:
+	if selected_ship >= 0 and map.selected >= 0:
+		Sim.send_ship(selected_ship, map.selected)
+
+func _update_preview() -> void:
+	var ship: Ship = Sim.world.fleet.get_ship(selected_ship) if selected_ship >= 0 else null
+	if ship == null and selected_ship >= 0:
+		selected_ship = -1  # sold
+		markers.selected_ship = -1
+		panel.set_ship(-1)
+	markers.preview_path = PackedInt32Array()
+	if ship and ship.status != Ship.Status.TRAVELING and map.selected >= 0:
+		var plan := Sim.plan_route(ship.id, map.selected)
+		if plan.ok:
+			markers.preview_path = plan.path
 
 func toggle_market() -> void:
 	_market_open = not _market_open
@@ -90,27 +168,52 @@ func toggle_market() -> void:
 func open_system_view() -> void:
 	if map.selected < 0:
 		return
+	if not Sim.player().is_known(map.selected):
+		Events.notice.emit("Uncharted: send a ship within one jump first")
+		return
 	tooltip.visible = false
 	camera.input_enabled = false
 	system_view.open(map.galaxy.systems[map.selected])
+
+func open_shipyard() -> void:
+	if map.selected < 0 or not Sim.player().is_known(map.selected) \
+			or not Sim.world.fleet.is_shipyard(map.selected):
+		return
+	tooltip.visible = false
+	camera.input_enabled = false
+	shipyard_dim.visible = true
+	shipyard.open(map.selected)
 
 func _unhandled_input(event: InputEvent) -> void:
 	var k := event as InputEventKey
 	if k == null or not k.pressed or k.echo:
 		return
+	var overlay := system_view.visible or shipyard.visible
 	match k.physical_keycode:
 		KEY_ESCAPE:
-			if system_view.visible:
+			if shipyard.visible:
+				shipyard.close_panel()
+			elif system_view.visible:
 				system_view.close_view()
-			else:
+			elif map.selected >= 0:
 				select(-1)
+			else:
+				select_ship(-1)
 		KEY_ENTER, KEY_KP_ENTER:
-			if not system_view.visible:
+			if not overlay:
 				open_system_view()
 		KEY_M:
-			if not system_view.visible:
+			if not overlay:
 				toggle_market()
+		KEY_S:
+			if not overlay:
+				send_selected_ship()
 		KEY_SPACE:
 			Sim.toggle_pause()
+		KEY_F2:
+			Sim.cheat()
+		KEY_Z:
+			map.show_drop_lines = not map.show_drop_lines
+			Events.notice.emit("Drop lines %s" % ("on" if map.show_drop_lines else "off"))
 		KEY_1, KEY_2, KEY_3, KEY_4:
 			Sim.set_speed(k.physical_keycode - KEY_0)

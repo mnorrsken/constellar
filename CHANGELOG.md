@@ -8,6 +8,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Ships and travel: `data/hulls.json` (9 hulls from a courier to heavy
+  freighters, a bulk carrier, a tanker, a liner and two later models) and
+  `data/modules.json` (cargo holds by cargo class, cabins, suites, mail bay,
+  armour, drive tune, jump extender, auto-trader). The player's company
+  (`Company`: cash, loan) starts with the Packet *Wanderer* at Lodestar.
+  `Fleet` handles specs, shipyards (industrial/core/military/robot worlds at
+  tech 8+, any world at tech 10), buying, selling, refits (cost, days in the
+  yard), route planning limited by jump range, and daily travel; ships arrive
+  on the predicted day. `World` commands take a company id (`buy_ship`,
+  `sell_ship`, `refit_ship`, `send_ship`, `take_loan`, `repay_loan`) and
+  report events that `Sim` turns into signals and notices. On the map, ships
+  are chevrons in company colour moving smoothly along lanes, with the
+  selected ship's route and a preview route. UI: fleet list, shipyard
+  (buy / refit / sell), send line on the system card (jumps, ly, days,
+  arrival date or why not), cash on the clock bar, notices. Ships in a
+  system without a settlement are "holding", not "docked".
+- Fog of war: each company charts systems (`Company.known`); a system and
+  everything one jump from it are charted for good when a ship reaches or
+  passes through it (the start world and its neighbours at the start).
+  Uncharted stars show only their glow — no name, drop line, lanes, card,
+  market or system view — and routes may only use charted systems.
+- The game pauses and the camera flies to a player ship that arrives or
+  leaves the yard (`Sim.auto_pause`, `main.gd auto_focus`; menu options
+  later). F2 cheat: chart everything and add 10,000,000 cr.
+- Drop lines are fainter, and Z hides/shows them (`GalaxyMap.show_drop_lines`).
+- Sending a ship resumes the game at its previous speed, unless other ships
+  are still waiting for orders (`Sim.waiting`, shown as "awaiting orders" in
+  the fleet list); then it stays paused and focuses the next waiting ship.
 - Calendar and markets: `data/archetypes.json` archetypes now list `industries`
   (input/output recipes, per market size) and `needs` (including `"*"` for
   free ports, which need every good); `data/balance.json` gets an `economy`
