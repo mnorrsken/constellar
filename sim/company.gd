@@ -76,12 +76,14 @@ func cash_net(month: int, ship_id := -1) -> float:
 	return total
 
 ## Profit in a month: like cash_net, but goods count when they are sold
-## (at what they cost) instead of when they are bought. Ship or company.
+## (at what they cost) instead of when they are bought, and buying,
+## refitting or selling ships ("ships") is investment, not profit. Ship or
+## company.
 func profit(month: int, ship_id := -1) -> float:
 	var total := 0.0
 	var cats: Dictionary = ledger.get(month, {}) if ship_id < 0 else ship_ledger.get(ship_id, {}).get(month, {})
 	for k in cats:
-		if k != "purchases":
+		if k != "purchases" and k != "ships":
 			total += cats[k]
 	return total
 

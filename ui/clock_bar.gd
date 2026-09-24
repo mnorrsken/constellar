@@ -50,4 +50,6 @@ func _refresh() -> void:
 	_cash.text = "%s cr " % Format.thousands(roundi(p.cash))
 	_cash.tooltip_text = "%s\nCash %s cr\nLoan %s of %s cr" % [p.name, Format.thousands(roundi(p.cash)),
 		Format.thousands(roundi(p.loan)), Format.thousands(roundi(p.loan_max))]
-	_buttons[Sim.speed].set_pressed_no_signal(true)
+	# set_pressed_no_signal skips the button group, so clear the others too.
+	for i in _buttons.size():
+		_buttons[i].set_pressed_no_signal(i == Sim.speed)

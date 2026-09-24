@@ -22,6 +22,15 @@ var _grid := GridContainer.new()
 var _system := -1
 var _cells: Array = []  # per commodity: [name, price, change, stock, tag, spark, aboard, buy, sell]
 var _trade_ship: Ship
+## Screen y the panel must end above (the fleet card; set by main.gd). The
+## table scrolls when it would run lower.
+var bottom_limit := 800.0:
+	set(value):
+		if absf(value - bottom_limit) > 1.0:
+			bottom_limit = value
+			_fit()
+var _scroll := ScrollContainer.new()
+var _viewer := ShipViewer.new()
 
 func _ready() -> void:
 	visible = false
@@ -66,7 +75,18 @@ func _ready() -> void:
 			_grid.add_child(cell)
 		_cells.append(row)
 	var close := _label("M to close", MUTED, 12)
-	for c in [_title, _status, trade_row, _grid, close]:
+	# Title and status on the left, the docked ship's model on the right.
+	var head := HBoxContainer.new()
+	var words := VBoxContainer.new()
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.add_child(_title)
+	words.add_child(_status)
+	_viewer.custom_minimum_size = Vector2(220, 84)
+	head.add_child(words)
+	head.add_child(_viewer)
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.add_child(_grid)
+	for c in [head, trade_row, _scroll, close]:
 		box.add_child(c)
 	add_child(box)
 	Events.day_passed.connect(func(_d): _refresh())
@@ -94,6 +114,9 @@ func _refresh() -> void:
 	var m := w.economy.market_at(_system)
 	_trade_ship = _docked_ship()
 	var live := _trade_ship != null
+	_viewer.visible = live
+	if live:
+		_viewer.show_ship(_trade_ship)
 	var known := w.known_prices(Sim.PLAYER, _system)
 	var prices: PackedFloat64Array
 	if live:
@@ -117,6 +140,7 @@ func _refresh() -> void:
 	if general > 0.0:
 		_status.text += "  ·  %d%% tariff on sales" % roundi(general * 100.0)
 	_grid.visible = live or not known.is_empty()
+	_scroll.visible = _grid.visible
 	_hold.visible = live
 	_lot.visible = live
 	if live:
@@ -208,6 +232,10 @@ func _trade(commodity_id: String, buying: bool) -> void:
 ## Back to content size (Controls grow but never shrink by themselves).
 func _fit() -> void:
 	(func():
+		if not visible:
+			return
+		if _scroll.visible:
+			Fit.cap(self, _scroll, _grid, bottom_limit)
 		offset_right = offset_left
 		offset_bottom = offset_top).call_deferred()
 

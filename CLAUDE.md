@@ -23,6 +23,9 @@ Godot is installed via Homebrew (`brew install --cask godot`), on PATH as
 - `make soak` — 20 game years of the economy headless; fails if markets sit
   at the price clamps too often or stock runs away (limits in
   `data/balance.json` economy.soak). Run it after changing economy data.
+- `make audio` — regenerate the music loops and UI sounds
+  (`tools/make_audio.py`, plain Python). The WAVs are not in git; `make
+  run`/`editor`/`import` build them when the script changes
 - `make clean` — remove the `.godot/` cache
 
 Override the binary if needed: `make test GODOT=/path/to/godot`.

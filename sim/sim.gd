@@ -161,17 +161,21 @@ func player() -> Company:
 func _run(result: Dictionary) -> Dictionary:
 	if not result.get("ok", false):
 		Events.notice.emit(result.get("error", "Not possible"))
+		Events.refused.emit(result.get("error", "Not possible"))
 	_flush_events()
 	return result
 
 func _hit_notice(e: Dictionary) -> void:
 	var near := WorldEvents.place_name(world, e.system)
 	var insured := "  Insurance paid %s cr." % Format.thousands(roundi(e.payout)) if e.has("payout") else ""
+	var text := ""
 	if e.type == "lost":
-		Events.notice.emit("%s was lost with all aboard near %s.%s" % [e.name, near, insured])
+		text = "%s was lost with all aboard near %s.%s" % [e.name, near, insured]
 	else:
-		Events.notice.emit("%s was raided near %s: cargo lost, repairs %s cr.%s" % [e.name, near,
-			Format.thousands(roundi(e.repairs)), insured])
+		text = "%s was raided near %s: cargo lost, repairs %s cr.%s" % [e.name, near,
+			Format.thousands(roundi(e.repairs)), insured]
+	Events.notice.emit(text)
+	Events.alert.emit(text)
 
 func _contract_notice(e: Dictionary) -> void:
 	var c := world.get_contract(e.contract)
@@ -223,6 +227,8 @@ func _flush_events() -> void:
 						Format.thousands(roundi(e.repairs))])
 			"arrived", "refitted", "departed", "bought", "sold", "refitting", "servicing":
 				fleet_moved = true
+				if e.type in ["bought", "sold", "refitting", "servicing"] and e.get("company", -1) == PLAYER:
+					Events.confirmed.emit(e.type)
 				if e.type == "sold":
 					waiting.erase(e.ship)
 				if e.type in ["bought", "sold", "refitting", "servicing"]:
@@ -258,6 +264,8 @@ func _flush_events() -> void:
 						set_speed(0)
 			"contract_accepted", "contract_done", "contract_failed":
 				contracts_moved = true
+				if e.type == "contract_accepted" and e.company == PLAYER:
+					Events.confirmed.emit(e.type)
 				fleet_moved = true  # hold space and berths changed
 				if e.type != "contract_accepted":
 					cash_changed[e.company] = true

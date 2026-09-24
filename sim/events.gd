@@ -35,6 +35,16 @@ signal news_posted(item: Dictionary)
 ## government changed).
 signal world_events_changed
 
+## A player command was refused (the reason is also a notice).
+signal refused(text: String)
+
+## Bad news for the player: a ship raided or lost.
+signal alert(text: String)
+
+## A player action went through: "bought", "sold", "refitting",
+## "servicing", "contract_accepted".
+signal confirmed(kind: String)
+
 ## A company charted new systems (fog of war lifted).
 signal charted(company_id: int)
 

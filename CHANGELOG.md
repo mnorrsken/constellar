@@ -8,6 +8,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The fleet panel is a fixed-size ship picker, so big fleets stay tidy:
+  "Ships (n)" opens a scrollable list (⚠ marks ships that need a look),
+  ◀ ▶ step through the fleet, "All" opens the fleet screen.
+- Ship card (right column): clicking a ship shows its model, route, cargo
+  manifest (cost and worth), contracts aboard, condition, profit, and
+  buttons for its orders and its port's market, contracts and yard. Star
+  and ship cards have ✕; side panels scroll instead of running under the
+  fleet card or the news ticker.
+- Refits at every inhabited world ("Refit dock"): a port fits the modules
+  its tech level allows (`tech` per module in `modules.json`; greyed out on
+  the rack otherwise). Buying, selling and servicing ships stay at the
+  major worlds' shipyards.
+- Shipyard: new ships are a short list (name, class, price); click one to
+  see it turning in 3D with its numbers, standard fit and Buy.
+- Ships now have procedural 3D models (`render/ship_model.gd`, built from
+  primitive meshes, no art assets) shaped by each hull's new `look` (length,
+  beam, nose, engines, fins, paint) and each fitted module's new `look`
+  (shape, colour) — crates, hopper, reefer, tanks, vault, cabins, pods,
+  mailpod, armour plates, drive tune, jump ring, auto-trader dish all show on
+  the model. `ui/ship_viewer.gd` shows one, lit and slowly turning (drag to
+  turn it by hand), in the fleet list, the market header, the route orders
+  panel, a thumbnail per ship on the fleet screen, and a hull/fit preview in
+  the shipyard.
+- Music and UI sound, generated (not committed) by `tools/make_audio.py`
+  (pure Python, no libraries, deterministic) via `make audio`: a music loop
+  per government (concordance, democracy, corporate, theocracy, junta,
+  feudal, custodians, anarchy, zealots) plus a "space" theme for the open
+  map, crossfading to the government of the star you've zoomed in on; UI
+  sounds (click, select, open/close, confirm, error, chime, coin/loss, hail,
+  alert, pause/resume) play on buttons and on `Events.refused`/`alert`/
+  `confirmed`/`attention`/`news_posted`/pause. K cycles music/sound/off.
 - Real UI and finance: ships age (`sim/aging.gd`) — condition (1 = new) wears
   daily and faster while travelling; reliability is hull reliability x
   condition; a travelling ship can break down (chance from reliability),
@@ -193,3 +224,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Fixed two HYG curation errors: Gliese 860's M6 companion had been picked
   as the system primary (renamed to Kruger 60, correct primary); 36
   Ophiuchi's three components corrected to dwarfs.
+
+### Fixed
+
+- The clock bar could show several speed buttons pressed at once.
+- Profit (charts, ship tables, loss reasons) no longer counts buying or refitting
+  ships as a loss; the cash ledger still shows it.

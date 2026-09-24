@@ -1,6 +1,9 @@
 # Godot 4 auto-generated cache and imported resources — never commit.
 .godot/
 
+# Generated audio (tools/make_audio.py; `make audio` rebuilds it).
+/assets/audio/
+
 # Exported builds.
 /build/
 /dist/

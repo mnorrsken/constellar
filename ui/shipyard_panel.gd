@@ -1,10 +1,14 @@
 class_name ShipyardPanel
 extends PanelContainer
-## Shipyard at one system. New ships: the hulls built here this year side
-## by side (new models marked). Your ships here: a fitting view per ship —
-## drag a module from the rack onto a slot (or drag between slots to swap),
-## see the refit price and days, then Refit — plus Service and Sell.
-## Opened from the system card; Esc closes.
+## Shipyard (major worlds) or refit dock (any other port) at one system.
+## New ships, at shipyards only: a short list of the hulls built here this
+## year (name, class, price; new models marked); click one to see it
+## turning in 3D with all its numbers, its standard fit and Buy. Your ships
+## here: a fitting view per ship — drag a module from the rack onto a slot
+## (or drag between slots to swap), see the ship as refitted, the price and
+## days, then Refit. The rack greys out modules this port doesn't make
+## (tech level). Service and Sell at shipyards only. Opened from the system
+## card; Esc closes.
 
 signal closed
 
@@ -26,8 +30,19 @@ var system := -1
 
 var _title := Label.new()
 var _cash := Label.new()
-var _hulls := GridContainer.new()
+var _hulls := VBoxContainer.new()
 var _refits := VBoxContainer.new()
+## The selected hull's card: model, numbers, standard fit, Buy.
+var _preview := ShipViewer.new()
+var _detail_name := Label.new()
+var _detail_class := Label.new()
+var _stats := GridContainer.new()
+var _fit_text := Label.new()
+var _buy := Button.new()
+var _selected_hull := ""
+var _new_ships := HBoxContainer.new()
+var _new_title: Label
+var _no_yard := Label.new()
 ## Ship id -> the fit being edited (module per slot), until refitted.
 var _pending: Dictionary = {}
 
@@ -37,6 +52,8 @@ class ModuleChip extends PanelContainer:
 	var label := ""
 
 	func _get_drag_data(_at: Vector2) -> Variant:
+		if module_id == "":
+			return null  # not made at this port
 		var preview := Label.new()
 		preview.text = label
 		preview.add_theme_color_override("font_color", Color(0.98, 0.72, 0.3))
@@ -87,11 +104,21 @@ func _ready() -> void:
 	close.pressed.connect(close_panel)
 	for c in [_title, _cash, close]:
 		head.add_child(c)
-	_hulls.columns = 11
-	_hulls.add_theme_constant_override("h_separation", 16)
-	_hulls.add_theme_constant_override("v_separation", 4)
+	_hulls.add_theme_constant_override("separation", 3)
+	_hulls.custom_minimum_size = Vector2(500, 0)
 	_refits.add_theme_constant_override("separation", 14)
-	for c in [head, _section("New ships"), _hulls, HSeparator.new(), _section("Your ships here"), _refits]:
+	_new_ships.add_theme_constant_override("separation", 18)
+	_new_ships.add_child(_hulls)
+	_new_ships.add_child(VSeparator.new())
+	_new_ships.add_child(_detail_card())
+	_new_title = _section("New ships  ·  click one to see it")
+	_no_yard.text = "No shipyard here: new ships are built, sold and serviced at the major worlds " \
+		+ "(industrial, core, military and robot worlds of tech 8 or more, and any world of tech 10)."
+	_no_yard.add_theme_font_size_override("font_size", 14)
+	_no_yard.add_theme_color_override("font_color", MUTED)
+	_no_yard.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_no_yard.custom_minimum_size = Vector2(900, 0)
+	for c in [head, _new_title, _new_ships, _no_yard, HSeparator.new(), _section("Your ships here"), _refits]:
 		box.add_child(c)
 	add_child(box)
 	Events.company_changed.connect(func(_c): _refresh())
@@ -100,7 +127,11 @@ func _ready() -> void:
 func open(system_index: int) -> void:
 	system = system_index
 	var s: StarSystem = Sim.galaxy.systems[system_index]
-	_title.text = "Shipyard  ·  %s  (%s)" % [s.settlement.name, s.name]
+	var yard: bool = Sim.world.fleet.is_shipyard(system_index)
+	_title.text = "%s  ·  %s  (%s)" % ["Shipyard" if yard else "Refit dock", s.settlement.name, s.name]
+	_new_title.visible = yard
+	_new_ships.visible = yard
+	_no_yard.visible = not yard
 	_pending.clear()
 	visible = true
 	Motion.pop_in(self)
@@ -116,28 +147,13 @@ func _refresh() -> void:
 	var world: World = Sim.world
 	_cash.text = "%s cr   " % Format.thousands(roundi(Sim.player().cash))
 	_clear(_hulls)
-	for h in ["Hull", "", "Class", "Slots", "Cargo", "Speed", "Jump", "Reliability", "Upkeep / month", "Price", ""]:
-		_hulls.add_child(_cell(h, MUTED, 12))
-	for id in world.fleet.hulls_for_sale(system, world.year()):
-		var h: Dictionary = Defs.world_content.hulls[id]
-		var price := _fitted_price(h)
-		var fresh := world.year() - int(h.year_from) <= NEW_YEARS and int(h.year_from) > world.start_year - NEW_YEARS
-		_hulls.add_child(_cell(h.name, TEXT, 15))
-		_hulls.add_child(_cell("NEW" if fresh else "", AMBER, 11))
-		_hulls.add_child(_cell(h["class"], MUTED, 14))
-		_hulls.add_child(_cell("%d" % h.slots, Color.WHITE, 14, true))
-		_hulls.add_child(_cell("%s t" % Format.thousands(int(h.slots) * int(h.slot_tonnes)), Color.WHITE, 14, true))
-		_hulls.add_child(_cell("%.2f ly/d" % h.speed, Color.WHITE, 14, true))
-		_hulls.add_child(_cell("%.0f ly" % h.jump_range, Color.WHITE, 14, true))
-		_hulls.add_child(_cell("%d%%" % roundi(float(h.reliability) * 100.0), Color.WHITE, 14, true))
-		_hulls.add_child(_cell("%s cr" % Format.thousands(int(h.crew_cost) + int(h.maintenance)), Color.WHITE, 14, true))
-		_hulls.add_child(_cell("%s cr" % Format.thousands(roundi(price)), AMBER, 14, true))
-		var buy := Button.new()
-		buy.text = "Buy"
-		buy.focus_mode = Control.FOCUS_NONE
-		buy.disabled = Sim.player().cash < price
-		buy.pressed.connect(func(): Sim.buy_ship(id, system))
-		_hulls.add_child(buy)
+	var for_sale := world.fleet.hulls_for_sale(system, world.year())
+	if not for_sale.is_empty() and not (_selected_hull in for_sale):
+		_selected_hull = for_sale[0]
+	var group := ButtonGroup.new()
+	for id in for_sale:
+		_hulls.add_child(_hull_row(world, id, group))
+	_show_detail(world)
 	_clear(_refits)
 	var here := world.ships_of(Sim.PLAYER).filter(
 		func(s): return s.system == system and s.status != Ship.Status.TRAVELING)
@@ -153,6 +169,7 @@ func _fitting(s: Ship) -> Control:
 	var world: World = Sim.world
 	var fleet := world.fleet
 	var busy := s.status == Ship.Status.REFITTING
+	var yard := fleet.is_shipyard(system)
 	var fit: Array = _pending.get(s.id, Array(s.modules))
 	var row := VBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
@@ -163,24 +180,41 @@ func _fitting(s: Ship) -> Control:
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(name_label)
 	var q := Aging.service_quote(world, s)
-	var service := _button("Service  %s cr" % Format.thousands(roundi(q.cost)), func(): Sim.service_ship(s.id))
-	service.disabled = busy or q.cost < 1.0
+	var service := _button("Service  %s cr" % Format.thousands(roundi(q.cost)) if q.cost >= 1.0 else "Service",
+		func(): Sim.service_ship(s.id))
+	service.disabled = busy or q.cost < 1.0 or not yard
 	service.tooltip_text = "%d days in the yard, back to %d%% (the best its age allows)" % [q.days,
 		roundi(q.condition * 100.0)] if q.cost >= 1.0 else "In as good a state as its age allows"
+	if not yard:
+		service.tooltip_text = "Servicing needs a shipyard"
 	var sell := _button("Sell  %s cr" % Format.thousands(roundi(fleet.sale_value(s))), func(): Sim.sell_ship(s.id))
-	sell.disabled = busy
+	sell.disabled = busy or not yard
+	if not yard:
+		sell.tooltip_text = "Ships are sold at a shipyard"
 	head.add_child(service)
 	head.add_child(sell)
 	row.add_child(head)
 	if busy:
 		row.add_child(_cell("In the yard until %s." % Calendar.format(s.busy_until, world.start_year), AMBER, 14))
 		return row
-	# The slot diagram.
+	# The slot diagram and rack on the left, the ship as refitted on the right.
+	var fitting := HBoxContainer.new()
+	fitting.add_theme_constant_override("separation", 14)
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 6)
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var slots := HBoxContainer.new()
 	slots.add_theme_constant_override("separation", 4)
 	for i in fit.size():
 		slots.add_child(_slot(s, i, fit[i]))
-	row.add_child(slots)
+	left.add_child(slots)
+	var model := ShipViewer.new()
+	model.custom_minimum_size = Vector2(260, 130)
+	model.show_fit(s.hull, fit, Sim.player().color)
+	model.tooltip_text = "As it will look after the refit. Drag to turn it."
+	fitting.add_child(left)
+	fitting.add_child(model)
+	row.add_child(fitting)
 	# The rack of modules this hull takes.
 	var rack := HFlowContainer.new()
 	rack.add_theme_constant_override("h_separation", 6)
@@ -188,8 +222,8 @@ func _fitting(s: Ship) -> Control:
 	rack.add_child(_cell("Drag onto a slot:", MUTED, 13))
 	for m in Defs.world_content.modules:
 		if fleet.module_allowed(s.hull, m):
-			rack.add_child(_chip(m))
-	row.add_child(rack)
+			rack.add_child(_chip(m, fleet.module_sold_at(system, m)))
+	left.add_child(rack)
 	# Quote and actions.
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)
@@ -212,6 +246,106 @@ func _fitting(s: Ship) -> Control:
 	row.add_child(actions)
 	return row
 
+## One hull in the list: name (and NEW), class, price; click to select.
+func _hull_row(world: World, id: String, group: ButtonGroup) -> Button:
+	var h: Dictionary = Defs.world_content.hulls[id]
+	var row := Button.new()
+	row.toggle_mode = true
+	row.button_group = group
+	row.button_pressed = id == _selected_hull
+	row.focus_mode = Control.FOCUS_NONE
+	row.custom_minimum_size = Vector2(0, 34)
+	row.pressed.connect(func():
+		_selected_hull = id
+		_show_detail(Sim.world))
+	var cols := HBoxContainer.new()
+	cols.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	cols.offset_left = 10
+	cols.offset_right = -10
+	cols.add_theme_constant_override("separation", 10)
+	cols.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var fresh := world.year() - int(h.year_from) <= NEW_YEARS and int(h.year_from) > world.start_year - NEW_YEARS
+	var name_label := _cell(h.name, TEXT, 15)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var parts: Array[Control] = [name_label]
+	if fresh:
+		parts.append(_cell("NEW", AMBER, 11))
+	parts.append(_cell(h["class"], MUTED, 13))
+	var price := _cell("%s cr" % Format.thousands(roundi(_fitted_price(h))), AMBER, 14, true)
+	price.custom_minimum_size = Vector2(120, 0)
+	price.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	parts.append(price)
+	for p in parts:
+		p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		cols.add_child(p)
+	row.add_child(cols)
+	return row
+
+## The card for the selected hull (built once; filled by _show_detail).
+func _detail_card() -> Control:
+	var card := VBoxContainer.new()
+	card.add_theme_constant_override("separation", 6)
+	card.custom_minimum_size = Vector2(420, 0)
+	_detail_name.add_theme_font_override("font", Fonts.weight(Fonts.DISPLAY, 700))
+	_detail_name.add_theme_font_size_override("font_size", 20)
+	_detail_class.add_theme_font_size_override("font_size", 13)
+	_detail_class.add_theme_color_override("font_color", MUTED)
+	_preview.custom_minimum_size = Vector2(420, 200)
+	_preview.tooltip_text = "Drag to turn it"
+	_stats.columns = 4
+	_stats.add_theme_constant_override("h_separation", 14)
+	_stats.add_theme_constant_override("v_separation", 2)
+	_fit_text.add_theme_font_size_override("font_size", 13)
+	_fit_text.add_theme_color_override("font_color", CYAN)
+	_fit_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_fit_text.custom_minimum_size = Vector2(420, 0)
+	_buy.focus_mode = Control.FOCUS_NONE
+	_buy.pressed.connect(func(): Sim.buy_ship(_selected_hull, system))
+	for c in [_detail_name, _detail_class, _preview, _stats, _fit_text, _buy]:
+		card.add_child(c)
+	return card
+
+func _show_detail(world: World) -> void:
+	if _selected_hull == "":
+		_detail_name.text = "No ships built here this year"
+		_preview.clear()
+		_buy.visible = false
+		return
+	var h: Dictionary = Defs.world_content.hulls[_selected_hull]
+	var modules: Array = h.get("default_modules", [])
+	_detail_name.text = h.name
+	_detail_class.text = "%s  ·  built %d–%d  ·  needs tech %d" % [h["class"], int(h.year_from), int(h.year_to), int(h.tech)]
+	_preview.show_fit(_selected_hull, modules, Sim.player().color)
+	_clear(_stats)
+	var rows := [
+		["Slots", "%d × %d t" % [int(h.slots), int(h.slot_tonnes)]],
+		["Cargo", "%s t" % Format.thousands(int(h.slots) * int(h.slot_tonnes))],
+		["Speed", "%.2f ly/day" % float(h.speed)],
+		["Jump", "%.0f ly" % float(h.jump_range)],
+		["Reliability", "%d%%" % roundi(float(h.reliability) * 100.0)],
+		["Fuel", "%d t per ly" % int(h.get("fuel_per_ly", 0))],
+		["Crew", "%s cr/month" % Format.thousands(int(h.crew_cost))],
+		["Maintenance", "%s cr/month" % Format.thousands(int(h.maintenance))],
+	]
+	for r in rows:
+		_stats.add_child(_cell(r[0], MUTED, 13))
+		_stats.add_child(_cell(r[1], Color.WHITE, 13, true))
+	# "4 × Container hold, 2 × Bulk hold", in fitting order.
+	var counts := {}
+	for m in modules:
+		counts[m] = counts.get(m, 0) + 1
+	var names := PackedStringArray()
+	for m in counts:
+		names.append(("%d × %s" % [counts[m], _module_name(m)]) if counts[m] > 1 else _module_name(m))
+	_fit_text.text = "Standard fit: %s  ·  refit it later at any shipyard" % ", ".join(names)
+	var price := _fitted_price(h)
+	var cash := Sim.player().cash
+	_buy.visible = true
+	_buy.disabled = cash < price
+	_buy.text = "Buy  %s cr" % Format.thousands(roundi(price)) if cash >= price \
+		else "Buy  %s cr  ·  %s more needed" % [Format.thousands(roundi(price)), Format.thousands(roundi(price - cash))]
+
 func _slot(s: Ship, i: int, module_id: String) -> SlotBox:
 	var box := SlotBox.new()
 	box.index = i
@@ -222,6 +356,9 @@ func _slot(s: Ship, i: int, module_id: String) -> SlotBox:
 	box.on_drop = func(index: int, m: String, from: int) -> void:
 		if not Sim.world.fleet.module_allowed(s.hull, m):
 			Events.notice.emit("%s cannot be fitted to this hull" % _module_name(m))
+			return
+		if from < 0 and not Sim.world.fleet.module_sold_at(system, m):
+			Events.notice.emit("%s is not made here" % _module_name(m))
 			return
 		var fit: Array = _pending.get(s.id, Array(s.modules)).duplicate()
 		if from >= 0:
@@ -257,13 +394,18 @@ func _slot(s: Ship, i: int, module_id: String) -> SlotBox:
 	box.add_child(v)
 	return box
 
-func _chip(module_id: String) -> ModuleChip:
+## A module on the rack; one this port doesn't make is greyed out and
+## can't be dragged.
+func _chip(module_id: String, made_here := true) -> ModuleChip:
 	var chip := ModuleChip.new()
-	chip.module_id = module_id
+	chip.module_id = module_id if made_here else ""
 	chip.label = _module_name(module_id)
-	chip.mouse_default_cursor_shape = Control.CURSOR_DRAG
+	chip.mouse_default_cursor_shape = Control.CURSOR_DRAG if made_here else Control.CURSOR_FORBIDDEN
 	var def: Dictionary = Defs.world_content.modules[module_id]
-	chip.tooltip_text = "%s  ·  %s cr" % [chip.label, Format.thousands(int(def.price))]
+	chip.tooltip_text = "%s  ·  %s cr" % [chip.label, Format.thousands(int(def.price))] if made_here \
+		else "%s: not made here (needs tech %d)" % [chip.label, int(def.get("tech", 1))]
+	if not made_here:
+		chip.modulate = Color(1, 1, 1, 0.35)
 	var style := StyleBoxFlat.new()
 	var c := _kind_color(module_id)
 	style.bg_color = Color(c, 0.12)

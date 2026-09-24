@@ -19,6 +19,16 @@ const PICK_RADIUS_PX := 16.0
 @onready var news_ticker: NewsTicker = $UI/NewsTicker
 @onready var news_panel: NewsPanel = $UI/NewsPanel
 @onready var fleet_screen: FleetScreen = $UI/FleetScreen
+@onready var ship_panel: ShipPanel = $UI/ShipPanel
+@onready var music: MusicPlayer = $Music
+@onready var sounds: UiSounds = $UiSounds
+
+## Zoomed in this close (camera distance) on the selected star, its
+## government's music plays; farther out, the "space" theme.
+const MUSIC_ZOOM := 22.0
+## Sound levels K cycles through: everything, no music, silence.
+const SOUND_LEVELS := ["all sound on", "music off", "all sound off"]
+var _sound_level := 0
 @onready var map_mode: MapModeBar = $UI/MapModeBar
 @onready var overlay_dim: ColorRect = $UI/OverlayDim
 @onready var floating: FloatingNumbers = $UI/FloatingNumbers
@@ -60,6 +70,10 @@ func _ready() -> void:
 	news_ticker.log_requested.connect(open_news)
 	news_panel.system_requested.connect(_show_news_system)
 	fleet_panel.screen_requested.connect(open_fleet)
+	ship_panel.orders_requested.connect(open_orders)
+	ship_panel.port_requested.connect(_open_port)
+	ship_panel.closed.connect(func(): select_ship(-1))
+	panel.closed.connect(func(): select(-1))
 	fleet_screen.ship_selected.connect(select_ship)
 	fleet_screen.orders_requested.connect(open_orders)
 	Events.world_events_changed.connect(_update_badges)
@@ -73,6 +87,12 @@ func _ready() -> void:
 	Events.attention.connect(_on_attention)
 
 func _process(_delta: float) -> void:
+	music.play_theme(_music_theme())
+	# Side panels end above the fixed ones: the market above the fleet card,
+	# the right-hand cards above the news ticker (they scroll if longer).
+	market_panel.bottom_limit = fleet_panel.global_position.y - 12.0
+	panel.bottom_limit = news_ticker.global_position.y - 12.0
+	ship_panel.bottom_limit = news_ticker.global_position.y - 12.0
 	# Re-pick every frame: the camera may be moving under a still mouse.
 	var i := -1
 	if _mouse != StarPicker.OFF_SCREEN and not _overlay_open():
@@ -126,13 +146,38 @@ func _on_double_clicked(screen_pos: Vector2) -> void:
 		select(i)
 		open_system_view()
 
+## The music for what the player looks at: the system view's system, or the
+## selected star when zoomed in on it; else deep space.
+func _music_theme() -> String:
+	var i := -1
+	if system_view.visible and system_view.system:
+		i = system_view.system.index
+	elif map.selected >= 0 and camera.rig.distance <= MUSIC_ZOOM \
+			and camera.rig.focus.distance_to(map.system_position(map.selected)) < 1.0:
+		i = map.selected
+	if i < 0 or not Sim.player().is_known(i):
+		return MusicPlayer.DEFAULT
+	var st := Sim.galaxy.systems[i].settlement
+	return st.government if st else MusicPlayer.DEFAULT
+
+## K: all sound, no music, silence.
+func cycle_sound() -> void:
+	_sound_level = (_sound_level + 1) % SOUND_LEVELS.size()
+	AudioServer.set_bus_mute(AudioServer.get_bus_index(&"Music"), _sound_level >= 1)
+	AudioServer.set_bus_mute(AudioServer.get_bus_index(&"UI"), _sound_level >= 2)
+	Events.notice.emit("Sound: %s" % SOUND_LEVELS[_sound_level])
+
 ## Selects a system (-1 = none): ring on the map, card on the right, and the
 ## camera flies there.
 func select(i: int) -> void:
+	if i >= 0 and i != map.selected:
+		sounds.play("select")
 	map.set_selected(i)
 	orders_panel.set_add_system(i)
 	if i >= 0:
 		camera.fly_to(map.system_position(i))
+		# The right-hand column shows what was clicked last: this star.
+		ship_panel.visible = false
 		panel.show_system(map.galaxy.systems[i])
 		if _market_open:
 			market_panel.show_system(map.galaxy.systems[i])
@@ -153,6 +198,11 @@ func select_ship(ship_id: int) -> void:
 	panel.set_ship(ship_id)
 	if ship_id >= 0:
 		camera.fly_to(markers.ship_position(ship_id), 30.0)
+		# The right-hand column shows what was clicked last: this ship.
+		panel.visible = false
+		ship_panel.show_ship(ship_id)
+	else:
+		ship_panel.visible = false
 	_update_preview()
 
 func _on_charted(company_id: int) -> void:
@@ -205,7 +255,7 @@ func open_system_view() -> void:
 
 func open_shipyard() -> void:
 	if map.selected < 0 or not Sim.player().is_known(map.selected) \
-			or not Sim.world.fleet.is_shipyard(map.selected):
+			or not Sim.world.fleet.can_refit_at(map.selected):
 		return
 	_overlay_opened()
 	shipyard.open(map.selected)
@@ -221,6 +271,18 @@ func open_contracts() -> void:
 		return
 	_overlay_opened()
 	contracts_panel.open(i, selected_ship)
+
+## A button on the ship card for its port: market, contracts or yard.
+func _open_port(what: String, system_index: int) -> void:
+	select(system_index)
+	match what:
+		"market":
+			if not _market_open:
+				toggle_market()
+		"contracts":
+			open_contracts()
+		"yard":
+			open_shipyard()
 
 func open_fleet() -> void:
 	_overlay_opened()
@@ -266,6 +328,7 @@ func open_finance() -> void:
 ## Modal panels (shipyard, orders, finance, contracts, news): dim the map
 ## and stop the camera.
 func _overlay_opened() -> void:
+	sounds.play("open")
 	for p in _overlays():
 		if p.visible:
 			p.visible = false
@@ -274,6 +337,7 @@ func _overlay_opened() -> void:
 	overlay_dim.visible = true
 
 func _overlay_closed() -> void:
+	sounds.play("close")
 	if not _overlays().any(func(p): return p.visible):
 		overlay_dim.visible = false
 		camera.input_enabled = not system_view.visible
@@ -338,6 +402,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				fleet_screen.close_panel()
 			elif system_view.visible:
 				system_view.close_view()
+			elif ship_panel.visible:
+				select_ship(-1)
 			elif map.selected >= 0:
 				select(-1)
 			else:
@@ -369,6 +435,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				fleet_screen.close_panel()
 			elif not overlay:
 				open_fleet()
+		KEY_K:
+			cycle_sound()
 		KEY_N:
 			if news_panel.visible:
 				news_panel.close_panel()

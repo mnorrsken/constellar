@@ -17,6 +17,9 @@ const AMBER := Color(0.98, 0.72, 0.3)
 
 var _title := Label.new()
 var _grid := GridContainer.new()
+## Ship id -> its thumbnail, kept across refreshes (building models daily
+## would be wasteful).
+var _thumbs: Dictionary = {}
 
 func _ready() -> void:
 	visible = false
@@ -35,7 +38,7 @@ func _ready() -> void:
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)
 	head.add_child(_button("✕  Esc", close_panel))
-	_grid.columns = 9
+	_grid.columns = 10
 	_grid.add_theme_constant_override("h_separation", 16)
 	_grid.add_theme_constant_override("v_separation", 6)
 	for c in [head, _grid]:
@@ -63,11 +66,22 @@ func _refresh() -> void:
 	_title.text = "Fleet  ·  %d ship%s" % [ships.size(), "" if ships.size() == 1 else "s"]
 	for c in _grid.get_children():
 		_grid.remove_child(c)
-		c.queue_free()
-	for h in ["Ship", "Doing", "Why", "Age", "Condition", "Reliability", "Last month", "12 months", ""]:
+		if not (c is ShipViewer):
+			c.queue_free()
+	for id in _thumbs.keys():
+		if w.fleet.get_ship(id) == null:
+			_thumbs[id].queue_free()
+			_thumbs.erase(id)
+	for h in ["", "Ship", "Doing", "Why", "Age", "Condition", "Reliability", "Last month", "12 months", ""]:
 		_grid.add_child(_cell(h, MUTED, 12))
 	var now := w.month()
 	for s in ships:
+		if not _thumbs.has(s.id):
+			_thumbs[s.id] = ShipViewer.new()
+			_thumbs[s.id].custom_minimum_size = Vector2(150, 64)
+		var thumb: ShipViewer = _thumbs[s.id]
+		_grid.add_child(thumb)
+		thumb.show_ship(s)
 		var name_box := VBoxContainer.new()
 		name_box.add_theme_constant_override("separation", 0)
 		name_box.add_child(_cell(s.name, TEXT, 15))

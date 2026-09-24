@@ -22,6 +22,7 @@ var _stops := VBoxContainer.new()
 var _add := Button.new()
 var _safest := CheckBox.new()
 var _insured := CheckBox.new()
+var _viewer := ShipViewer.new()
 
 func _ready() -> void:
 	visible = false
@@ -63,8 +64,13 @@ func _ready() -> void:
 	_insured.focus_mode = Control.FOCUS_NONE
 	_insured.toggled.connect(func(on): Sim.set_insurance(ship_id, on))
 	_insured.tooltip_text = "Pays for cargo, repairs and the ship itself after a raid or a loss.\nThe premium follows the risk the ship ran last month."
-	ship_row.add_child(_safest)
-	ship_row.add_child(_insured)
+	_viewer.custom_minimum_size = Vector2(200, 80)
+	var switches := VBoxContainer.new()
+	switches.alignment = BoxContainer.ALIGNMENT_CENTER
+	switches.add_child(_safest)
+	switches.add_child(_insured)
+	ship_row.add_child(_viewer)
+	ship_row.add_child(switches)
 	for c in [head, ship_row, _stops, _add, hint]:
 		box.add_child(c)
 	add_child(box)
@@ -102,6 +108,7 @@ func _refresh() -> void:
 	_state.add_theme_color_override("font_color", Color(0.45, 0.85, 0.55) if s.orders_active else MUTED)
 	_run.text = "Stop route" if s.orders_active else "Start route"
 	_run.disabled = s.orders.size() < 2 and not s.orders_active
+	_viewer.show_ship(s)
 	_safest.set_pressed_no_signal(s.safe_routing)
 	_insured.set_pressed_no_signal(s.insured)
 	_insured.text = "Insured  (about %s cr a month)" % Format.thousands(roundi(Danger.premium(w, s)))

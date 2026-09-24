@@ -1,8 +1,9 @@
 class_name Fleet
 extends RefCounted
 ## Every ship in the game, what they can do (specs from hulls.json and
-## modules.json), where they can be bought and refitted (shipyards), and
-## travel: routes limited by jump range, one day of movement per tick.
+## modules.json), where they can be bought (shipyards at major worlds) and
+## refitted (any inhabited world, with the modules its tech level makes),
+## and travel: routes limited by jump range, one day of movement per tick.
 ##
 ## Commands take the Company doing them and return {ok, error, ...}; World
 ## checks that the ship belongs to that company before calling in.
@@ -84,6 +85,15 @@ func is_shipyard(system_index: int) -> bool:
 		return true
 	return st.archetype in _yards.get("archetypes", []) and st.tech_level >= int(_yards.get("archetype_min_tech", 0))
 
+## Any inhabited world refits ships (what it can fit depends on its tech).
+func can_refit_at(system_index: int) -> bool:
+	return _galaxy.systems[system_index].settlement != null
+
+## A port makes a module when its tech level reaches the module's "tech".
+func module_sold_at(system_index: int, module_id: String) -> bool:
+	var st := _galaxy.systems[system_index].settlement
+	return st != null and st.tech_level >= int(_modules.get(module_id, {}).get("tech", 1))
+
 ## Hull ids a shipyard sells in a given year: in production and within the
 ## settlement's tech level.
 func hulls_for_sale(system_index: int, year: int) -> Array[String]:
@@ -137,19 +147,25 @@ func sell(company: Company, ship: Ship, day: int) -> Dictionary:
 	ships.erase(ship)
 	return {"ok": true, "income": income}
 
-## Replaces the fit. New modules are paid in full, removed ones sold at
-## module_resale; the ship is out of service for a few days.
+## Replaces the fit at any inhabited world. New modules are paid in full
+## and must be made there (tech level); removed ones sold at module_resale;
+## the ship is out of service for a few days.
 func refit(company: Company, ship: Ship, new_modules: Array, day: int) -> Dictionary:
 	if ship.status != Ship.Status.DOCKED:
 		return {"ok": false, "error": "The ship must be docked"}
-	if not is_shipyard(ship.system):
-		return {"ok": false, "error": "No shipyard here"}
+	if not can_refit_at(ship.system):
+		return {"ok": false, "error": "No port here to refit at"}
 	var slots := int(hull_def(ship).slots)
 	if new_modules.size() != slots:
 		return {"ok": false, "error": "This hull has %d slots" % slots}
 	for m in new_modules:
 		if not module_allowed(ship.hull, m):
 			return {"ok": false, "error": "%s cannot be fitted to this hull" % _modules.get(m, {}).get("name", m)}
+		# Only modules the ship doesn't already carry must be made here
+		# (moving one to another slot is fine anywhere).
+		if new_modules.count(m) > ship.modules.count(m) and not module_sold_at(ship.system, m):
+			return {"ok": false, "error": "%s is not made here (needs tech %d)" % [
+				_modules.get(m, {}).get("name", m), int(_modules[m].get("tech", 1))]}
 	var quote := refit_quote(ship, new_modules)
 	if quote.changed == 0:
 		return {"ok": false, "error": "Nothing to change"}

@@ -5,6 +5,7 @@
 		"price": 180000, "crew_cost": 3000, "maintenance": 2000, "reliability": 0.97,
 		"year_from": 3380, "year_to": 3430, "tech": 5,
 		"allowed": ["container", "cold", "secure", "mail", "cabins", "suites", "drive_tune", "jump_extender", "armour", "auto_trader"],
+		"look": { "length": 5.0, "beam": 1.2, "nose": "wedge", "engines": 2, "fins": true, "paint": "b9c6d3" },
 		"default_modules": ["container", "mail"]
 	},
 	{
@@ -13,6 +14,7 @@
 		"price": 450000, "crew_cost": 4000, "maintenance": 3000, "reliability": 0.95,
 		"year_from": 3370, "year_to": 3425, "tech": 4,
 		"allowed": ["*"],
+		"look": { "length": 7.0, "beam": 1.8, "nose": "block", "engines": 2, "fins": false, "paint": "8e9aa8" },
 		"default_modules": ["container", "container", "container"]
 	},
 	{
@@ -21,6 +23,7 @@
 		"price": 1200000, "crew_cost": 7000, "maintenance": 6000, "reliability": 0.94,
 		"year_from": 3385, "year_to": 3440, "tech": 6,
 		"allowed": ["*"],
+		"look": { "length": 10.0, "beam": 2.4, "nose": "block", "engines": 3, "fins": false, "paint": "7f8b96" },
 		"default_modules": ["container", "container", "container", "bulk", "bulk"]
 	},
 	{
@@ -29,6 +32,7 @@
 		"price": 3000000, "crew_cost": 12000, "maintenance": 11000, "reliability": 0.93,
 		"year_from": 3390, "year_to": 3450, "tech": 8,
 		"allowed": ["*"],
+		"look": { "length": 16.0, "beam": 3.2, "nose": "block", "engines": 4, "fins": false, "paint": "6f7780" },
 		"default_modules": ["container", "container", "container", "container", "bulk", "bulk", "bulk", "bulk"]
 	},
 	{
@@ -37,6 +41,7 @@
 		"price": 2200000, "crew_cost": 8000, "maintenance": 7000, "reliability": 0.95,
 		"year_from": 3380, "year_to": 3450, "tech": 6,
 		"allowed": ["bulk", "armour", "drive_tune", "jump_extender", "auto_trader"],
+		"look": { "length": 13.0, "beam": 3.6, "nose": "block", "engines": 3, "fins": false, "paint": "8a7f6e" },
 		"default_modules": ["bulk", "bulk", "bulk", "bulk", "bulk", "bulk"]
 	},
 	{
@@ -45,6 +50,7 @@
 		"price": 2400000, "crew_cost": 8000, "maintenance": 7500, "reliability": 0.94,
 		"year_from": 3385, "year_to": 3450, "tech": 7,
 		"allowed": ["tank", "armour", "drive_tune", "jump_extender", "auto_trader"],
+		"look": { "length": 13.0, "beam": 3.0, "nose": "round", "engines": 3, "fins": false, "paint": "9aa2a8" },
 		"default_modules": ["tank", "tank", "tank", "tank", "tank", "tank"]
 	},
 	{
@@ -53,6 +59,7 @@
 		"price": 2600000, "crew_cost": 14000, "maintenance": 8000, "reliability": 0.96,
 		"year_from": 3395, "year_to": 3450, "tech": 7,
 		"allowed": ["cabins", "suites", "mail", "cold", "container", "armour", "drive_tune", "jump_extender", "auto_trader"],
+		"look": { "length": 12.0, "beam": 2.2, "nose": "round", "engines": 2, "fins": true, "paint": "d8dde3" },
 		"default_modules": ["cabins", "cabins", "cabins", "suites", "suites", "mail"]
 	},
 	{
@@ -61,6 +68,7 @@
 		"price": 1900000, "crew_cost": 7000, "maintenance": 6500, "reliability": 0.93,
 		"year_from": 3405, "year_to": 3460, "tech": 8,
 		"allowed": ["*"],
+		"look": { "length": 10.0, "beam": 2.0, "nose": "wedge", "engines": 2, "fins": true, "paint": "5f7a8c" },
 		"default_modules": ["container", "container", "cold", "secure"]
 	},
 	{
@@ -69,6 +77,7 @@
 		"price": 1700000, "crew_cost": 7500, "maintenance": 5500, "reliability": 0.97,
 		"year_from": 3412, "year_to": 3470, "tech": 7,
 		"allowed": ["*"],
+		"look": { "length": 11.0, "beam": 2.4, "nose": "round", "engines": 3, "fins": false, "paint": "a3aeb8" },
 		"default_modules": ["container", "container", "container", "container", "bulk", "bulk"]
 	},
 	{
@@ -77,6 +86,7 @@
 		"price": 240000, "crew_cost": 3000, "maintenance": 1800, "reliability": 0.98,
 		"year_from": 3418, "year_to": 3480, "tech": 6,
 		"allowed": ["container", "cold", "secure", "mail", "cabins", "suites", "drive_tune", "jump_extender", "armour", "auto_trader"],
+		"look": { "length": 5.5, "beam": 1.2, "nose": "wedge", "engines": 2, "fins": true, "paint": "dfe6ee" },
 		"default_modules": ["container", "mail"]
 	},
 	{
@@ -85,6 +95,7 @@
 		"price": 3100000, "crew_cost": 14000, "maintenance": 7000, "reliability": 0.97,
 		"year_from": 3421, "year_to": 3480, "tech": 8,
 		"allowed": ["cabins", "suites", "mail", "cold", "container", "armour", "drive_tune", "jump_extender", "auto_trader"],
+		"look": { "length": 13.0, "beam": 2.2, "nose": "round", "engines": 3, "fins": true, "paint": "eef1f4" },
 		"default_modules": ["cabins", "cabins", "cabins", "suites", "suites", "suites", "mail"]
 	},
 	{
@@ -93,6 +104,7 @@
 		"price": 3600000, "crew_cost": 12000, "maintenance": 9500, "reliability": 0.96,
 		"year_from": 3426, "year_to": 3490, "tech": 8,
 		"allowed": ["*"],
+		"look": { "length": 17.0, "beam": 3.2, "nose": "round", "engines": 4, "fins": false, "paint": "7d8894" },
 		"default_modules": ["container", "container", "container", "container", "container", "bulk", "bulk", "bulk", "bulk"]
 	}
 ]

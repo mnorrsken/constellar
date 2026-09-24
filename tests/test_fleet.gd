@@ -95,7 +95,14 @@ func test_refit_refusals(t: Object) -> void:
 	t.ok(not w.refit_ship(0, courier.id, ["mail"]).ok, "wrong slot count")
 	t.ok(not w.refit_ship(0, courier.id, ["container", "mail"]).ok, "nothing to change")
 	var start := w.ships_of(0)[0]
-	t.ok(not w.refit_ship(0, start.id, ["bulk", "bulk", "bulk"]).ok, "no shipyard at the start world")
+	var tech := w.galaxy.systems[w.start_system].settlement.tech_level
+	t.ok(not w.fleet.is_shipyard(w.start_system), "the start world builds no ships")
+	t.ok(w.refit_ship(0, start.id, ["bulk", "bulk", "container"]).ok, "but any port refits (simple modules)")
+	start.status = Ship.Status.DOCKED
+	t.ok(tech < 8, "a small colony (tech %d)" % tech)
+	var r := w.refit_ship(0, start.id, ["bulk", "bulk", "jump_extender"])
+	t.ok(not r.ok and "tech" in r.error, "doesn't make advanced modules: %s" % r.get("error", ""))
+	t.ok(not w.buy_ship(0, "packet", w.start_system).ok, "and sells no new ships")
 
 func test_travel_arrives_on_predicted_day(t: Object) -> void:
 	var w := _world()

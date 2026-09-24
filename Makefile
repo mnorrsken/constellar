@@ -10,21 +10,30 @@ HYG := build/hyg_v44.csv.gz
 
 .DEFAULT_GOAL := help
 
-.PHONY: help run editor build import test soak stars clean
+# Music and UI sounds are generated from tools/make_audio.py (not in git).
+AUDIO := assets/audio/music/space.wav
+
+.PHONY: help run editor build import test soak stars audio clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-run: ## Run the game (main scene)
+run: $(AUDIO) ## Run the game (main scene)
 	$(GODOT) --path $(PROJECT)
 
-editor: ## Open the project in the Godot editor
+editor: $(AUDIO) ## Open the project in the Godot editor
 	$(GODOT) --editor --path $(PROJECT)
 
 build: import ## Alias for `import`: compile + reimport, fail on errors
 
-import: ## Headless import: build the .godot cache and catch script/asset errors
+audio: ## Regenerate the music loops and UI sounds (tools/make_audio.py)
+	python3 tools/make_audio.py
+
+$(AUDIO): tools/make_audio.py
+	python3 tools/make_audio.py
+
+import: $(AUDIO) ## Headless import: build the .godot cache and catch script/asset errors
 	$(GODOT) --headless --editor --quit --path $(PROJECT)
 
 test: ## Run headless sim tests (non-zero exit on failure)

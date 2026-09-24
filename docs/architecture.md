@@ -98,13 +98,15 @@ rule, `effects` and start/end headline templates (`{a}`/`{b}`).
 
 `data/hulls.json` lists hulls (slots, tonnes per slot, speed in ly/day,
 jump range, price, crew cost, maintenance, reliability, production years,
-tech level, allowed modules, default fit) — 12 now, including later models
-Swift II courier, Starliner II liner and Leviathan II heavy freighter,
-each production-year-gated; `World` posts a news headline on 1 Jan of a
-hull's first production year. `data/modules.json` lists
+tech level, allowed modules, default fit, and a `look` — length, beam, nose
+shape, engines, fins, paint — for the 3D model) — 12 now, including later
+models Swift II courier, Starliner II liner and Leviathan II heavy
+freighter, each production-year-gated; `World` posts a news headline on 1
+Jan of a hull's first production year. `data/modules.json` lists
 modules: cargo holds (`cargo_class`, capacity factor per slot), cabins and
 suites (passengers), mail bay, armour, drive tune (`speed_mult`), jump
-extender (`range_add`), auto-trader. `data/names.json` also has
+extender (`range_add`), auto-trader — each with the `tech` level a port
+needs to make it, and a `look` (shape, colour) for the model. `data/names.json` also has
 `ship_names`.
 
 ## Star data pipeline
@@ -302,10 +304,14 @@ or losing money — see `Aging` below).
 
 `sim/fleet.gd` (`Fleet`) owns every ship. Specs: `speed` (drive tunes),
 `jump_range` (jump extenders), `capacity` by cargo class, `sale_value`.
-Shipyards: `is_shipyard` (archetype + tech from `balance.json`),
-`hulls_for_sale(system, year)` (production years and tech). Commands:
-`buy`, `sell`, `refit` (+ `refit_quote`: new modules paid, old ones sold at
-`module_resale`, 3 days + 2 per changed slot), `plan_route` (shortest path
+Shipyards (buying, selling, servicing): `is_shipyard` (archetype + tech
+from `balance.json`), `hulls_for_sale(system, year)` (production years and
+tech). Refits at any inhabited world (`can_refit_at`); a module the ship
+doesn't already carry must be made there (`module_sold_at`: the port's tech
+level >= the module's `tech`; moving a fitted module between slots is
+fine anywhere). Commands: `buy`, `sell`, `refit` (+ `refit_quote`: new
+modules paid, old ones sold at `module_resale`, 3 days + 2 per changed
+slot), `plan_route` (shortest path
 using only lanes within jump range, plus `Danger.penalty` per lane when the
 ship has `safe_routing` on, so it detours around danger; "Out of range"
 when only longer jumps reach; also returns the route's `risk`, `Danger.
@@ -373,7 +379,8 @@ sums a day's sales per player ship into `Events.profit`.
 -> category -> amount). Besides cash categories, both also keep a memo
 `"cost_of_sales"` entry per sale (`note_cost_of_sales`, no cash movement:
 what the goods sold had cost), so `cash_net(month, ship)` (raw cash flow)
-and `profit(month, ship)` (goods count when sold, not when bought) can
+and `profit(month, ship)` (goods count when sold, not when bought; buying,
+refitting and selling ships — "ships" — is investment and left out) can
 both be read off the same ledger. `Trading.loss_reason(company, ship,
 month)` explains a loss month (e.g. cargo sold below cost, a breakdown,
 high maintenance). `Calendar.month_index` / `month_name` give ledger
@@ -581,6 +588,16 @@ broken-down ship held still at its stall point. It draws
 the selected ship's remaining route (amber) and a preview route to the
 selected system (cyan), and gives `screen_points` for picking ships.
 
+`render/ship_model.gd` (`ShipModel`, static) builds a ship's 3D model from
+primitive meshes, no art assets: `build(hull, modules, module_defs, accent)`
+returns a `Node3D` lying along +Z — an engine block with rear nozzles, a
+nose from the hull's `look` (block with a bridge tower, wedge or round),
+optional fins, a keel, and one bay per module slot shaped and coloured for
+what's fitted (crates, hopper, reefer, tanks, vault, cabins, pods, mailpod,
+armour plates, drive tune, jump ring, auto-trader dish), sharing cached
+materials (metal, paint, the owner's accent stripe, emissive glow, an
+additive engine flame). Root meta `size` gives the model's bounds.
+
 **Picking coordinate note:** `main.gd` tracks the mouse from
 `InputEventMouse.position` (not `Viewport.get_mouse_position()`, which did not follow input events) so it stays
 in the same coordinate space as `Camera3D.unproject_position` under the
@@ -651,17 +668,51 @@ every `Events.day_passed`. The status line shows the general tariff (a
 government's `"*"` rate); rows only add a tariff tag where a commodity's
 duty differs from that general rate.
 
-`ui/fleet_panel.gd` (`FleetPanel`, bottom left) lists the player's ships
-with what each is doing, plus `note_text` under each row explaining why
-it's idle, waiting or losing money; clicking a row selects it.
-`ui/fleet_screen.gd` (`FleetScreen`, key V or the fleet list title) is the
+`ui/ship_viewer.gd` (`ShipViewer`, a `SubViewportContainer`) renders one
+`ShipModel` in its own lit 3D world (own world, transparent background,
+MSAA, warm key/cool fill/rim lights, glow, filmic tonemap): it turns
+slowly and can be dragged to turn by hand. `show_ship(ship)` rebuilds only
+when the hull, fit or owner colour changes; `show_fit(hull_id, modules,
+accent)` previews a fit that isn't built yet; `clear()` empties it. Used in
+`FleetPanel` (the selected ship, hidden while the market panel is open),
+`MarketPanel` (the docked ship in the header), `OrdersPanel`, `FleetScreen`
+(one thumbnail per ship) and `ShipyardPanel` (the selected hull for sale,
+and a live preview of the fit being edited).
+
+`ui/fleet_panel.gd` (`FleetPanel`, bottom left) is the fixed-size ship
+picker, whatever the fleet size: "Ships (n) ▾" opens a scrollable list
+above it (⚠ on ships whose note wants a look; picking one closes it),
+◀ ▶ step through the fleet, "All" opens the fleet screen; below, the
+selected ship's name and Orders, what it is doing and `note_text` (why
+it's idle, waiting or losing money).
+`ui/ship_panel.gd` (`ShipPanel`, right column) is the selected ship's full
+card, opened by clicking a ship on the map or picking one in the fleet
+card: model, what it is doing and the stops still ahead, the note, the
+cargo manifest (tonnes, paid per tonne, worth per tonne here when docked or
+at the destination by last known price, and the gain or loss), contracts
+aboard (deadline, reward), condition/reliability/age/speed/jump, profit,
+route orders, and buttons for Orders and, when docked, the port's Market,
+Contracts and Shipyard/Refit (`port_requested`). The right column shows
+whichever was clicked last, a star (`SystemPanel`) or a ship; both have ✕,
+Esc closes the ship card first. `ui/fit.gd` (`Fit.cap`) sizes a panel's
+ScrollContainer so the panel ends above a line: main.gd sets
+`bottom_limit` each frame — the market panel ends above the fleet card,
+the system and ship cards above the news ticker — and longer content
+scrolls instead of running under them (the system card scrolls its
+settlement details; its title and send line always show).
+`ui/fleet_screen.gd` (`FleetScreen`, key V or the fleet card's "All") is the
 full fleet table: doing/why (`FleetPanel.status_text`/`note_text`), age, a
 condition bar, reliability, last month's profit, a 12-month profit
 `Sparkline`, and Show/Orders/Service buttons per ship.
 
-`ui/shipyard_panel.gd` (`ShipyardPanel`) has a hull comparison table for
-ships built here this year (new models marked, with slots/cargo/speed/
-jump/reliability/upkeep/price), and, per owned ship docked there, a
+`ui/shipyard_panel.gd` (`ShipyardPanel`) is the shipyard at major worlds
+and a "Refit dock" at other ports (no new ships; Service and Sell disabled;
+rack modules the port doesn't make greyed out and not draggable; the
+system card's button reads "Refit" there). At a shipyard it lists the hulls
+built here this year as selectable rows (name, NEW mark, class, price); the selected one
+fills a card with its model, class and build years, slots/cargo/speed/
+jump/reliability/fuel/crew/maintenance, standard fit and Buy (or how much
+more cash is needed). Per owned ship docked there it has a
 drag-and-drop fitting view (`SlotBox`/`ModuleChip` inner classes: drag a
 module from the rack onto a slot, or drag between two slots to swap) with
 a fit summary, refit quote, Reset/Refit, Service and Sell; a dim layer sits
@@ -725,6 +776,47 @@ selection. On `Events.charted` it re-applies the map's fog; on
 flies there. Uncharted systems: tooltip and card only say "Uncharted
 system"; market, system view and shipyard stay closed. F2 calls
 `Sim.cheat()`.
+
+## Audio
+
+`tools/make_audio.py` (`make audio`; plain Python, no libraries, deterministic)
+synthesizes music and UI sounds into `assets/audio/`, gitignored — `make
+audio`/`run`/`editor`/`import` depend on `assets/audio/music/space.wav`,
+which the Makefile rebuilds whenever the script changes. Each government
+gets a music loop (mode, tempo, chord progression and layers — pad, drone,
+bass, arpeggio, bells, melody, drums, scatter — through a Schroeder reverb,
+loudness-matched, 22.05 kHz mono, 27-46 s; the reverb tail is folded back
+onto the start and a WAV `smpl` chunk marks the loop, which Godot's importer
+detects and imports with QOA compression): concordance (stately Lydian,
+bells), democracy (Ionian, harp-like arpeggio, light beat), corporate
+(Dorian sequencer bass), theocracy (Phrygian choir and drone, tolling
+bells), junta (Aeolian marching drums, ostinato), feudal (Dorian lute over a
+drone, frame drum), custodians (whole-tone glassy sixteenths, ticking),
+anarchy (Locrian, sour detuned pad, irregular hits), zealots (Hijaz, low
+choir, toms), plus a `space` theme (slow Lydian pads) for the open map and
+empty systems. UI sounds (`assets/audio/ui/*.wav`, 44.1 kHz: click, select,
+open, close, confirm, error, chime, coin, loss, hail, alert, pause, resume)
+are shorter synthesized cues. `default_bus_layout.tres` adds `Music`
+(-4 dB) and `UI` (-8 dB) buses.
+
+`audio/music_player.gd` (`MusicPlayer`, node "Music" in `main.tscn`) has
+`play_theme(id)`, crossfading 2.5 s between two players; an unknown or
+missing theme falls back to "space"; skipped on the headless Dummy audio
+driver, which never releases a playing stream. `audio/ui_sounds.gd`
+(`UiSounds`, node "UiSounds") plays a click on every `BaseButton` (found via
+`SceneTree.node_added`) and reacts to `Events`: `refused` (error), `alert`
+(raid/loss), `confirmed` (bought/sold/refitting/servicing/contract_accepted),
+`attention` (hail), `profit` (coin or loss), `news_posted` for visible
+starting news (chime), and pause/resume on speed changes. `sim/events.gd`
+gained `refused(text)` (emitted by `Sim._run` on a refused command),
+`alert(text)` (raids/losses, `Sim._hit_notice`) and `confirmed(kind)`
+(`Sim._flush_events`, player commands only) for these to listen to.
+
+`main.gd` picks the music: the system view's system, or a zoomed-in
+(camera rig distance ≤ 22, focused on it) and charted selected star, plays
+its government's theme; otherwise "space". Selecting a star plays "select";
+modal panels play open/close. K cycles music/sound/off (mutes the `Music`/
+`UI` buses) with a notice; the HUD hint shows "K sound".
 
 ## Tests
 

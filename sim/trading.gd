@@ -204,7 +204,7 @@ static func loss_reason(company: Company, ship_id: int, month: int) -> String:
 	var income: float = sales + cats.get("contracts", 0.0) + maxf(cats.get("insurance", 0.0), 0.0)
 	var worst := ""
 	for k in cats:
-		if cats[k] < 0.0 and not (k in ["purchases", "cost_of_sales"]) and (worst == "" or cats[k] < cats[worst]):
+		if cats[k] < 0.0 and not (k in ["purchases", "cost_of_sales", "ships"]) and (worst == "" or cats[k] < cats[worst]):
 			worst = k
 	if sales > 0.0 and sales < cost:
 		return "price too low: sold for %s less than it cost" % Format.thousands(roundi(cost - sales))
@@ -212,8 +212,6 @@ static func loss_reason(company: Company, ship_id: int, month: int) -> String:
 		return "earned nothing: no sales or contracts"
 	if worst == "repairs":
 		return "repairs ate the profit (%s cr)" % Format.thousands(roundi(-cats.repairs))
-	if worst == "ships":
-		return "refit or purchase cost"
 	return "running costs above income (most: %s)" % worst
 
 # --- route orders -------------------------------------------------------------------

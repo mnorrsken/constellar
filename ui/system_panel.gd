@@ -2,13 +2,16 @@ class_name SystemPanel
 extends PanelContainer
 ## Card on the right of the map for the selected star system. With a ship
 ## selected it also offers to send that ship here (route length, days,
-## arrival date, or why it cannot go).
+## arrival date, or why it cannot go). The settlement details scroll when
+## the card would run below `bottom_limit` (the news ticker); the title
+## and the send line always show. ✕ (or Esc) closes it.
 
 signal view_requested
 signal market_requested
 signal shipyard_requested
 signal send_requested
 signal contracts_requested
+signal closed
 
 const WIDTH := 380.0
 
@@ -28,6 +31,14 @@ var _system: StarSystem
 var _details: Array = []
 ## Selected ship id, or -1.
 var ship_id := -1
+## Screen y the card must end above (set by main.gd).
+var bottom_limit := 800.0:
+	set(value):
+		if absf(value - bottom_limit) > 1.0:
+			bottom_limit = value
+			_fit.call_deferred()
+var _scroll := ScrollContainer.new()
+var _detail_box := VBoxContainer.new()
 
 func _ready() -> void:
 	visible = false
@@ -73,8 +84,26 @@ func _ready() -> void:
 	_send_box.add_child(_send_button)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
+	var head := HBoxContainer.new()
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var close := Button.new()
+	close.text = "✕"
+	close.focus_mode = Control.FOCUS_NONE
+	close.tooltip_text = "Close (Esc)"
+	close.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	close.pressed.connect(func():
+		visible = false
+		closed.emit())
+	head.add_child(_title)
+	head.add_child(close)
 	_details = [HSeparator.new(), _card, HSeparator.new(), _bodies, buttons, _contracts_button]
-	for c in [_title, _facts] + _details + [_send_box]:
+	_detail_box.add_theme_constant_override("separation", 8)
+	_detail_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for c in _details:
+		_detail_box.add_child(c)
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.add_child(_detail_box)
+	for c in [head, _facts, _scroll, _send_box]:
 		box.add_child(c)
 	add_child(box)
 	Events.fleet_changed.connect(func(): if visible and _system: show_system(_system))
@@ -96,6 +125,7 @@ func show_system(s: StarSystem) -> void:
 	var charted: bool = Sim.player().is_known(s.index)
 	for c in _details:
 		c.visible = charted
+	_scroll.visible = charted
 	if not charted:
 		_title.text = "Uncharted system"
 		_facts.text = "Send a ship within one jump to chart it."
@@ -117,7 +147,12 @@ func show_system(s: StarSystem) -> void:
 		"" if belts == 0 else "  ·  %d belt%s" % [belts, "" if belts == 1 else "s"]]
 	_system = s
 	_market_button.disabled = s.settlement == null
-	_yard_button.disabled = not Sim.world.fleet.is_shipyard(s.index)
+	# Every port refits; only the major yards build ships.
+	var yard: bool = Sim.world.fleet.is_shipyard(s.index)
+	_yard_button.text = "Shipyard" if yard else "Refit"
+	_yard_button.tooltip_text = "Buy, refit, service and sell ships" if yard \
+		else "Refit ships with the modules this port makes (no new ships, sales or servicing here)"
+	_yard_button.disabled = s.settlement == null
 	var offers := Contracts.offers_at(Sim.world, s.index).size()
 	_contracts_button.text = "Contracts  ·  %d on the board   C" % offers
 	_contracts_button.disabled = s.settlement == null
@@ -156,4 +191,6 @@ func _update_send() -> void:
 ## Shrinks back to the content height (Controls grow by themselves but never
 ## shrink when their content gets shorter).
 func _fit() -> void:
+	if _scroll.visible:
+		Fit.cap(self, _scroll, _detail_box, bottom_limit)
 	offset_bottom = offset_top
