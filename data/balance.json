@@ -42,6 +42,11 @@
 		"mail_sacks": [4, 20], "mail_rate": 250, "mail_per_bay": 20,
 		"penalty_share": 0.3, "deadline_speed": 0.25, "deadline_slack": 1.4, "deadline_buffer": 10
 	},
+	"events": { "max_per_system": 2, "news_max": 300, "stability_drift": 0.03 },
+	"danger": {
+		"unsettled": 0.002, "max": 0.5, "armour_factor": 0.5, "destroy_share": 0.25, "raid_repair_share": 0.05,
+		"safe_ly_per_risk": 3000, "insurance_min_rate": 0.002, "insurance_markup": 1.5
+	},
 	"ships": { "sell_share": 0.6, "module_resale": 0.5, "refit_days_base": 3, "refit_days_per_slot": 2 },
 	"forced_settlements": {
 		"sol": {

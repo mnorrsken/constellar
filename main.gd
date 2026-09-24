@@ -16,6 +16,8 @@ const PICK_RADIUS_PX := 16.0
 @onready var orders_panel: OrdersPanel = $UI/OrdersPanel
 @onready var finance_panel: FinancePanel = $UI/FinancePanel
 @onready var contracts_panel: ContractsPanel = $UI/ContractsPanel
+@onready var news_ticker: NewsTicker = $UI/NewsTicker
+@onready var news_panel: NewsPanel = $UI/NewsPanel
 @onready var map_mode: MapModeBar = $UI/MapModeBar
 @onready var overlay_dim: ColorRect = $UI/OverlayDim
 @onready var floating: FloatingNumbers = $UI/FloatingNumbers
@@ -51,8 +53,15 @@ func _ready() -> void:
 	fleet_panel.orders_requested.connect(open_orders)
 	map_mode.mode_changed.connect(_apply_price_map)
 	system_view.closed.connect(func(): camera.input_enabled = true)
-	for p in [shipyard, orders_panel, finance_panel, contracts_panel]:
+	for p in [shipyard, orders_panel, finance_panel, contracts_panel, news_panel]:
 		p.closed.connect(_overlay_closed)
+	news_ticker.system_requested.connect(_show_news_system)
+	news_ticker.log_requested.connect(open_news)
+	news_panel.system_requested.connect(_show_news_system)
+	Events.world_events_changed.connect(_update_badges)
+	Events.world_events_changed.connect(func(): _apply_price_map(map_mode.commodity))
+	Events.charted.connect(func(_c): _update_badges())
+	_update_badges()
 	Events.fleet_changed.connect(_update_preview)
 	for sig in [Events.day_passed, Events.company_changed, Events.charted]:
 		sig.connect(func(_x = null): _apply_price_map(map_mode.commodity))
@@ -209,6 +218,31 @@ func open_contracts() -> void:
 	_overlay_opened()
 	contracts_panel.open(i, selected_ship)
 
+func open_news() -> void:
+	_overlay_opened()
+	news_panel.open()
+
+## A headline was clicked: select its system (if charted) and fly there.
+func _show_news_system(i: int) -> void:
+	if i >= 0 and Sim.player().is_known(i):
+		select(i)
+
+## Pulsing rings at systems with running events: red for danger (war,
+## pirates), amber for politics (zealots, embargo, agreements), cyan else.
+func _update_badges() -> void:
+	var colors := {"danger": Color(1.0, 0.3, 0.28), "politics": Color(1.0, 0.7, 0.25), "info": Color(0.35, 0.85, 1.0)}
+	var rank := {"danger": 3, "politics": 2, "info": 1}
+	var best := {}  # system -> badge
+	for ev in Sim.world.world_events:
+		var badge: String = WorldEvents.def_of(Sim.world, ev.kind).get("badge", "info")
+		for i in ev.systems:
+			if Sim.world.galaxy.systems[i].settlement and rank[badge] > rank.get(best.get(i, ""), 0):
+				best[i] = badge
+	var out := {}
+	for i in best:
+		out[i] = colors[best[i]]
+	map.set_badges(out)
+
 func open_orders(ship_id: int) -> void:
 	if ship_id < 0:
 		Events.notice.emit("Select a ship first")
@@ -221,10 +255,10 @@ func open_finance() -> void:
 	_overlay_opened()
 	finance_panel.open()
 
-## Modal panels (shipyard, orders, finance, contracts): dim the map and
-## stop the camera.
+## Modal panels (shipyard, orders, finance, contracts, news): dim the map
+## and stop the camera.
 func _overlay_opened() -> void:
-	for p in [shipyard, orders_panel, finance_panel, contracts_panel]:
+	for p in [shipyard, orders_panel, finance_panel, contracts_panel, news_panel]:
 		if p.visible:
 			p.visible = false
 	tooltip.visible = false
@@ -232,17 +266,33 @@ func _overlay_opened() -> void:
 	overlay_dim.visible = true
 
 func _overlay_closed() -> void:
-	if not (shipyard.visible or orders_panel.visible or finance_panel.visible or contracts_panel.visible):
+	if not (shipyard.visible or orders_panel.visible or finance_panel.visible or contracts_panel.visible \
+			or news_panel.visible):
 		overlay_dim.visible = false
 		camera.input_enabled = not system_view.visible
 
 func _overlay_open() -> bool:
 	return system_view.visible or shipyard.visible or orders_panel.visible or finance_panel.visible \
-		or contracts_panel.visible
+		or contracts_panel.visible or news_panel.visible
 
-## Price map mode: stars tinted by the known price of one good (-1 = off).
+## Map modes: the danger map (lanes and stars by the chance of a hit), or
+## stars tinted by the known price of one good (c; -1 = off).
 func _apply_price_map(c: int) -> void:
 	tooltip.price_commodity = c
+	if map_mode.danger:
+		var lanes := {}
+		var stars := {}
+		for key in Sim.world.danger:
+			var d: float = Sim.world.danger[key]
+			lanes[key] = MapModeBar.danger_ramp(d)
+			for i in [key.x, key.y]:
+				stars[i] = maxf(stars.get(i, 0.0), d)
+		for i in stars:
+			stars[i] = Color(MapModeBar.danger_ramp(stars[i]), 1.0)
+		map.set_lane_colors(lanes)
+		map.set_tints(stars)
+		return
+	map.set_lane_colors({})
 	if c < 0:
 		map.set_tints({})
 		return
@@ -272,6 +322,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				finance_panel.close_panel()
 			elif contracts_panel.visible:
 				contracts_panel.close_panel()
+			elif news_panel.visible:
+				news_panel.close_panel()
 			elif system_view.visible:
 				system_view.close_view()
 			elif map.selected >= 0:
@@ -300,6 +352,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				contracts_panel.close_panel()
 			elif not overlay:
 				open_contracts()
+		KEY_N:
+			if news_panel.visible:
+				news_panel.close_panel()
+			elif not overlay:
+				open_news()
 		KEY_P:
 			if not overlay:
 				map_mode.cycle()

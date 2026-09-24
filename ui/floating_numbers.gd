@@ -5,7 +5,9 @@ extends Control
 ## and fades out.
 
 const LIFE := 2.8
-const RISE_PX := 70.0
+const RISE_PX := 50.0
+## Text size in px, a little above the star names.
+const FONT_SIZE := 19
 
 var camera: Camera3D
 var markers: ShipMarkers
@@ -43,9 +45,9 @@ func _draw() -> void:
 		if camera.is_position_behind(it.pos):
 			continue
 		var t: float = it.age / LIFE
-		var p := camera.unproject_position(it.pos) - Vector2(0, 28 + RISE_PX * t)
+		var p := camera.unproject_position(it.pos) - Vector2(0, 22 + RISE_PX * t)
 		var a := 1.0 - smoothstep(0.65, 1.0, t)
-		var w := _font.get_string_size(it.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
+		var w := _font.get_string_size(it.text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x
 		var at := p - Vector2(w * 0.5, 0)
-		draw_string_outline(_font, at, it.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 26, 6, Color(0.02, 0.03, 0.07, 0.8 * a))
-		draw_string(_font, at, it.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color(it.color, a))
+		draw_string_outline(_font, at, it.text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, 5, Color(0.02, 0.03, 0.07, 0.8 * a))
+		draw_string(_font, at, it.text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, Color(it.color, a))

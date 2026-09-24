@@ -96,10 +96,11 @@ func is_fully_connected(max_jump: float = INF) -> bool:
 
 ## Shortest route by distance (A*) from `from` to `to` using only lanes no
 ## longer than `max_jump`, and (when `allowed` is given, one byte per system)
-## only systems whose byte is non-zero. Returns the system indices including
+## only systems whose byte is non-zero. `penalty` adds extra cost (in ly) per
+## lane, keyed Vector2i(lower index, higher index) ("safest" routing). Returns the system indices including
 ## both ends, [from] when from == to, or an empty array when there is no route.
 func find_path(from: int, to: int, max_jump: float = INF,
-		allowed := PackedByteArray()) -> PackedInt32Array:
+		allowed := PackedByteArray(), penalty := {}) -> PackedInt32Array:
 	if from == to:
 		return PackedInt32Array([from])
 	var goal := systems[to].position
@@ -125,6 +126,8 @@ func find_path(from: int, to: int, max_jump: float = INF,
 			if closed.has(v) or (not allowed.is_empty() and allowed[v] == 0):
 				continue
 			var cost: float = g_cost[u] + lane.length
+			if not penalty.is_empty():
+				cost += penalty.get(Vector2i(mini(u, v), maxi(u, v)), 0.0)
 			if cost < g_cost.get(v, INF):
 				g_cost[v] = cost
 				came_from[v] = u

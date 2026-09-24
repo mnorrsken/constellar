@@ -35,6 +35,7 @@ static func load_world_content(dir: String) -> Dictionary:
 		"planet_types": load_list(dir + "planet_types.json"),
 		"archetypes": load_list(dir + "archetypes.json"),
 		"governments": load_list(dir + "governments.json"),
+		"events": load_list(dir + "events.json"),
 		"names": load_object(dir + "names.json"),
 		"balance": load_object(dir + "balance.json"),
 	}

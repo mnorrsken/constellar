@@ -10,6 +10,12 @@ extends SceneTree
 ## at the price clamps, or any stock ends above max_stock_ratio x its target
 ## (runaway stock). Also prints a per-commodity table and total supply vs
 ## demand, which is what you tune archetypes.json against.
+##
+## Events run as in a game. Every event in events.json must fire at least
+## once and, at least once, visibly move the prices it acts on (5% or more
+## in the expected direction while it runs; an embargo, a closed port or
+## a new ban: any good concerned 5% either way);
+## otherwise the run fails too.
 
 func _init() -> void:
 	var args := {}
@@ -49,8 +55,38 @@ func _init() -> void:
 	var lo := float(content.balance.economy.price_min)
 	var hi := float(content.balance.economy.price_max)
 	var days := years * Calendar.DAYS_PER_YEAR
+	var fired := {}    # event kind -> times started
+	var visible := {}  # event kind -> times it moved prices
+	var watch := {}    # event id -> [kind, checks [[market, c, direction, start price]], seen]
 	for d in days:
+		# Prices from before today, the baseline for events starting today
+		# (their effects reach the prices at once).
+		var before := {}
+		for m in e.markets:
+			before[m] = m.price.duplicate()
 		w.advance_day()
+		for ev in w.world_events:
+			if not watch.has(ev.id):
+				fired[ev.kind] = fired.get(ev.kind, 0) + 1
+				watch[ev.id] = [ev.kind, _checks(w, ev, before), false]
+		if w.day % 7 == 0:
+			for id in watch:
+				var entry: Array = watch[id]
+				if entry[2]:
+					continue
+				for chk in entry[1]:
+					var r: float = chk[0].price[chk[1]] / chk[3]
+					if (chk[2] > 0 and r >= 1.05) or (chk[2] < 0 and r <= 0.95) or (chk[2] == 0 and absf(r - 1.0) >= 0.05):
+						entry[2] = true
+						visible[entry[0]] = visible.get(entry[0], 0) + 1
+						break
+			# Finished events stop being watched.
+			var running := {}
+			for ev in w.world_events:
+				running[ev.id] = true
+			for id in watch.keys():
+				if not running.has(id) and not watch[id][2]:
+					watch[id][2] = true
 		if w.day % 7 == 0:
 			for m in e.markets:
 				for c in n:
@@ -87,6 +123,37 @@ func _init() -> void:
 		(Time.get_ticks_msec() - t0) / 1000.0])
 	print("samples at a price clamp: %.1f%% (limit %.0f%%)" % [share * 100.0, max_share * 100.0])
 	print("highest stock / target: %.2f at %s (limit %.1f)" % [worst, worst_at, max_ratio])
-	var ok := share <= max_share and worst <= max_ratio
+	var events_ok := true
+	print("\n%-15s %6s %8s" % ["event", "fired", "visible"])
+	for kind in content.events:
+		print("%-15s %6d %8d" % [kind, fired.get(kind, 0), visible.get(kind, 0)])
+		if visible.get(kind, 0) == 0:
+			events_ok = false
+	print("every event fired with a visible market effect: %s" % ("yes" if events_ok else "NO"))
+	var ok := share <= max_share and worst <= max_ratio and events_ok
 	print("SOAK %s" % ("PASS" if ok else "FAIL"))
 	quit(0 if ok else 1)
+
+## What to watch for one event: each affected market's goods named in its
+## supply/demand effects with the direction the price should go (+1 up,
+## -1 down), or every traded good either way (0) for an embargo or a
+## closed port, and banned goods either way.
+func _checks(w: World, ev: WorldEvent, before: Dictionary) -> Array:
+	var fx: Dictionary = WorldEvents.def_of(w, ev.kind).get("effects", {})
+	var out := []
+	for i in ev.systems:
+		var m := w.economy.market_at(i)
+		if m == null:
+			continue
+		for part in [["supply", -1], ["demand", 1]]:
+			var mults: Dictionary = fx.get(part[0], {})
+			for id in mults:
+				var dir: int = part[1] * (1 if float(mults[id]) > 1.0 else -1)
+				var goods := range(m.price.size()) if id == "*" else [w.economy.index_of(id)]
+				for c in goods:
+					if m.is_traded(c) and (id != "*" or m.supply_rate[c] > 0.0):
+						out.append([m, c, dir, before[m][c]])
+		for c in m.price.size():
+			if m.is_traded(c) and (fx.get("isolated", false) or fx.get("closed", false) or m.banned[c]):
+				out.append([m, c, 0, before[m][c]])
+	return out

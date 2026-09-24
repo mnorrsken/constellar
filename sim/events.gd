@@ -28,6 +28,13 @@ signal profit(ship_id: int, amount: float)
 ## abandoned a contract.
 signal contracts_changed
 
+## The Rim Courier printed a headline: {day, text, systems, kind, start}.
+signal news_posted(item: Dictionary)
+
+## An event started or ended somewhere (markets, tariffs, lane danger or a
+## government changed).
+signal world_events_changed
+
 ## A company charted new systems (fog of war lifted).
 signal charted(company_id: int)
 

@@ -7,6 +7,8 @@ extends Node3D
 ## centre so pairs separate when zoomed in (cosmetic, not to scale).
 ## Fog of war: every star glows, but names, drop lines and lanes appear only
 ## for systems in `known` (set_known; lanes need both ends charted).
+## Pulsing badge rings mark systems with running events (set_badges), and
+## the danger map mode colours lanes by danger (set_lane_colors).
 
 const STAR_SHADER := preload("res://render/shaders/star.gdshader")
 const GRID_SHADER := preload("res://render/shaders/grid.gdshader")
@@ -45,6 +47,10 @@ var _time := 0.0
 ## One byte per system, 1 = charted. Empty = everything visible.
 var _known := PackedByteArray()
 var _lanes_mi: MeshInstance3D
+## Lane key (Vector2i, lower index first) -> colour; empty = normal lanes.
+var _lane_colors: Dictionary = {}
+var _badges: Array[MeshInstance3D] = []
+var _badge_systems: Dictionary = {}
 var _drops_mi: MeshInstance3D
 ## Drop lines ("z rods") from stars to the galactic plane; Z toggles them.
 var show_drop_lines := true:
@@ -64,6 +70,7 @@ func build(g: Galaxy) -> void:
 	_build_drop_lines()
 	_build_stars()
 	_build_labels()
+	_badges.clear()
 	_hover_ring = _make_ring(HOVER_COLOR, 30.0, 0.0, 0.0)
 	_select_ring = _make_ring(SELECT_COLOR, 40.0, 10.0, 0.8)
 
@@ -72,6 +79,30 @@ func set_known(known: PackedByteArray) -> void:
 	_known = known.duplicate()
 	_build_lanes()
 	_build_drop_lines()
+	set_badges(_badge_systems)
+
+## Danger map mode: colours lanes (Vector2i(a, b), a < b -> Color); an empty
+## dictionary restores the normal lane colours.
+func set_lane_colors(colors: Dictionary) -> void:
+	if colors.is_empty() and _lane_colors.is_empty():
+		return  # nothing to undo: skip the rebuild
+	_lane_colors = colors
+	_build_lanes()
+
+## Event badges: a pulsing ring at each charted system in `systems`
+## (system index -> Color).
+func set_badges(systems: Dictionary) -> void:
+	_badge_systems = systems
+	for r in _badges:
+		r.queue_free()
+	_badges.clear()
+	for i in systems:
+		if not is_known(i):
+			continue
+		var ring := _make_ring(systems[i], 54.0, 0.0, 0.0)
+		ring.material_override.set_shader_parameter("thickness", 0.05)
+		_place_ring(ring, i)
+		_badges.append(ring)
 
 ## Map mode: tints every star of a system (system index -> Color); an empty
 ## dictionary restores the real star colours.
@@ -112,6 +143,9 @@ func _process(delta: float) -> void:
 	if galaxy == null:
 		return
 	_time += delta
+	var pulse := 0.6 + 0.9 * (0.5 + 0.5 * sin(_time * 3.0))
+	for r in _badges:
+		r.material_override.set_shader_parameter("intensity", pulse)
 	_update_multiples()
 	_update_labels()
 
@@ -138,6 +172,8 @@ func _build_lanes() -> void:
 		if not (is_known(lane.a) and is_known(lane.b)):
 			continue
 		var c := DEEP_LANE_COLOR if lane.length > deep_lane_ly else LANE_COLOR
+		if not _lane_colors.is_empty():
+			c = _lane_colors.get(Vector2i(mini(lane.a, lane.b), maxi(lane.a, lane.b)), c)
 		Ribbon.add_segment(st, system_position(lane.a), system_position(lane.b), c)
 		any = true
 	_lanes_mi = Ribbon.make_instance(2.0)

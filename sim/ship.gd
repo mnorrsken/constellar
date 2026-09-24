@@ -38,6 +38,14 @@ var stop_handled := false
 var wait_start := 0
 ## The player restarted the route here: sell even at a loss this once.
 var allow_loss := false
+## Insured (monthly premium, pays out on raids and losses) and "safest"
+## routing (avoid dangerous lanes) instead of the shortest route.
+var insured := false
+var safe_routing := false
+## Summed hit chance of the lanes flown this month and last month (prices
+## the insurance premium).
+var risk_month := 0.0
+var risk_last_month := 0.0
 
 func cargo_tonnes() -> float:
 	var t := 0.0
@@ -55,5 +63,5 @@ func to_dict() -> Dictionary:
 		"leg_progress": snappedf(leg_progress, 0.0001), "departed_day": departed_day,
 		"arrival_day": arrival_day, "busy_until": busy_until, "bought_day": bought_day,
 		"cargo": cargo.duplicate(), "orders": orders.duplicate(true), "order_index": order_index,
-		"orders_active": orders_active,
+		"orders_active": orders_active, "insured": insured, "safe_routing": safe_routing,
 	}

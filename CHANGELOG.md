@@ -8,6 +8,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Events, governments and news: `data/events.json` lists 11 events (war,
+  zealot takeover, plague, crop failure, mining strike, labour strike,
+  pirates, stellar flare, embargo, trade agreement, festival) that roll
+  monthly by chance, weighted and placed by conditions (population,
+  archetype, government, stability, star class); running events drive
+  supply/demand multipliers, closed ports, embargoes, waived tariffs and
+  lane danger, plus one-off government/stability/population changes, and
+  post headlines on start and end. `data/governments.json` gains `tariffs`,
+  `bans`, `war` and `lane_danger`, plus a new `zealots` government only
+  reachable via the zealot takeover event. Lane danger (`sim/danger.gd`)
+  comes from the governments at each end (plus war/pirates); crossing a
+  dangerous lane can raid a ship (cargo and freight charters lost, a repair
+  bill) or destroy it; armour modules halve the risk; insurance charges a
+  monthly premium priced off last month's risk and pays out on a hit.
+  Markets: banned goods, tariffed sales, closed and isolated (embargoed)
+  ports feed into trading, routes, contracts and background traffic, which
+  now skip them. UI: the Rim Courier news ticker (bottom right) and log (N)
+  of running events and headlines for charted systems; a danger map mode (P
+  cycles stars/danger/price maps) and pulsing map badges (danger, politics,
+  other); route orders panel gets safest-routing and insurance toggles;
+  system card shows route risk, tariffs, bans and running events; market
+  panel shows banned/duty tags and closed ports; finance panel adds
+  tariffs, insurance and repairs rows.
 - Passengers, mail and contracts: every market posts a weekly board of jobs
   (`Contract`/`Contracts`) — freight charters (the client's own cargo of an
   export good, taking hold space of its cargo class), passenger groups

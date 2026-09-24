@@ -1,8 +1,9 @@
 class_name SettlementCard
 extends VBoxContainer
 ## Settlement facts for one star system: name, archetype and body, a short
-## summary, then population, tech level, government and stability. Used by
-## the map's system panel and by the system view.
+## summary, then population, tech level, government, stability, tariffs
+## and banned goods, and the events running there. Used by the map's system
+## panel and by the system view.
 
 const AMBER := Color(0.98, 0.72, 0.3)
 const MUTED := Color(0.55, 0.62, 0.74)
@@ -11,6 +12,7 @@ var _name := Label.new()
 var _where := Label.new()
 var _summary := Label.new()
 var _grid := GridContainer.new()
+var _events := VBoxContainer.new()
 
 func _ready() -> void:
 	add_theme_constant_override("separation", 6)
@@ -25,11 +27,13 @@ func _ready() -> void:
 	_grid.columns = 2
 	_grid.add_theme_constant_override("h_separation", 18)
 	_grid.add_theme_constant_override("v_separation", 3)
-	for c in [_name, _where, _summary, _grid]:
+	_events.add_theme_constant_override("separation", 2)
+	for c in [_name, _where, _summary, _grid, _events]:
 		add_child(c)
 
 func show_system(s: StarSystem) -> void:
-	for child in _grid.get_children():
+	for child in _grid.get_children() + _events.get_children():
+		child.get_parent().remove_child(child)
 		child.queue_free()
 	var st := s.settlement
 	if st == null:
@@ -53,6 +57,29 @@ func show_system(s: StarSystem) -> void:
 	_row("Tech level", "%d / 10" % st.tech_level)
 	_row("Government", Defs.government_name(st.government))
 	_row("Stability", "%s (%d%%)" % [_stability_word(st.stability), roundi(st.stability * 100.0)])
+	var gov: Dictionary = Defs.world_content.governments.get(st.government, {})
+	var w: World = Sim.world
+	var m := w.economy.market_at(s.index)
+	var waived := m != null and m.tariff_mult == 0.0
+	var duties := PackedStringArray()
+	var profile: Dictionary = gov.get("tariffs", {})
+	for id in profile:
+		if float(profile[id]) > 0.0:
+			duties.append("%s %d%%" % ["all goods" if id == "*" else Defs.commodities[id].name, roundi(float(profile[id]) * 100.0)])
+	_row("Tariffs", "none" if duties.is_empty() else ("waived (agreement)" if waived else ", ".join(duties)))
+	var bans: Array = gov.get("bans", [])
+	if not bans.is_empty():
+		_row("Banned", ", ".join(bans.map(func(id): return Defs.commodities[id].name)))
+	for ev in WorldEvents.active_at(w, s.index):
+		var l := Label.new()
+		var badge: String = WorldEvents.def_of(w, ev.kind).get("badge", "info")
+		l.text = "●  %s  (until %s)" % [WorldEvents.def_of(w, ev.kind).get("name", ev.kind),
+			Calendar.format(ev.end_day, w.start_year)]
+		l.tooltip_text = ev.headline
+		l.mouse_filter = Control.MOUSE_FILTER_PASS
+		l.add_theme_font_size_override("font_size", 14)
+		l.add_theme_color_override("font_color", NewsPanel.BADGES.get(badge, Color.WHITE))
+		_events.add_child(l)
 
 func _row(key: String, value: String) -> void:
 	var k := Label.new()

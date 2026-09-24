@@ -27,6 +27,16 @@ var demand_rate := PackedFloat64Array()
 var recipes: Array[Dictionary] = []
 ## Weekly price samples, oldest first, at most `history_weeks` of them.
 var history: Array[PackedFloat32Array] = []
+## Running events (set by WorldEvents.apply_all): output and consumption
+## multipliers per commodity, a closed port (no trade), an embargo (no
+## background traffic), and tariffs (0 = waived by a trade agreement).
+## `banned`: 1 per good the government bans (no background traffic in it).
+var supply_mult := PackedFloat64Array()
+var demand_mult := PackedFloat64Array()
+var closed := false
+var isolated := false
+var tariff_mult := 1.0
+var banned := PackedByteArray()
 
 var _cfg: Dictionary
 
@@ -41,6 +51,11 @@ func _init(system_index: int, bases: PackedFloat64Array, cfg: Dictionary) -> voi
 	price.resize(n)
 	supply_rate.resize(n)
 	demand_rate.resize(n)
+	supply_mult.resize(n)
+	supply_mult.fill(1.0)
+	demand_mult.resize(n)
+	demand_mult.fill(1.0)
+	banned.resize(n)
 
 ## Adds a recipe; amounts are per day at full rate (already scaled by size).
 func add_recipe(inputs: Dictionary, outputs: Dictionary) -> void:
@@ -89,12 +104,19 @@ func tick(days: int) -> void:
 		for k in out_idx.size():
 			var fill := stock[out_idx[k]] / target[out_idx[k]]
 			var rate := ratio * clampf((stop - fill) / (stop - start), 0.0, 1.0)
-			stock[out_idx[k]] += out_amt[k] * days * rate
+			stock[out_idx[k]] += out_amt[k] * days * rate * supply_mult[out_idx[k]]
 			used = maxf(used, rate)
 		if used <= 0.0:
 			continue
 		for k in in_idx.size():
 			stock[in_idx[k]] = maxf(stock[in_idx[k]] - in_amt[k] * days * used, 0.0)
+	# Events wanting more than the recipes use (a war wants weapons). Less
+	# demand (zealots shun luxuries) lowers the wanted stock in price_at.
+	var cover := float(_cfg.get("cover_days", 30.0))
+	for c in stock.size():
+		if demand_mult[c] > 1.0:
+			var extra := (demand_mult[c] - 1.0) * maxf(demand_rate[c], target[c] / cover) * days
+			stock[c] = maxf(stock[c] - extra, 0.0)
 	# Surplus above target slowly spoils or gets written off.
 	var decay := 1.0 - pow(1.0 - float(_cfg.get("decay_per_day", 0.001)), days)
 	for c in stock.size():
@@ -106,11 +128,13 @@ func refresh_prices() -> void:
 	for c in price.size():
 		price[c] = price_at(c, stock[c])
 
-## Unit price if the stock of `c` were `s`.
+## Unit price if the stock of `c` were `s`. An event cutting demand
+## (demand_mult < 1) cuts the wanted stock with it.
 func price_at(c: int, s: float) -> float:
 	if target[c] <= 0.0:
 		return base_price[c]
-	var ratio := pow(target[c] / maxf(s, target[c] * 0.01), float(_cfg.get("elasticity", 0.8)))
+	var wanted := target[c] * minf(demand_mult[c], 1.0)
+	var ratio := pow(wanted / maxf(s, target[c] * 0.01), float(_cfg.get("elasticity", 0.8)))
 	return base_price[c] * clampf(ratio, float(_cfg.get("price_min", 0.25)), float(_cfg.get("price_max", 4.0)))
 
 ## Total cost of buying `qty` here: every unit is priced along the curve as

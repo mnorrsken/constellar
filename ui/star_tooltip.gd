@@ -8,6 +8,7 @@ var _title := Label.new()
 var _facts := Label.new()
 var _settlement := Label.new()
 var _price := Label.new()
+var _events := Label.new()
 ## Map mode: commodity whose known price to show (-1 = none).
 var price_commodity := -1
 var _stars := RichTextLabel.new()
@@ -36,6 +37,9 @@ func _ready() -> void:
 	box.add_child(_facts)
 	box.add_child(_settlement)
 	box.add_child(_price)
+	_events.add_theme_font_size_override("font_size", 14)
+	_events.add_theme_color_override("font_color", Color(1.0, 0.7, 0.35))
+	box.add_child(_events)
 	box.add_child(_stars)
 	add_child(box)
 
@@ -46,6 +50,12 @@ func show_system(g: Galaxy, i: int, mouse: Vector2) -> void:
 	_settlement.visible = charted
 	_price.visible = charted and price_commodity >= 0 and s.settlement != null
 	_stars.visible = charted
+	var names := PackedStringArray()
+	if charted:
+		for ev in WorldEvents.active_at(Sim.world, i):
+			names.append(WorldEvents.def_of(Sim.world, ev.kind).get("name", ev.kind))
+	_events.visible = not names.is_empty()
+	_events.text = "  ·  ".join(names)
 	if not charted:
 		_title.text = "Uncharted system"
 		_place(mouse)

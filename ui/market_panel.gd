@@ -71,6 +71,7 @@ func _ready() -> void:
 	add_child(box)
 	Events.day_passed.connect(func(_d): _refresh())
 	Events.fleet_changed.connect(_refresh)
+	Events.world_events_changed.connect(_refresh)
 	Events.company_changed.connect(func(_c): _refresh())
 
 ## Shows the market of a system, or hides the panel where there is none.
@@ -97,6 +98,9 @@ func _refresh() -> void:
 		prices = m.price
 		_status.text = "Live prices: %s is docked here" % _trade_ship.name
 		_status.add_theme_color_override("font_color", GREEN)
+		if m.closed:
+			_status.text = "The port is closed (strike): no trade until it reopens"
+			_status.add_theme_color_override("font_color", AMBER)
 	elif not known.is_empty():
 		prices = known.price
 		var age: int = w.day - int(known.day)
@@ -127,11 +131,20 @@ func _refresh() -> void:
 	for c in _cells.size():
 		var row: Array = _cells[c]
 		var ratio: float = prices[c] / m.base_price[c]
+		var banned := Trading.is_banned(w, _system, c)
+		var duty := Trading.tariff(w, _system, c)
+		row[0].add_theme_color_override("font_color", Color(1.0, 0.45, 0.4) if banned else Color(0.86, 0.9, 0.97))
 		row[1].text = Format.thousands(roundi(prices[c]))
 		row[2].text = "%+d%%" % roundi((ratio - 1.0) * 100.0)
 		row[2].add_theme_color_override("font_color", GREEN if ratio < 0.97 else (AMBER if ratio > 1.03 else MUTED))
 		row[3].text = Format.thousands(roundi(m.stock[c])) if live else "—"
-		if m.supply_rate[c] > m.demand_rate[c]:
+		if banned:
+			row[4].text = "banned"
+			row[4].add_theme_color_override("font_color", Color(1.0, 0.45, 0.4))
+		elif duty > 0.0:
+			row[4].text = "duty %d%%" % roundi(duty * 100.0)
+			row[4].add_theme_color_override("font_color", AMBER)
+		elif m.supply_rate[c] > m.demand_rate[c]:
 			row[4].text = "export"
 			row[4].add_theme_color_override("font_color", GREEN)
 		elif m.demand_rate[c] > 0.0:
@@ -152,8 +165,8 @@ func _refresh() -> void:
 		for k in [7, 8]:
 			row[k].modulate.a = 1.0 if live else 0.0
 			row[k].mouse_filter = Control.MOUSE_FILTER_STOP if live else Control.MOUSE_FILTER_IGNORE
-		row[7].disabled = not live or Trading.free_space(w, _trade_ship, c) < 1.0 or m.stock[c] < 1.0
-		row[8].disabled = not live or aboard < 0.5
+		row[7].disabled = not live or banned or m.closed or Trading.free_space(w, _trade_ship, c) < 1.0 or m.stock[c] < 1.0
+		row[8].disabled = not live or banned or m.closed or aboard < 0.5
 	_fit()
 
 ## The selected player ship if it is docked here, else any docked here.

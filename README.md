@@ -49,10 +49,19 @@ Buy/Sell buttons (lot size at the top); elsewhere it shows the last prices
 your ships saw and how old they are. O opens the selected ship's route
 orders (add the selected system as a stop; sell, buy, wait for a full load,
 auto-trade; Start route). L shows the finances (ledger, borrow, repay).
-P cycles the price map: stars and names coloured by what you know of one
-good's price. Every sale shows its profit (or loss) floating up from the
-ship. A route that would sell at a loss stops and pauses the game; restart
-it to sell anyway.
+P cycles the map mode: stars, danger (lanes and stars coloured by the
+chance of a hit), then the price maps. Every sale shows its profit (or
+loss) floating up from the ship. A route that would sell at a loss stops
+and pauses the game; restart it to sell anyway.
+
+Events and danger: wars, strikes, pirates, embargoes and other events come
+and go, moving prices, closing ports, banning or tariffing goods and
+raising the danger of nearby lanes; pulsing map badges mark where
+something is happening. The Rim Courier ticker (bottom right, click a
+headline to select its system) shows the latest news; N opens the full
+log. Flying a dangerous lane can cost a ship its cargo or itself; the route
+orders panel (O) has a safest-routing toggle (routes around danger) and an
+insurance toggle (a monthly premium that pays out on a raid or loss).
 
 Press M, or the system panel's Market button, to see the selected system's
 market. Space pauses/resumes the game clock; 1-4 set its speed (also

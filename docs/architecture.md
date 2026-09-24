@@ -64,8 +64,10 @@ archetype also lists `industries` (recipes of `{in, out}` commodity ids to
 per-market-size-unit-per-day amounts) and `needs` (commodity id to per-size
 rate; `"*"` means every commodity, for free ports) — see `Economy` below.
 `data/governments.json` lists 7 governments (stability, region/archetype
-weights) plus `custodians` (stability 0.92, never picked by region — robot
-worlds only). `data/names.json` holds settlement name pools, plus
+weights, `tariffs` by commodity, `bans`, `war` likeliness, `lane_danger`)
+plus `custodians` (stability 0.92, never picked by region — robot worlds
+only) and `zealots` (bans atomics, never picked by region — only reached
+via the zealot takeover event). `data/names.json` holds settlement name pools, plus
 `robot_suffixes` for robot world names. `data/balance.json` has
 `world_seed`, `start_system`, `start_year`, region radii, settlement
 population/tech ranges by region, `settlements.robot_world_chance` (odds an
@@ -80,7 +82,16 @@ weekly background traffic, and `soak` limits) — see `Economy` below, plus
 days) and `contracts` (board size per market size, offer lifetime, max
 lane hops to a destination, kind mix, freight tonnage/rate/cargo-class
 weights, passenger group size/rate/luxury share, mail sacks/rate/sacks per
-bay, penalty share, deadline speed/slack/buffer) — see `Contracts` below.
+bay, penalty share, deadline speed/slack/buffer) — see `Contracts` below,
+plus `events` (max running events per system, news log length, monthly
+stability drift) and `danger` (unsettled-system base danger, cap, armour
+factor, destroy share, raid repair share, safest-routing penalty per risk,
+insurance minimum rate and markup) — see `Events, governments and danger`
+below.
+
+`data/events.json` lists 11 events, each an id, scope (`system`/`pair`/
+`lane`), monthly chance, duration range, `where` conditions, a weighting
+rule, `effects` and start/end headline templates (`{a}`/`{b}`).
 
 `data/hulls.json` lists hulls (slots, tonnes per slot, speed in ly/day,
 jump range, price, crew cost, maintenance, reliability, production years,
@@ -213,7 +224,14 @@ stock vs target, not on `volume_scale`, so balance is unchanged.
 `quote_buy`/`quote_sell` integrate price over the stock change (`_integrate`,
 a 24-step midpoint rule) so a big lot costs more, or earns less, per unit
 than a small one; `buy`/`sell` apply that and move stock/price. `record_week`
-appends a price sample to `history`, capped at `history_weeks`.
+appends a price sample to `history`, capped at `history_weeks`. Running
+events (`WorldEvents.apply_all`) rebuild each market's `supply_mult`/
+`demand_mult` per commodity, `closed` (no trading), `isolated` (embargoed —
+skipped by background traffic), `tariff_mult` (0 while a trade agreement
+waives tariffs) and `banned` (per commodity, from the settlement's
+government `bans`); `price_at` folds lower demand into the wanted stock and
+`tick` folds higher demand into consumption, so events move prices without
+a separate code path.
 
 `sim/economy.gd` (`Economy`) builds one `Market` per settlement:
 `build()` reads each settlement's archetype `industries` and `needs` from
@@ -230,16 +248,24 @@ the price ratio beats `1 + friction + per_ly x distance`, capped by
 `capacity x volume_scale x` the smaller market's size, a `max_share` of the
 source's stock, and the destination's target headroom — this is background
 NPC trade so prices don't drift to extremes; real rival companies take over
-part of this job later. Player trades (`buy`/`sell`) still move prices
-immediately, between weekly ticks.
+part of this job later. Traffic skips embargoed/closed markets and banned
+goods. Player trades (`buy`/`sell`) still move prices immediately, between
+weekly ticks.
 
 `sim/world.gd` (`World`) now carries `day`, `start_year` and `economy`
 alongside the galaxy. `World.create` builds the `Economy` after generation
 and reads `economy.warmup_days`. `advance_day()` is the one sim tick: ticks
-the economy, then increments `day`. `warm_up()` runs `economy.tick_day` for
-`warmup_days` before day 0 so markets aren't freshly settled when the player
-arrives; it's called by `Sim` and `tools/soak.gd`, not by tests, so tests
-stay fast. `date_string()` is `Calendar.format(day, start_year)`.
+the economy, then increments `day`; ends events (`WorldEvents.daily`),
+moves the fleet (crossing a dangerous lane may raid or lose a ship,
+`Danger.cross`), delivers contracts and charges docking; on the 1st of the
+month runs `Danger.monthly` (insurance premiums), `Trading.monthly_costs`
+and `WorldEvents.monthly` (the event roll); then runs route orders (see
+`Events, governments and danger` below for the event/danger pieces).
+`warm_up()` runs
+`economy.tick_day` for `warmup_days` before day 0 so markets aren't freshly
+settled when the player arrives; it's called by `Sim` and `tools/soak.gd`,
+not by tests, so tests stay fast. `date_string()` is `Calendar.format(day,
+start_year)`.
 
 `tools/soak.gd` (`godot --headless --script res://tools/soak.gd`, wrapped by
 `make soak`) builds the world, warms it up, then runs `years` (default from
@@ -248,7 +274,8 @@ trading, sampling every traded commodity's price weekly. It prints
 per-commodity supply/demand at full rate, average price vs base, and the
 share of samples at each clamp, then fails (exit 1) if more than
 `soak.max_clamp_share` of samples sit at a price clamp or any market's stock
-exceeds `soak.max_stock_ratio` x its target.
+exceeds `soak.max_stock_ratio` x its target, or if any event never fired or
+didn't visibly move a price.
 
 ## Fleet
 
@@ -258,7 +285,10 @@ exceeds `soak.max_stock_ratio` x its target.
 
 `sim/ship.gd` (`Ship`) holds owner, hull, one module per slot, and status:
 `DOCKED` or `REFITTING` at `system`, or `TRAVELING` along `route` (system
-indices) at `leg` + `leg_progress` ly, with `arrival_day`.
+indices) at `leg` + `leg_progress` ly, with `arrival_day`. Also `insured`,
+`safe_routing`, and `risk_month`/`risk_last_month` (danger run this month
+and last, for pricing the insurance premium — see `Events, governments and
+danger` below).
 
 `sim/fleet.gd` (`Fleet`) owns every ship. Specs: `speed` (drive tunes),
 `jump_range` (jump extenders), `capacity` by cargo class, `sale_value`.
@@ -266,10 +296,14 @@ Shipyards: `is_shipyard` (archetype + tech from `balance.json`),
 `hulls_for_sale(system, year)` (production years and tech). Commands:
 `buy`, `sell`, `refit` (+ `refit_quote`: new modules paid, old ones sold at
 `module_resale`, 3 days + 2 per changed slot), `plan_route` (shortest path
-using only lanes within jump range; "Out of range" when only longer jumps
-reach), `send`. `advance_day` moves each travelling ship `speed` ly along
-its legs and returns `arrived` / `refitted` events; `travel_days` =
-ceil(length / speed), so a ship arrives on the day `send` predicted.
+using only lanes within jump range, plus `Danger.penalty` per lane when the
+ship has `safe_routing` on, so it detours around danger; "Out of range"
+when only longer jumps reach; also returns the route's `risk`, `Danger.
+route_risk`), `send`. `advance_day` moves each travelling ship `speed` ly
+along its legs and returns `arrived` / `passed` events (each carrying
+`from`, the lane just crossed, for `World.advance_day` to roll `Danger.
+cross`) and `refitted` events; `travel_days` = ceil(length / speed), so a
+ship arrives on the day `send` predicted.
 `route_point(ship, extra_ly)` gives position and heading (the renderer adds
 speed x day fraction). Ship ids come from a counter, never reused.
 
@@ -298,9 +332,14 @@ settlement ("holding" otherwise).
 ## Trading
 
 `sim/trading.gd` (`Trading`, static functions on a `World`) holds the trade
-rules. `buy` / `sell` need the ship docked at a market; buying is limited by
-stock, free hold space of the good's cargo class (`free_space`) and cash;
-there is no sales tax yet (tariffs come with the government rules). `fuel_quote` / `pay_fuel`: `hull.fuel_per_ly` x route length,
+rules. `buy` / `sell` need the ship docked at a market that isn't `closed`;
+buying is limited by stock, free hold space of the good's cargo class
+(`free_space`) and cash; both refuse a good the settlement government
+`is_banned` (from `governments.json bans`). Sales pay a tariff (`tariff`:
+the government's `tariffs` for that commodity x the market's `tariff_mult`,
+0 while a trade agreement waives it); the auto-trader counts the tariff
+when picking the best margin. Route orders skip banned goods and wait at a
+closed port rather than erroring. `fuel_quote` / `pay_fuel`: `hull.fuel_per_ly` x route length,
 bought from the local market (the rest at base x `fuel_without_market`).
 `docking_fee` on arrival at a settlement. `monthly_costs` on the 1st: crew
 and maintenance per ship, interest on loans, ledger trimmed to
@@ -344,7 +383,9 @@ or `luxury` (passengers), `amount` (tonnes, passengers or sacks), `reward`,
 `sim/contracts.gd` (`Contracts`, static functions on a `World`, like
 `Trading`) runs the boards. `post_offers` (weekly, after the market tick)
 drops expired offers and posts new ones sized to each market's `size`
-(capped at `max_offers`, alive `offer_weeks`): kind is a weighted draw
+(capped at `max_offers`, alive `offer_weeks`; none posted for a closed
+port, and freight never picks a good banned at the origin or destination):
+kind is a weighted draw
 (`contracts.kinds`, passengers excluded at robot worlds), destination is a
 weighted draw over every system within `max_hops` lanes (near places
 favoured, and for people/mail, big markets too — weights and route lengths
@@ -358,7 +399,7 @@ freight against `Trading.free_space` (freight charters reserve hold space
 via `freight_reserved`, so player cargo can't overfill a hold that also
 carries charters), passengers against `free_berths` (economy/luxury cabin
 modules), mail against `free_mail` (mail bay modules x `mail_per_bay`).
-`accept` needs the ship docked at the origin, the destination charted and
+`accept` needs the ship docked at the origin (not closed), the destination charted and
 room, and files the job under `World.jobs[ship.id]`; `deliver` (on arrival)
 pays the reward to the `"contracts"` ledger category; `check_deadlines`
 (daily) and `abandon` fail a job, charging the penalty to `"penalties"` and
@@ -383,6 +424,58 @@ Abandon (showing the penalty). `FleetPanel` shows each ship's contract
 count; `FinancePanel` has Contracts and Penalties ledger rows;
 `MarketPanel`'s hold line adds reserved charter freight; `SystemPanel`'s
 Contracts button shows the board's offer count.
+
+## Events, governments and danger
+
+`sim/world_event.gd` (`WorldEvent`) is one running event: definition id
+(`data/events.json`), the `systems` it touches (a lane event's two ends),
+`start_day`/`end_day` and its headline.
+
+`sim/world_events.gd` (`WorldEvents`, static functions on a `World`) is the
+event engine. `monthly` (1st of the month) drifts every settlement's
+stability toward its government's base, then gives each event definition
+its `chance_per_month`; `candidates` finds every place that fits the
+`where` conditions (population, archetype, not-government, max stability,
+star class) and scope (`system`/`pair`/`lane`, a `pair`/`lane` needing both
+lane ends to fit), weighted by `_weight` (war-likeliness, instability,
+market size or lawlessness); one is picked and `start` runs it (one-off
+government/stability/population changes happen immediately, and it posts a
+start headline). `daily` ends events past their `end_day` (posts an end
+headline). `apply_all` rebuilds every market's `supply_mult`/`demand_mult`/
+`closed`/`isolated`/`tariff_mult`/`banned` and `World.danger` (see `Danger`
+below) from scratch from all running events, so overlapping events just
+add up; `Contracts._weighted_with` is reused for the weighted picks.
+`post_news(w, text, systems, kind, starting)` appends to `World.news`
+(capped at `events.news_max`) and queues a `"news"` event for `Sim` to emit
+as `Events.news_posted`.
+
+`sim/danger.gd` (`Danger`, static functions on a `World`) is lane danger
+and its consequences. `base_map` gives every lane a base chance per
+crossing from the worse of its two end governments' `lane_danger`
+(`danger.unsettled` for an empty system); `WorldEvents.apply_all` adds
+`lane_danger`/`zone_danger` from running events (war, pirates), capped at
+`danger.max`. `ship_danger` halves that per armour module
+(`danger.armour_factor`); `route_risk` is the chance of at least one hit
+over a planned route; `penalty` turns danger into extra ly cost per lane
+for `Fleet.plan_route`'s "safest routing". `cross(w, ship, a, b)` rolls a
+hit crossing a -> b: on a hit, cargo and any freight charters are lost
+(`Contracts.abandon`), then either a raid (a repair bill,
+`danger.raid_repair_share` of the ship's value, booked to `"repairs"`) or,
+with `danger.destroy_share` chance, the ship is destroyed and removed from
+the fleet (and all its jobs fail); an insured ship's payout (cargo value,
+plus the repairs on a raid or the ship on a loss)
+is booked to `"insurance"`, and a loss posts a news item. `monthly` charges
+insured ships their `premium` (from `risk_last_month`, at least
+`danger.insurance_min_rate`, else risk x `danger.insurance_markup`) and
+rolls `risk_month` into `risk_last_month`.
+
+`World` adds `world_events`, `news`, `danger` (the lane-key -> chance map),
+`next_event_id`, and `events_rng`/`danger_rng` (seeded separately from the
+world seed, so choosing to look at danger doesn't perturb which events
+fire). `set_insurance`/`set_routing` toggle a ship's `insured`/
+`safe_routing`. `Sim` exposes the same toggles and the `Events.
+news_posted`/`world_events_changed` signals; a raid or loss also posts a
+player notice and pauses the game (if `auto_pause`).
 
 ## Render layer
 
@@ -409,6 +502,10 @@ when far), `Label3D` names that fade by camera distance, and hover/
 selection rings. Members of a multi-star system circle the system centre
 (cosmetic, not to scale). `star_positions()`/`star_system()` expose where
 each star is drawn this frame, which `main.gd` uses for picking.
+`set_lane_colors(colors)` recolours the starlane ribbon per lane (used for
+the danger map mode); `set_badges(systems)` draws a pulsing ring at each
+charted system with a running event (colour by badge kind — danger,
+politics, other).
 
 `render/map_camera.gd` (`MapCamera`) turns input into edits on a target
 `OrbitRig`, then eases the view toward it: left-drag orbit, right/
@@ -459,8 +556,9 @@ variable-font weight/spacing variants.
 
 `ui/star_tooltip.gd` (`StarTooltip`) shows a hovered system's name,
 distance from Sol, lane count, each star with a colour dot and spectral
-type (`Format.spectral`), and its settlement line (name, archetype,
-population or "N robots", or "Uninhabited"). `ui/hud.gd` (`Hud`) draws the wordmark and
+type (`Format.spectral`), its settlement line (name, archetype,
+population or "N robots", or "Uninhabited"), and the names of any running
+events there. `ui/hud.gd` (`Hud`) draws the wordmark and
 a line of control hints. `ui/debug_overlay.gd` (`DebugOverlay`, F1) lists
 every on-screen system's id and galactic coordinates, FPS, camera state,
 and the hovered id.
@@ -470,8 +568,11 @@ and system UI: `population()` ("7.2 billion"), `thousands()`, `au()`, and
 `spectral()` (spectral type as text, e.g. "G2 V", "white dwarf").
 
 `ui/settlement_card.gd` (`SettlementCard`) shows one settlement's name,
-archetype and body, a short summary, and population (or "none" plus a
-Robots row for robot worlds)/tech/government/stability, or "Uninhabited";
+archetype and body, a short summary, population (or "none" plus a
+Robots row for robot worlds)/tech/government/stability, a Tariffs row
+(per-commodity duties, "waived (agreement)" or "none") and a Banned row
+when the government bans a good, then each running event there with its
+badge colour and end date, or "Uninhabited";
 shared by the map's system panel and the
 system view. `ui/system_panel.gd` (`SystemPanel`) is the card on the right
 of the map for the selected system (star types, distance, region, body
@@ -509,19 +610,35 @@ docked there, per-slot module pickers with the refit quote, Refit and Sell;
 a dim layer sits behind it. `ui/toast.gd` (`Toast`) shows `Events.notice`
 messages under the clock bar. `ClockBar` shows cash (loan in its tooltip).
 `SystemPanel` has a Shipyard button and, with a ship selected, the send
-line (jumps, ly, days, arrival date, or why not) and "Send <ship> here",
-refreshed daily.
+line (jumps, ly, days, arrival date, or why not, plus the route's risk of
+a hit once it's non-trivial, coloured by `MapModeBar.danger_ramp`) and
+"Send <ship> here", refreshed daily.
 
 `MarketPanel` never hides grid cells (a GridContainer would shift the rest
 into the wrong columns); it shows live prices (a player ship docked there) with Buy/Sell
 for that ship, a lot size and cargo aboard, else the prices the company
-last saw and their age, else nothing. `OrdersPanel` (O) edits a ship's route
-orders; `FinancePanel` (L) shows three months of the ledger by category and
-by ship, with borrow/repay; `MapModeBar` (top right, P cycles) picks the
-price map; `GalaxyMap.set_tints` colours stars and names; the tooltip adds
-the known price and its age. Modal panels share `OverlayDim`.
+last saw and their age, else nothing; a banned good is red-tagged "banned"
+with Buy/Sell disabled, a market's tariff shows per commodity, and a
+closed port disables trading. `OrdersPanel` (O) edits a ship's route
+orders, and has Safest routing (adds `Danger.penalty` to route planning)
+and Insured (shows the monthly premium) toggles per ship; `FinancePanel`
+(L) shows three months of the ledger by category (now including
+`tariffs`, `insurance`, `repairs`) and by ship, with borrow/repay;
+`MapModeBar` (top right, P cycles stars / danger / price maps) picks the
+map mode: the danger map colours lanes and stars by chance of a hit
+(`danger_ramp`, green/amber/red) via `GalaxyMap.set_lane_colors`/
+`set_tints`, the price maps colour stars and names by known price via
+`set_tints`; the tooltip adds the known price and its age. Modal panels
+share `OverlayDim`.
 `ui/floating_numbers.gd` (`FloatingNumbers`) draws the rising profit/loss
 text at the selling ship on `Events.profit`.
+
+`ui/news_ticker.gd` (`NewsTicker`, "The Rim Courier", bottom right) turns
+through the latest headlines about charted systems every few seconds, a
+new one showing at once; clicking selects its system, N opens the full
+log. `ui/news_panel.gd` (`NewsPanel`, N) lists what's running now (grouped
+by badge colour) then every past headline, newest first; clicking a line
+closes the log and selects its system.
 
 ## Main scene
 
@@ -619,3 +736,12 @@ kinds, deterministic), accepting (charters take hold space, no double
 accept, refusals: not docked, no cabins; berth and mail counts), delivery
 and reward, a missed deadline's penalty, abandoning, and a contracts-only
 bot that buys a second ship within three years with no failed jobs.
+
+`tests/test_events.gd` covers event placement (conditions, weighting, one
+per system at a time up to `max_per_system`), effects on prices/closed
+ports/embargoes/waived tariffs/bans while running and reverting when they
+end, one-off government/stability/population changes, start/end headlines
+and the news log, lane danger from governments and running events, armour
+halving risk, safest routing avoiding danger, raids and losses (cargo and
+freight charters lost, repairs, insurance payout, ship removed from the
+fleet on a loss), and the insurance premium.

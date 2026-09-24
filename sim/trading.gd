@@ -1,7 +1,8 @@
 class_name Trading
 ## Trade rules on top of World: buying and selling cargo (cargo class and
-## hold space), fuel for a trip, docking fees, what each company
-## knows of prices, the monthly books, and route orders. Static functions on
+## hold space, the government's tariffs and bans, closed ports), fuel for a
+## trip, docking fees, what each company knows of prices, the monthly
+## books, and route orders. Static functions on
 ## a World so the world stays the single owner of state.
 ##
 ## Money always goes through Company.book(), so every credit lands in the
@@ -14,6 +15,22 @@ static func cfg(w: World) -> Dictionary:
 
 static func commodity_class(w: World, c: int) -> String:
 	return w.content.commodities[w.economy.commodity_ids[c]].cargo_class
+
+## The government's duty on goods sold at a system (share of the income):
+## its tariff profile (governments.json "tariffs": per good or "*"),
+## waived under a trade agreement.
+static func tariff(w: World, system_index: int, c: int) -> float:
+	var st := w.galaxy.systems[system_index].settlement
+	var m := w.economy.market_at(system_index)
+	if st == null or m == null:
+		return 0.0
+	var profile: Dictionary = w.content.governments.get(st.government, {}).get("tariffs", {})
+	return float(profile.get(w.economy.commodity_ids[c], profile.get("*", 0.0))) * m.tariff_mult
+
+## Banned goods can't be bought or sold there (governments.json "bans").
+static func is_banned(w: World, system_index: int, c: int) -> bool:
+	var st := w.galaxy.systems[system_index].settlement
+	return st != null and w.economy.commodity_ids[c] in w.content.governments.get(st.government, {}).get("bans", [])
 
 static func docking_fee(w: World, ship: Ship) -> float:
 	var t := cfg(w)
@@ -35,6 +52,8 @@ static func fuel_quote(w: World, ship: Ship, length_ly: float) -> Dictionary:
 	var tonnes := length_ly * float(w.fleet.hull_def(ship).get("fuel_per_ly", 0))
 	var fuel := w.economy.index_of(cfg(w).get("fuel_commodity", "fuel"))
 	var m := w.economy.market_at(ship.system) if ship.status == Ship.Status.DOCKED else null
+	if m and m.closed:
+		m = null
 	var local := minf(tonnes, m.stock[fuel]) if m else 0.0
 	var cost := m.quote_buy(fuel, local) if m and local > 0.0 else 0.0
 	cost += (tonnes - local) * w.economy.markets[0].base_price[fuel] * float(cfg(w).get("fuel_without_market", 1.5))
@@ -70,6 +89,8 @@ static func buy(w: World, ship: Ship, c: int, qty: float) -> Dictionary:
 	if not check.ok:
 		return check
 	var m: Market = check.market
+	if is_banned(w, ship.system, c):
+		return {"ok": false, "error": "%s are banned here" % _name(w, c)}
 	var company := w.companies[ship.company]
 	qty = floorf(minf(qty, minf(m.stock[c], free_space(w, ship, c))))
 	if qty < 1.0:
@@ -91,13 +112,15 @@ static func buy(w: World, ship: Ship, c: int, qty: float) -> Dictionary:
 	w.events.append({"type": "cargo", "ship": ship.id, "company": ship.company})
 	return {"ok": true, "qty": qty, "cost": cost}
 
-## Sells up to `qty` t of cargo. (No sales tax: tariffs and smuggling come
-## with the government rules.)
+## Sells up to `qty` t of cargo; the government's tariff is taken from the
+## income.
 static func sell(w: World, ship: Ship, c: int, qty: float) -> Dictionary:
 	var check := _at_market(w, ship)
 	if not check.ok:
 		return check
 	var m: Market = check.market
+	if is_banned(w, ship.system, c):
+		return {"ok": false, "error": "%s are banned here" % _name(w, c)}
 	qty = minf(qty, ship.cargo.get(c, 0.0))
 	if qty <= 0.0:
 		return {"ok": false, "error": "No such cargo aboard"}
@@ -110,14 +133,18 @@ static func sell(w: World, ship: Ship, c: int, qty: float) -> Dictionary:
 		ship.cargo.erase(c)
 		ship.cargo_cost.erase(c)
 	company.book("sales", gross, w.month(), ship.id)
+	var duty := gross * tariff(w, ship.system, c)
+	if duty > 0.0:
+		company.book("tariffs", -duty, w.month(), ship.id)
 	observe(w, ship.company, ship.system)
 	w.events.append({"type": "cargo", "ship": ship.id, "company": ship.company})
 	w.events.append({"type": "sale", "ship": ship.id, "company": ship.company,
-		"system": ship.system, "profit": gross - basis})
-	return {"ok": true, "qty": qty, "income": gross, "profit": gross - basis}
+		"system": ship.system, "profit": gross - duty - basis})
+	return {"ok": true, "qty": qty, "income": gross - duty, "profit": gross - duty - basis}
 
-## What selling the whole cargo here would bring, and what it cost:
-## {income, cost}. No market: {income 0, cost 0}.
+## What selling the whole cargo here would bring after tariffs, and what it
+## cost: {income, cost}. Banned goods stay aboard and don't count. No
+## market: {income 0, cost 0}.
 static func sale_quote(w: World, ship: Ship) -> Dictionary:
 	var m := w.economy.market_at(ship.system)
 	var income := 0.0
@@ -125,13 +152,17 @@ static func sale_quote(w: World, ship: Ship) -> Dictionary:
 	if m == null:
 		return {"income": 0.0, "cost": 0.0}
 	for c in ship.cargo:
-		income += m.quote_sell(c, ship.cargo[c])
+		if is_banned(w, ship.system, c):
+			continue
+		income += m.quote_sell(c, ship.cargo[c]) * (1.0 - tariff(w, ship.system, c))
 		cost += ship.cargo_cost.get(c, 0.0)
 	return {"income": income, "cost": cost}
 
+## Sells everything that may be sold here (banned goods stay aboard).
 static func sell_all(w: World, ship: Ship) -> void:
 	for c in ship.cargo.keys():
-		sell(w, ship, c, ship.cargo[c])
+		if not is_banned(w, ship.system, c):
+			sell(w, ship, c, ship.cargo[c])
 
 static func _at_market(w: World, ship: Ship) -> Dictionary:
 	if ship.status != Ship.Status.DOCKED:
@@ -139,7 +170,12 @@ static func _at_market(w: World, ship: Ship) -> Dictionary:
 	var m := w.economy.market_at(ship.system)
 	if m == null:
 		return {"ok": false, "error": "No market here"}
+	if m.closed:
+		return {"ok": false, "error": "The port is closed"}
 	return {"ok": true, "market": m}
+
+static func _name(w: World, c: int) -> String:
+	return w.content.commodities[w.economy.commodity_ids[c]].name
 
 # --- the books ----------------------------------------------------------------------
 
@@ -163,7 +199,8 @@ static func monthly_costs(w: World) -> void:
 ## wait_full_max_days), then head for the next stop. A ship that cannot go
 ## on (cash, fuel, no charted route) stops its orders, and so does one whose
 ## cargo would sell at a loss (it keeps the cargo; restarting the route
-## there sells anyway).
+## there sells anyway). Banned goods are neither bought nor sold; at a
+## closed port the ship waits until it reopens.
 static func process_orders(w: World) -> void:
 	for s in w.fleet.ships:
 		if not s.orders_active or s.status != Ship.Status.DOCKED or s.orders.size() < 2:
@@ -171,6 +208,9 @@ static func process_orders(w: World) -> void:
 		var stop: Dictionary = s.orders[s.order_index]
 		if s.system != int(stop.system):
 			_go(w, s, int(stop.system))
+			continue
+		var port := w.economy.market_at(s.system)
+		if port and port.closed:
 			continue
 		if not s.stop_handled:
 			if (stop.get("sell_all", true) or stop.get("auto", false)) and not s.cargo.is_empty():
@@ -206,6 +246,8 @@ static func _load(w: World, s: Ship, stop: Dictionary) -> void:
 		return
 	for b in stop.get("buy", []):
 		var c := w.economy.index_of(b.commodity)
+		if is_banned(w, s.system, c):
+			continue
 		var amount := float(b.get("amount", 0))
 		var want := free_space(w, s, c) if amount <= 0.0 else maxf(amount - s.cargo.get(c, 0.0), 0.0)
 		if want >= 1.0:
@@ -217,6 +259,8 @@ static func _full(w: World, s: Ship, stop: Dictionary) -> bool:
 		return true
 	for b in stop.get("buy", []):
 		var c := w.economy.index_of(b.commodity)
+		if is_banned(w, s.system, c):
+			continue
 		var amount := float(b.get("amount", 0))
 		if amount <= 0.0 and free_space(w, s, c) >= 1.0:
 			return false
@@ -225,7 +269,8 @@ static func _full(w: World, s: Ship, stop: Dictionary) -> bool:
 	return true
 
 ## Auto-trader: for each cargo class aboard, the good with the best known
-## margin at the next stop, if any is positive.
+## margin (after the next stop's tariff) at the next stop, if any is
+## positive; goods banned here or there are skipped.
 static func _auto_buy(w: World, s: Ship, next_system: int) -> void:
 	var known: Dictionary = w.companies[s.company].prices.get(next_system, {})
 	var m := w.economy.market_at(s.system)
@@ -234,9 +279,9 @@ static func _auto_buy(w: World, s: Ship, next_system: int) -> void:
 	var best := {}  # cargo class -> [margin, commodity]
 	for c in m.price.size():
 		var cls := commodity_class(w, c)
-		if free_space(w, s, c) < 1.0:
+		if free_space(w, s, c) < 1.0 or is_banned(w, s.system, c) or is_banned(w, next_system, c):
 			continue
-		var margin: float = known.price[c] - m.price[c]
+		var margin: float = known.price[c] * (1.0 - tariff(w, next_system, c)) - m.price[c]
 		if margin > m.price[c] * 0.05 and margin > best.get(cls, [0.0])[0]:
 			best[cls] = [margin, c]
 	for cls in best:

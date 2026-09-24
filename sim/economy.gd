@@ -95,13 +95,16 @@ func run_traffic() -> void:
 	var full := float(_cfg.get("overstock_start", 1.0))
 	for link in links:
 		var ends := [[link[0], link[1]], [link[1], link[0]]]
+		# Embargoes and closed ports stop the NPC traders.
+		if link[0].isolated or link[1].isolated or link[0].closed or link[1].closed:
+			continue
 		var cost := 1.0 + friction + per_ly * float(link[2])
 		for pair in ends:
 			var from: Market = pair[0]
 			var to: Market = pair[1]
 			var cap := capacity * minf(from.size, to.size)
 			for c in commodity_ids.size():
-				if not to.is_traded(c) or from.stock[c] <= 0.0:
+				if not to.is_traded(c) or from.stock[c] <= 0.0 or from.banned[c] or to.banned[c]:
 					continue
 				var gap := to.price[c] / from.price[c] - cost
 				if gap <= 0.0:

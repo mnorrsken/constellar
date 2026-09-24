@@ -124,6 +124,14 @@ func accept_contract(contract_id: int, ship_id: int) -> Dictionary:
 func abandon_contract(contract_id: int) -> Dictionary:
 	return _run(world.abandon_contract(PLAYER, contract_id))
 
+## Insures a ship (monthly premium) or cancels its insurance.
+func set_insurance(ship_id: int, on: bool) -> Dictionary:
+	return _run(world.set_insurance(PLAYER, ship_id, on))
+
+## "Safest" routing around dangerous lanes, or the shortest route.
+func set_routing(ship_id: int, safest: bool) -> Dictionary:
+	return _run(world.set_routing(PLAYER, ship_id, safest))
+
 ## Route a player ship could fly (charted systems only); a query, no events.
 func plan_route(ship_id: int, target_system: int) -> Dictionary:
 	return world.plan_route(PLAYER, ship_id, target_system)
@@ -152,6 +160,15 @@ func _run(result: Dictionary) -> Dictionary:
 	_flush_events()
 	return result
 
+func _hit_notice(e: Dictionary) -> void:
+	var near := WorldEvents.place_name(world, e.system)
+	var insured := "  Insurance paid %s cr." % Format.thousands(roundi(e.payout)) if e.has("payout") else ""
+	if e.type == "lost":
+		Events.notice.emit("%s was lost with all aboard near %s.%s" % [e.name, near, insured])
+	else:
+		Events.notice.emit("%s was raided near %s: cargo lost, repairs %s cr.%s" % [e.name, near,
+			Format.thousands(roundi(e.repairs)), insured])
+
 func _contract_notice(e: Dictionary) -> void:
 	var c := world.get_contract(e.contract)
 	if c == null:
@@ -176,6 +193,7 @@ func _flush_events() -> void:
 	var attention := []
 	var profits := {}  # player ship id -> summed profit
 	var contracts_moved := false
+	var events_moved := false
 	for e in world.drain_events():
 		match e.type:
 			"charted":
@@ -215,6 +233,18 @@ func _flush_events() -> void:
 				cash_changed[e.company] = true
 			"contracts":
 				contracts_moved = true
+			"news":
+				events_moved = events_moved or e.item.kind != "loss"
+				Events.news_posted.emit(e.item)
+			"raided", "lost":
+				fleet_moved = true
+				cash_changed[e.company] = true
+				if e.company == PLAYER:
+					_hit_notice(e)
+					waiting.erase(e.ship)
+					# Bad news pauses the game, but the ship needs no new orders.
+					if auto_pause and speed != 0:
+						set_speed(0)
 			"contract_accepted", "contract_done", "contract_failed":
 				contracts_moved = true
 				fleet_moved = true  # hold space and berths changed
@@ -228,6 +258,8 @@ func _flush_events() -> void:
 		Events.charted.emit(c)
 	for id in profits:
 		Events.profit.emit(id, profits[id])
+	if events_moved:
+		Events.world_events_changed.emit()
 	if contracts_moved:
 		Events.contracts_changed.emit()
 	if fleet_moved:

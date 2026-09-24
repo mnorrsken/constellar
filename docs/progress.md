@@ -3,7 +3,7 @@
 Milestone-by-milestone status. See [`constellar-plan.md`](../constellar-plan.md)
 for the plan and acceptance criteria this tracks.
 
-Current test count: **99 tests, 3464 assertions, 0 failures** (`make test`).
+Current test count: **108 tests, 3561 assertions, 0 failures** (`make test`).
 
 - **M0 — Project skeleton — done.** Godot 4.7 project setup, autoloads
   (`Events`/`Defs`/`Sim`), `data/commodities.json`, Makefile, headless test
@@ -49,7 +49,13 @@ Current test count: **99 tests, 3464 assertions, 0 failures** (`make test`).
   reward vs deadline penalty, hold/berth/mail-bay capacity. Contracts panel
   (C) to accept/abandon; fleet, finance and market UI show job counts,
   ledger rows and reserved hold space.
-- **M8 — Events, governments and news — pending.**
+- **M8 — Events, governments and news — done.** Monthly events
+  (`data/events.json`, `sim/world_event.gd`/`world_events.gd`) drive
+  supply/demand, closed/embargoed ports, tariffs and government changes;
+  governments (`data/governments.json`) gain tariffs, bans and lane danger,
+  plus a zealots government reachable only via an event. Lane danger and
+  raids/losses (`sim/danger.gd`), insurance and safest routing. News ticker
+  and log, danger map mode, map badges.
 - **M9 — Real UI and finance — pending.**
 - **M10 — Influence and goals — pending.**
 - **M11 — Save/load and main menu — pending.**

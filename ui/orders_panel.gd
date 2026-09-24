@@ -2,7 +2,8 @@ class_name OrdersPanel
 extends PanelContainer
 ## Route orders for one ship (Transport Tycoon style): a looping list of
 ## stops. Each stop: sell all cargo, buy one good (0 t = fill the hold),
-## wait for a full load, or auto-trade (needs an auto-trader module).
+## wait for a full load, or auto-trade (needs an auto-trader module). The
+## ship's routing (shortest or safest) and insurance are set here too.
 ## Every edit is applied at once; a running route restarts with the change.
 
 signal closed
@@ -18,6 +19,8 @@ var _state := Label.new()
 var _run := Button.new()
 var _stops := VBoxContainer.new()
 var _add := Button.new()
+var _safest := CheckBox.new()
+var _insured := CheckBox.new()
 
 func _ready() -> void:
 	visible = false
@@ -51,7 +54,17 @@ func _ready() -> void:
 	hint.text = "Select a charted system on the map, then add it as a stop. The route loops."
 	hint.add_theme_font_size_override("font_size", 13)
 	hint.add_theme_color_override("font_color", MUTED)
-	for c in [head, _stops, _add, hint]:
+	var ship_row := HBoxContainer.new()
+	ship_row.add_theme_constant_override("separation", 18)
+	_safest.text = "Safest routes (around dangerous lanes)"
+	_safest.focus_mode = Control.FOCUS_NONE
+	_safest.toggled.connect(func(on): Sim.set_routing(ship_id, on))
+	_insured.focus_mode = Control.FOCUS_NONE
+	_insured.toggled.connect(func(on): Sim.set_insurance(ship_id, on))
+	_insured.tooltip_text = "Pays for cargo, repairs and the ship itself after a raid or a loss.\nThe premium follows the risk the ship ran last month."
+	ship_row.add_child(_safest)
+	ship_row.add_child(_insured)
+	for c in [head, ship_row, _stops, _add, hint]:
 		box.add_child(c)
 	add_child(box)
 	Events.fleet_changed.connect(_refresh)
@@ -87,6 +100,9 @@ func _refresh() -> void:
 	_state.add_theme_color_override("font_color", Color(0.45, 0.85, 0.55) if s.orders_active else MUTED)
 	_run.text = "Stop route" if s.orders_active else "Start route"
 	_run.disabled = s.orders.size() < 2 and not s.orders_active
+	_safest.set_pressed_no_signal(s.safe_routing)
+	_insured.set_pressed_no_signal(s.insured)
+	_insured.text = "Insured  (about %s cr a month)" % Format.thousands(roundi(Danger.premium(w, s)))
 	for child in _stops.get_children():
 		child.queue_free()
 	for i in s.orders.size():

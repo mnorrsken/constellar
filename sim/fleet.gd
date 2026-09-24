@@ -178,15 +178,16 @@ func refit_quote(ship: Ship, new_modules: Array) -> Dictionary:
 
 ## Shortest route the ship can fly to `target`: {ok, path, length, days}
 ## or {ok: false, error}. With `known` (a company's charted systems) the
-## route may only use charted systems.
-func plan_route(ship: Ship, target: int, known := PackedByteArray()) -> Dictionary:
+## route may only use charted systems; `penalty` (ly per lane) steers
+## "safest" routing around dangerous lanes.
+func plan_route(ship: Ship, target: int, known := PackedByteArray(), penalty := {}) -> Dictionary:
 	var from := ship.destination()
 	if target == from:
 		return {"ok": false, "error": "Already there"}
 	if not known.is_empty() and known[target] == 0:
 		return {"ok": false, "error": "Uncharted system: send a ship within one jump to chart it"}
 	var range_ly := jump_range(ship)
-	var path := _galaxy.find_path(from, target, range_ly, known)
+	var path := _galaxy.find_path(from, target, range_ly, known, penalty)
 	if path.is_empty():
 		if not _galaxy.find_path(from, target, INF, known).is_empty():
 			return {"ok": false, "error": "Out of range: the route needs jumps longer than %.1f ly" % range_ly}
@@ -197,12 +198,12 @@ func plan_route(ship: Ship, target: int, known := PackedByteArray()) -> Dictiona
 static func travel_days(length: float, ly_per_day: float) -> int:
 	return maxi(1, ceili((length - 1e-6) / ly_per_day))
 
-func send(ship: Ship, target: int, day: int, known := PackedByteArray()) -> Dictionary:
+func send(ship: Ship, target: int, day: int, known := PackedByteArray(), penalty := {}) -> Dictionary:
 	if ship.status == Ship.Status.REFITTING:
 		return {"ok": false, "error": "The ship is being refitted"}
 	if ship.status == Ship.Status.TRAVELING:
 		return {"ok": false, "error": "The ship is already under way"}
-	var plan := plan_route(ship, target, known)
+	var plan := plan_route(ship, target, known, penalty)
 	if not plan.ok:
 		return plan
 	ship.status = Ship.Status.TRAVELING
@@ -218,7 +219,8 @@ func send(ship: Ship, target: int, day: int, known := PackedByteArray()) -> Dict
 
 ## Moves every ship one day; `new_day` is the day being entered. Returns
 ## events: {type: "arrived"|"passed"|"refitted", ship, system} ("passed" =
-## went through a system on the way).
+## went through a system on the way); arrived and passed carry `from`, the
+## other end of the lane just flown.
 func advance_day(new_day: int) -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
 	for s in ships:
@@ -242,14 +244,15 @@ func _move(s: Ship, ly: float, events: Array[Dictionary]) -> void:
 		remaining -= left
 		s.leg += 1
 		s.leg_progress = 0.0
+		var from := s.route[s.leg - 1]
 		if s.leg >= s.route.size() - 1:
 			s.status = Ship.Status.DOCKED
 			s.system = s.route[s.route.size() - 1]
 			s.route = PackedInt32Array()
 			s.leg = 0
-			events.append({"type": "arrived", "ship": s.id, "system": s.system})
+			events.append({"type": "arrived", "ship": s.id, "system": s.system, "from": from})
 			return
-		events.append({"type": "passed", "ship": s.id, "system": s.route[s.leg]})
+		events.append({"type": "passed", "ship": s.id, "system": s.route[s.leg], "from": from})
 
 ## Galactic position of a travelling ship `extra_ly` beyond where the sim
 ## has it (the renderer passes speed x day fraction for smooth motion), and

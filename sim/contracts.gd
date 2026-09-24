@@ -78,6 +78,8 @@ static func post_offers(w: World) -> void:
 		if c.status == Contract.Status.OFFERED:
 			open[c.origin] = open.get(c.origin, 0) + 1
 	for m in w.economy.markets:
+		if m.closed:
+			continue
 		var open_here: int = open.get(m.system, 0)
 		var room := int(k.get("max_offers", 12)) - open_here
 		var n := mini(room, roundi(m.size * float(k.get("offers_per_size", 0.7)) * w.rng.randf_range(0.5, 1.5)))
@@ -110,6 +112,9 @@ static func _new_offer(w: World, m: Market) -> Contract:
 	match kind:
 		"freight":
 			c.commodity = _export_of(w, m)
+			var ci := w.economy.index_of(c.commodity)
+			if Trading.is_banned(w, m.system, ci) or Trading.is_banned(w, dest, ci):
+				return null
 			var t: Array = k.get("freight_tonnes", [100, 600])
 			c.amount = roundi(w.rng.randf_range(t[0], t[1]) / 10.0) * 10
 			c.reward = float(k.get("freight_base", 5000)) + c.amount * length * float(k.get("freight_rate", 4.0))
@@ -185,10 +190,13 @@ static func _export_of(w: World, m: Market) -> String:
 	return w.economy.commodity_ids[_weighted(w, weights)]
 
 static func _weighted(w: World, weights: Dictionary) -> Variant:
+	return _weighted_with(w.rng, weights)
+
+static func _weighted_with(rng: RandomNumberGenerator, weights: Dictionary) -> Variant:
 	var total := 0.0
 	for k in weights:
 		total += weights[k]
-	var r := w.rng.randf() * total
+	var r := rng.randf() * total
 	var last: Variant = null
 	for k in weights:
 		last = k
@@ -204,6 +212,8 @@ static func accept(w: World, company_id: int, c: Contract, ship: Ship) -> Dictio
 		return {"ok": false, "error": "This offer is gone"}
 	if ship.status != Ship.Status.DOCKED or ship.system != c.origin:
 		return {"ok": false, "error": "The ship must be docked here"}
+	if w.economy.market_at(c.origin).closed:
+		return {"ok": false, "error": "The port is closed"}
 	if not w.companies[company_id].is_known(c.destination):
 		return {"ok": false, "error": "The destination is uncharted"}
 	if not fits(w, ship, c):

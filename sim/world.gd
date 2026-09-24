@@ -35,8 +35,19 @@ var jobs: Dictionary = {}
 ## destination weights, Vector2i(origin, dest) -> route length in ly.
 var contract_cache: Dictionary = {}
 var next_contract_id := 0
-## World-level randomness (contract offers), seeded from the world seed.
+## World-level randomness, seeded from the world seed: contract offers,
+## the event rolls, and hits on dangerous lanes.
 var rng: RandomNumberGenerator
+var events_rng: RandomNumberGenerator
+var danger_rng: RandomNumberGenerator
+## Running events (see WorldEvents) and the news they made, oldest first:
+## {day, text, systems, kind, start}.
+var world_events: Array[WorldEvent] = []
+var next_event_id := 0
+var news: Array[Dictionary] = []
+## Lane danger: Danger.key(a, b) -> chance of a hit per crossing (base from
+## the governments at the ends, plus wars and pirates).
+var danger: Dictionary = {}
 
 var _warmup_days := 0
 
@@ -58,6 +69,9 @@ static func create(world_seed: int, stars_data: Dictionary, content: Dictionary)
 	w.economy = Economy.build(w.galaxy, content)
 	w.fleet = Fleet.new(w.galaxy, content)
 	w.rng = stream(world_seed, "world", "contracts")
+	w.events_rng = stream(world_seed, "world", "events")
+	w.danger_rng = stream(world_seed, "world", "danger")
+	WorldEvents.apply_all(w)
 	var company_cfg: Dictionary = balance.get("company", {})
 	w.companies.append(Company.from_dict(0, company_cfg))
 	for c in w.companies:
@@ -82,8 +96,9 @@ func warm_up() -> void:
 	for i in _warmup_days:
 		economy.tick_day(i)
 
-## One game day: markets (weekly), ships move, arrivals pay docking and
-## learn prices, month-start costs, then route orders run.
+## One game day: markets (weekly), events end, ships move (and may be hit
+## on dangerous lanes), arrivals pay docking and learn prices, month-start
+## costs and the event roll, then route orders run.
 func advance_day() -> void:
 	var markets_moved := economy.tick_day(day)
 	day += 1
@@ -91,22 +106,30 @@ func advance_day() -> void:
 		Trading.observe_docked(self)
 		Contracts.post_offers(self)
 		events.append({"type": "contracts"})
-	var moved := fleet.advance_day(day)
-	events.append_array(moved)
-	for e in moved:
+	WorldEvents.daily(self)
+	for e in fleet.advance_day(day):
 		var s := fleet.get_ship(e.ship)
+		if s == null:
+			continue  # lost earlier today
+		if e.has("from") and Danger.cross(self, s, e.from, e.system) == "lost":
+			continue
+		events.append(e)
 		if e.type == "arrived" or e.type == "passed":
 			# Ships chart what they reach: the system and one jump around it.
 			reveal(s.company, e.system)
 		if e.type == "arrived":
 			s.stop_handled = false
 			Contracts.deliver(self, s, e.system)
-			if galaxy.systems[e.system].settlement:
-				companies[s.company].book("docking", -Trading.docking_fee(self, s), month(), s.id)
+			var port := economy.market_at(e.system)
+			if port:
+				if not port.closed:  # no fee while the dock workers strike
+					companies[s.company].book("docking", -Trading.docking_fee(self, s), month(), s.id)
 				Trading.observe(self, s.company, e.system)
 	Contracts.check_deadlines(self)
 	if Calendar.date(day, 0).day == 1:
+		Danger.monthly(self)
 		Trading.monthly_costs(self)
+		WorldEvents.monthly(self)
 	Trading.process_orders(self)
 
 ## Months since the start (ledger key).
@@ -157,7 +180,14 @@ func plan_route(company_id: int, ship_id: int, target_system: int) -> Dictionary
 	var s := _own_ship(company_id, ship_id)
 	if s == null:
 		return {"ok": false, "error": "Not your ship"}
-	return fleet.plan_route(s, target_system, companies[company_id].known)
+	var plan := fleet.plan_route(s, target_system, companies[company_id].known, route_penalty(s))
+	if plan.ok:
+		plan.risk = Danger.route_risk(self, s, plan.path)
+	return plan
+
+## Extra lane costs for the ship's routing: dangerous lanes for "safest".
+func route_penalty(s: Ship) -> Dictionary:
+	return Danger.penalty(self) if s.safe_routing else {}
 
 ## Sends a ship by hand (this stops its route orders).
 func send_ship(company_id: int, ship_id: int, target_system: int) -> Dictionary:
@@ -175,14 +205,15 @@ func depart(s: Ship, target_system: int) -> Dictionary:
 	var known := companies[s.company].known
 	if s.status != Ship.Status.DOCKED:
 		return fleet.send(s, target_system, day, known)  # the refusal
-	var plan := fleet.plan_route(s, target_system, known)
+	var penalty := route_penalty(s)
+	var plan := fleet.plan_route(s, target_system, known, penalty)
 	if not plan.ok:
 		return plan
 	var fuel := Trading.fuel_quote(self, s, plan.length)
 	if companies[s.company].cash < fuel.cost:
 		return {"ok": false, "error": "Not enough cash for fuel (%s cr)" % Format.thousands(roundi(fuel.cost))}
 	Trading.pay_fuel(self, s, fuel)
-	var r := fleet.send(s, target_system, day, known)
+	var r := fleet.send(s, target_system, day, known, penalty)
 	if r.ok:
 		r.fuel = fuel
 		events.append({"type": "departed", "ship": s.id, "company": s.company})
@@ -263,6 +294,24 @@ func contracts_of(company_id: int) -> Array[Contract]:
 		if c.company == company_id and c.status == Contract.Status.ACCEPTED:
 			out.append(c)
 	return out
+
+## Insures a ship (monthly premium) or cancels its insurance.
+func set_insurance(company_id: int, ship_id: int, on: bool) -> Dictionary:
+	var s := _own_ship(company_id, ship_id)
+	if s == null:
+		return {"ok": false, "error": "Not your ship"}
+	s.insured = on
+	events.append({"type": "orders", "ship": ship_id, "company": company_id})
+	return {"ok": true}
+
+## "Safest" routing (around dangerous lanes) or the shortest route.
+func set_routing(company_id: int, ship_id: int, safest: bool) -> Dictionary:
+	var s := _own_ship(company_id, ship_id)
+	if s == null:
+		return {"ok": false, "error": "Not your ship"}
+	s.safe_routing = safest
+	events.append({"type": "orders", "ship": ship_id, "company": company_id})
+	return {"ok": true}
 
 ## What a company knows of a market: {day, price} or {} (never seen).
 func known_prices(company_id: int, system_index: int) -> Dictionary:

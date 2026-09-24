@@ -78,6 +78,7 @@ func _ready() -> void:
 		box.add_child(c)
 	add_child(box)
 	Events.fleet_changed.connect(func(): if visible and _system: show_system(_system))
+	Events.world_events_changed.connect(func(): if visible and _system: show_system(_system))
 	Events.contracts_changed.connect(func(): if visible and _system: show_system(_system))
 	# Arrival dates in the send line move on with the calendar.
 	Events.day_passed.connect(func(_d): if visible and _system and ship_id >= 0: _update_send())
@@ -141,6 +142,11 @@ func _update_send() -> void:
 			jumps, "" if jumps == 1 else "s", plan.length, plan.days,
 			Calendar.format(Sim.world.day + plan.days, Sim.world.start_year)]
 		_send_info.add_theme_color_override("font_color", Color(0.45, 0.9, 1.0))
+		# Worth a warning from 1 in 100 up.
+		if plan.risk >= 0.01:
+			_send_info.text += "  ·  %.0f%% risk of a hit%s" % [plan.risk * 100.0,
+				" (safest route)" if ship.safe_routing else ""]
+			_send_info.add_theme_color_override("font_color", MapModeBar.danger_ramp(plan.risk / 2.0))
 	else:
 		_send_info.text = plan.error
 		_send_info.add_theme_color_override("font_color", SettlementCard.MUTED)

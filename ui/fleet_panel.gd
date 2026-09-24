@@ -57,6 +57,9 @@ func refresh() -> void:
 		b.tooltip_text = "%s  ·  %s t cargo  ·  %.2f ly/day  ·  %.0f ly jump" % [
 			world.fleet.hull_def(s).name, Format.thousands(roundi(world.fleet.total_capacity(s))),
 			world.fleet.speed(s), world.fleet.jump_range(s)]
+		if s.insured or s.safe_routing:
+			b.tooltip_text += "\n%s" % "  ·  ".join(PackedStringArray(
+				(["insured"] if s.insured else []) + (["safest routes"] if s.safe_routing else [])))
 		b.add_theme_font_size_override("font_size", 15)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.pressed.connect(func(): ship_selected.emit(s.id))

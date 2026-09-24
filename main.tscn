@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3]
+[gd_scene load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://main.gd" id="1_main"]
 [ext_resource type="Script" path="res://render/galaxy_map.gd" id="2_map"]
@@ -20,6 +20,8 @@
 [ext_resource type="Script" path="res://ui/map_mode_bar.gd" id="18_mapmode"]
 [ext_resource type="Script" path="res://ui/floating_numbers.gd" id="19_float"]
 [ext_resource type="Script" path="res://ui/contracts_panel.gd" id="20_contracts"]
+[ext_resource type="Script" path="res://ui/news_ticker.gd" id="21_ticker"]
+[ext_resource type="Script" path="res://ui/news_panel.gd" id="22_news"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("7_sky")
@@ -72,6 +74,9 @@ script = ExtResource("10_clock")
 [node name="FleetPanel" type="PanelContainer" parent="UI"]
 script = ExtResource("13_fleet")
 
+[node name="NewsTicker" type="PanelContainer" parent="UI"]
+script = ExtResource("21_ticker")
+
 [node name="MapModeBar" type="HBoxContainer" parent="UI"]
 script = ExtResource("18_mapmode")
 
@@ -102,6 +107,9 @@ script = ExtResource("17_finance")
 
 [node name="ContractsPanel" type="PanelContainer" parent="UI"]
 script = ExtResource("20_contracts")
+
+[node name="NewsPanel" type="PanelContainer" parent="UI"]
+script = ExtResource("22_news")
 
 [node name="Tooltip" type="PanelContainer" parent="UI"]
 script = ExtResource("4_tooltip")
