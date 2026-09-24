@@ -107,7 +107,9 @@ func test_monthly_costs(t: Object) -> void:
 		w.advance_day()
 	var feb: Dictionary = w.companies[0].ledger.get(w.month(), {})
 	t.eq(feb.get("crew", 0.0), -4000.0, "Packet crew")
-	t.eq(feb.get("maintenance", 0.0), -3000.0, "Packet maintenance")
+	var s := w.ships_of(0)[0]
+	var aged := 3000.0 * (1.0 + 0.03 * Aging.age_years(w, s))
+	t.ok(is_equal_approx(feb.get("maintenance", 0.0), -aged), "Packet maintenance, more for an older ship")
 	t.ok(is_equal_approx(feb.get("interest", 0.0), -500000.0 * 0.06 / 12.0), "a month of 6% interest")
 
 func test_manual_trade_loop_makes_money(t: Object) -> void:

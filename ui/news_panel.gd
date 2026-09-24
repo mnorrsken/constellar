@@ -55,6 +55,7 @@ func _ready() -> void:
 
 func open() -> void:
 	visible = true
+	Motion.pop_in(self)
 	_refresh()
 
 func close_panel() -> void:
@@ -82,7 +83,8 @@ func _refresh() -> void:
 		if not NewsTicker._visible(item):
 			continue
 		var text := "%s   %s" % [Calendar.format(item.day, w.start_year), item.text]
-		_log.add_child(_line(text, Color(0.86, 0.9, 0.97) if item.start else MUTED, item.systems[0]))
+		_log.add_child(_line(text, Color(0.86, 0.9, 0.97) if item.start else MUTED,
+			item.systems[0] if not item.systems.is_empty() else -1))
 		shown += 1
 		if shown >= LOG_LINES:
 			break

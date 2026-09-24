@@ -18,6 +18,7 @@ const PICK_RADIUS_PX := 16.0
 @onready var contracts_panel: ContractsPanel = $UI/ContractsPanel
 @onready var news_ticker: NewsTicker = $UI/NewsTicker
 @onready var news_panel: NewsPanel = $UI/NewsPanel
+@onready var fleet_screen: FleetScreen = $UI/FleetScreen
 @onready var map_mode: MapModeBar = $UI/MapModeBar
 @onready var overlay_dim: ColorRect = $UI/OverlayDim
 @onready var floating: FloatingNumbers = $UI/FloatingNumbers
@@ -53,11 +54,14 @@ func _ready() -> void:
 	fleet_panel.orders_requested.connect(open_orders)
 	map_mode.mode_changed.connect(_apply_price_map)
 	system_view.closed.connect(func(): camera.input_enabled = true)
-	for p in [shipyard, orders_panel, finance_panel, contracts_panel, news_panel]:
+	for p in _overlays():
 		p.closed.connect(_overlay_closed)
 	news_ticker.system_requested.connect(_show_news_system)
 	news_ticker.log_requested.connect(open_news)
 	news_panel.system_requested.connect(_show_news_system)
+	fleet_panel.screen_requested.connect(open_fleet)
+	fleet_screen.ship_selected.connect(select_ship)
+	fleet_screen.orders_requested.connect(open_orders)
 	Events.world_events_changed.connect(_update_badges)
 	Events.world_events_changed.connect(func(): _apply_price_map(map_mode.commodity))
 	Events.charted.connect(func(_c): _update_badges())
@@ -218,6 +222,10 @@ func open_contracts() -> void:
 	_overlay_opened()
 	contracts_panel.open(i, selected_ship)
 
+func open_fleet() -> void:
+	_overlay_opened()
+	fleet_screen.open()
+
 func open_news() -> void:
 	_overlay_opened()
 	news_panel.open()
@@ -258,7 +266,7 @@ func open_finance() -> void:
 ## Modal panels (shipyard, orders, finance, contracts, news): dim the map
 ## and stop the camera.
 func _overlay_opened() -> void:
-	for p in [shipyard, orders_panel, finance_panel, contracts_panel, news_panel]:
+	for p in _overlays():
 		if p.visible:
 			p.visible = false
 	tooltip.visible = false
@@ -266,14 +274,16 @@ func _overlay_opened() -> void:
 	overlay_dim.visible = true
 
 func _overlay_closed() -> void:
-	if not (shipyard.visible or orders_panel.visible or finance_panel.visible or contracts_panel.visible \
-			or news_panel.visible):
+	if not _overlays().any(func(p): return p.visible):
 		overlay_dim.visible = false
 		camera.input_enabled = not system_view.visible
 
 func _overlay_open() -> bool:
-	return system_view.visible or shipyard.visible or orders_panel.visible or finance_panel.visible \
-		or contracts_panel.visible or news_panel.visible
+	return system_view.visible or _overlays().any(func(p): return p.visible)
+
+## The modal panels (one open at a time, over a dimmed map).
+func _overlays() -> Array:
+	return [shipyard, orders_panel, finance_panel, contracts_panel, news_panel, fleet_screen]
 
 ## Map modes: the danger map (lanes and stars by the chance of a hit), or
 ## stars tinted by the known price of one good (c; -1 = off).
@@ -324,6 +334,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				contracts_panel.close_panel()
 			elif news_panel.visible:
 				news_panel.close_panel()
+			elif fleet_screen.visible:
+				fleet_screen.close_panel()
 			elif system_view.visible:
 				system_view.close_view()
 			elif map.selected >= 0:
@@ -352,6 +364,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				contracts_panel.close_panel()
 			elif not overlay:
 				open_contracts()
+		KEY_V:
+			if fleet_screen.visible:
+				fleet_screen.close_panel()
+			elif not overlay:
+				open_fleet()
 		KEY_N:
 			if news_panel.visible:
 				news_panel.close_panel()

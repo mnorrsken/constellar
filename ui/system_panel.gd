@@ -90,6 +90,8 @@ func set_ship(id: int) -> void:
 		show_system(_system)
 
 func show_system(s: StarSystem) -> void:
+	if not visible:
+		Motion.fade_in(self)
 	_system = s
 	var charted: bool = Sim.player().is_known(s.index)
 	for c in _details:

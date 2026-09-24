@@ -25,6 +25,15 @@ var arrival_day := 0
 ## Refitting until this day.
 var busy_until := 0
 var bought_day := 0
+## Day the ship was built (before day 0 for a second-hand start ship).
+var built_day := 0
+## 1 = new; wears with age and travel, restored in part by servicing (see
+## Aging). A breakdown stops the ship until `broken_until`.
+var condition := 1.0
+var broken_until := 0
+## Why the ship is idle, waiting or losing money, for the player (empty
+## while all is well). Set by the sim.
+var note := ""
 ## Cargo: commodity index -> tonnes, and what was paid for it in total.
 var cargo: Dictionary = {}
 var cargo_cost: Dictionary = {}
@@ -64,4 +73,5 @@ func to_dict() -> Dictionary:
 		"arrival_day": arrival_day, "busy_until": busy_until, "bought_day": bought_day,
 		"cargo": cargo.duplicate(), "orders": orders.duplicate(true), "order_index": order_index,
 		"orders_active": orders_active, "insured": insured, "safe_routing": safe_routing,
+		"built_day": built_day, "condition": snappedf(condition, 0.0001), "broken_until": broken_until,
 	}

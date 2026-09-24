@@ -98,10 +98,13 @@ func _show() -> void:
 	_headline.tooltip_text = item.text
 
 func _clicked() -> void:
-	if not _items.is_empty():
+	if not _items.is_empty() and not _items[_index].systems.is_empty():
 		system_requested.emit(_items[_index].systems[0])
 
+## Headlines about charted systems, and galaxy-wide ones (no system).
 static func _visible(item: Dictionary) -> bool:
+	if item.systems.is_empty():
+		return true
 	for i in item.systems:
 		if Sim.player().is_known(i):
 			return true

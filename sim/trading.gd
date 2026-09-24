@@ -133,6 +133,7 @@ static func sell(w: World, ship: Ship, c: int, qty: float) -> Dictionary:
 		ship.cargo.erase(c)
 		ship.cargo_cost.erase(c)
 	company.book("sales", gross, w.month(), ship.id)
+	company.note_cost_of_sales(basis, w.month(), ship.id)
 	var duty := gross * tariff(w, ship.system, c)
 	if duty > 0.0:
 		company.book("tariffs", -duty, w.month(), ship.id)
@@ -186,11 +187,34 @@ static func monthly_costs(w: World) -> void:
 		var h := w.fleet.hull_def(s)
 		var c := w.companies[s.company]
 		c.book("crew", -float(h.get("crew_cost", 0)), month, s.id)
-		c.book("maintenance", -float(h.get("maintenance", 0)), month, s.id)
+		c.book("maintenance", -Aging.maintenance(w, s), month, s.id)
 	for c in w.companies:
 		if c.loan > 0.0:
 			c.book("interest", -c.loan * c.interest_per_year / 12.0, month)
 		c.trim_ledger(month, int(cfg(w).get("ledger_months", 24)))
+
+## Why a ship made a loss in a month, from its books (empty if it didn't).
+## Goods count when sold (Company.profit).
+static func loss_reason(company: Company, ship_id: int, month: int) -> String:
+	var cats: Dictionary = company.ship_ledger.get(ship_id, {}).get(month, {})
+	if company.profit(month, ship_id) >= 0.0 or cats.is_empty():
+		return ""
+	var sales: float = cats.get("sales", 0.0) + cats.get("tariffs", 0.0)
+	var cost: float = -cats.get("cost_of_sales", 0.0)
+	var income: float = sales + cats.get("contracts", 0.0) + maxf(cats.get("insurance", 0.0), 0.0)
+	var worst := ""
+	for k in cats:
+		if cats[k] < 0.0 and not (k in ["purchases", "cost_of_sales"]) and (worst == "" or cats[k] < cats[worst]):
+			worst = k
+	if sales > 0.0 and sales < cost:
+		return "price too low: sold for %s less than it cost" % Format.thousands(roundi(cost - sales))
+	if income <= 0.0:
+		return "earned nothing: no sales or contracts"
+	if worst == "repairs":
+		return "repairs ate the profit (%s cr)" % Format.thousands(roundi(-cats.repairs))
+	if worst == "ships":
+		return "refit or purchase cost"
+	return "running costs above income (most: %s)" % worst
 
 # --- route orders -------------------------------------------------------------------
 
@@ -211,24 +235,31 @@ static func process_orders(w: World) -> void:
 			continue
 		var port := w.economy.market_at(s.system)
 		if port and port.closed:
+			s.note = "waiting: the port is closed"
 			continue
 		if not s.stop_handled:
 			if (stop.get("sell_all", true) or stop.get("auto", false)) and not s.cargo.is_empty():
 				var q := sale_quote(w, s)
 				if q.income < q.cost - 0.5 and not s.allow_loss:
 					s.orders_active = false
-					w.events.append({"type": "orders_stopped", "ship": s.id, "company": s.company,
-						"reason": "the cargo would sell at a loss here (%s cr)" % Format.thousands(roundi(q.income - q.cost))})
+					var why := "price too low: the cargo would sell at a loss here (%s cr)" % Format.thousands(roundi(q.income - q.cost))
+					s.note = "route stopped: " + why
+					w.events.append({"type": "orders_stopped", "ship": s.id, "company": s.company, "reason": why})
 					continue
 				sell_all(w, s)
 			s.allow_loss = false
+			s.note = ""
 			_load(w, s, stop)
 			s.stop_handled = true
 			s.wait_start = w.day
+			if stop.get("service", false) and w.fleet.is_shipyard(s.system) and Aging.needs_service(w, s):
+				if Aging.service(w, s).ok:
+					continue  # in the yard; the route goes on when it is out
 		elif stop.get("wait_full", false):
 			_load(w, s, stop)
-		if stop.get("wait_full", false) and not _full(w, s, stop) \
-				and w.day - s.wait_start < int(cfg(w).get("wait_full_max_days", 28)):
+		var max_wait := int(cfg(w).get("wait_full_max_days", 28))
+		if stop.get("wait_full", false) and not _full(w, s, stop) and w.day - s.wait_start < max_wait:
+			s.note = "waiting for a full load (day %d of %d)" % [w.day - s.wait_start + 1, max_wait]
 			continue
 		s.order_index = (s.order_index + 1) % s.orders.size()
 		s.stop_handled = false
@@ -238,6 +269,7 @@ static func _go(w: World, s: Ship, target: int) -> void:
 	var r := w.depart(s, target)
 	if not r.ok:
 		s.orders_active = false
+		s.note = "route stopped: " + r.error
 		w.events.append({"type": "orders_stopped", "ship": s.id, "company": s.company, "reason": r.error})
 
 static func _load(w: World, s: Ship, stop: Dictionary) -> void:
@@ -247,11 +279,14 @@ static func _load(w: World, s: Ship, stop: Dictionary) -> void:
 	for b in stop.get("buy", []):
 		var c := w.economy.index_of(b.commodity)
 		if is_banned(w, s.system, c):
+			s.note = "no cargo: %s are banned here" % _name(w, c)
 			continue
 		var amount := float(b.get("amount", 0))
 		var want := free_space(w, s, c) if amount <= 0.0 else maxf(amount - s.cargo.get(c, 0.0), 0.0)
 		if want >= 1.0:
-			buy(w, s, c, want)
+			var r := buy(w, s, c, want)
+			if not r.ok:
+				s.note = "no cargo: %s (%s)" % [r.error.to_lower(), _name(w, c)]
 
 ## Loaded as far as this stop wants: no free space for anything it buys.
 static func _full(w: World, s: Ship, stop: Dictionary) -> bool:
@@ -275,6 +310,7 @@ static func _auto_buy(w: World, s: Ship, next_system: int) -> void:
 	var known: Dictionary = w.companies[s.company].prices.get(next_system, {})
 	var m := w.economy.market_at(s.system)
 	if known.is_empty() or m == null:
+		s.note = "no cargo match: no known prices at the next stop"
 		return
 	var best := {}  # cargo class -> [margin, commodity]
 	for c in m.price.size():
@@ -284,6 +320,8 @@ static func _auto_buy(w: World, s: Ship, next_system: int) -> void:
 		var margin: float = known.price[c] * (1.0 - tariff(w, next_system, c)) - m.price[c]
 		if margin > m.price[c] * 0.05 and margin > best.get(cls, [0.0])[0]:
 			best[cls] = [margin, c]
+	if best.is_empty():
+		s.note = "no cargo match: nothing here sells for more at %s" % w.galaxy.systems[next_system].name
 	for cls in best:
 		var c: int = best[cls][1]
 		buy(w, s, c, free_space(w, s, c))

@@ -115,28 +115,41 @@ func test_accept_refusals(t: Object) -> void:
 func test_contracts_only_start_grows(t: Object) -> void:
 	var w := _world()
 	var c := w.companies[0]
-	var start := c.cash
+	var worth := func() -> float:
+		var v := c.cash
+		for s in w.ships_of(0):
+			v += w.fleet.sale_value(s)
+		return v
+	var start: float = worth.call()
 	var failed := 0
-	for d in 3 * 365:
+	var done := 0
+	for d in 4 * 365:
 		for s in w.ships_of(0):
 			_bot(w, s)
 		w.advance_day()
 		for e in w.drain_events():
 			if e.type == "contract_failed":
 				failed += 1
+			elif e.type == "contract_done":
+				done += 1
 		for s in w.ships_of(0):
 			if s.status == Ship.Status.DOCKED and c.cash > 650000.0 and w.fleet.is_shipyard(s.system):
 				w.buy_ship(0, "packet", s.system)
 	t.ok(w.ships_of(0).size() >= 2, "bought a second ship from contract income (%d ships)" % w.ships_of(0).size())
-	t.ok(c.cash > start, "and still has more cash than at the start (%d)" % c.cash)
-	t.eq(failed, 0, "no jobs failed")
+	t.ok(worth.call() > start, "and the house is worth more than at the start (%d > %d)" % [worth.call(), start])
+	# Breakdowns can make a ship late now and then.
+	t.ok(failed * 10 <= done, "few jobs failed (%d of %d)" % [failed, failed + done])
 
 ## Contracts only: take the best job here plus others to the same place, go;
-## with nothing to do, move to the charted neighbour with most offers.
+## with nothing to do, move to the charted neighbour with most offers. A
+## worn ship with no jobs gets serviced at a shipyard.
 func _bot(w: World, s: Ship) -> void:
 	if s.status != Ship.Status.DOCKED:
 		return
 	var mine := Contracts.active_for(w, s)
+	if mine.is_empty() and w.fleet.is_shipyard(s.system) and Aging.needs_service(w, s):
+		w.service_ship(0, s.id)
+		return
 	if mine.is_empty():
 		var offers := Contracts.offers_at(w, s.system).filter(
 			func(o): return w.companies[0].is_known(o.destination) and Contracts.fits(w, s, o))

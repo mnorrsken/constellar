@@ -84,10 +84,13 @@ lane hops to a destination, kind mix, freight tonnage/rate/cargo-class
 weights, passenger group size/rate/luxury share, mail sacks/rate/sacks per
 bay, penalty share, deadline speed/slack/buffer) — see `Contracts` below,
 plus `events` (max running events per system, news log length, monthly
-stability drift) and `danger` (unsettled-system base danger, cap, armour
+stability drift), `danger` (unsettled-system base danger, cap, armour
 factor, destroy share, raid repair share, safest-routing penalty per risk,
 insurance minimum rate and markup) — see `Events, governments and danger`
-below.
+below — and `aging` (wear per day and per travel day, breakdown chance per
+day and repair share, maintenance growth per year, service cost share and
+cap) — see `Aging` below. `company.start_ship` now also gives the start
+ship an `age_years`/`condition` (5 years, 90% — second-hand).
 
 `data/events.json` lists 11 events, each an id, scope (`system`/`pair`/
 `lane`), monthly chance, duration range, `where` conditions, a weighting
@@ -95,7 +98,10 @@ rule, `effects` and start/end headline templates (`{a}`/`{b}`).
 
 `data/hulls.json` lists hulls (slots, tonnes per slot, speed in ly/day,
 jump range, price, crew cost, maintenance, reliability, production years,
-tech level, allowed modules, default fit). `data/modules.json` lists
+tech level, allowed modules, default fit) — 12 now, including later models
+Swift II courier, Starliner II liner and Leviathan II heavy freighter,
+each production-year-gated; `World` posts a news headline on 1 Jan of a
+hull's first production year. `data/modules.json` lists
 modules: cargo holds (`cargo_class`, capacity factor per slot), cabins and
 suites (passengers), mail bay, armour, drive tune (`speed_mult`), jump
 extender (`range_add`), auto-trader. `data/names.json` also has
@@ -255,12 +261,14 @@ weekly ticks.
 `sim/world.gd` (`World`) now carries `day`, `start_year` and `economy`
 alongside the galaxy. `World.create` builds the `Economy` after generation
 and reads `economy.warmup_days`. `advance_day()` is the one sim tick: ticks
-the economy, then increments `day`; ends events (`WorldEvents.daily`),
-moves the fleet (crossing a dangerous lane may raid or lose a ship,
-`Danger.cross`), delivers contracts and charges docking; on the 1st of the
-month runs `Danger.monthly` (insurance premiums), `Trading.monthly_costs`
-and `WorldEvents.monthly` (the event roll); then runs route orders (see
-`Events, governments and danger` below for the event/danger pieces).
+the economy, then increments `day`; ends events (`WorldEvents.daily`), wears
+and may break down ships (`Aging.daily`, before the fleet moves), moves the
+fleet (crossing a dangerous lane may raid or lose a ship, `Danger.cross`),
+delivers contracts and charges docking; on 1 January posts new-hull news;
+on the 1st of the month runs `Danger.monthly` (insurance premiums),
+`Trading.monthly_costs` and `WorldEvents.monthly` (the event roll); then
+runs route orders (see `Events, governments and danger` below for the
+event/danger pieces, and `Aging` below for wear/breakdowns/servicing).
 `warm_up()` runs
 `economy.tick_day` for `warmup_days` before day 0 so markets aren't freshly
 settled when the player arrives; it's called by `Sim` and `tools/soak.gd`,
@@ -288,7 +296,9 @@ didn't visibly move a price.
 indices) at `leg` + `leg_progress` ly, with `arrival_day`. Also `insured`,
 `safe_routing`, and `risk_month`/`risk_last_month` (danger run this month
 and last, for pricing the insurance premium — see `Events, governments and
-danger` below).
+danger` below); `built_day`, `condition` (1 = new), `broken_until` (a
+breakdown delays `arrival_day`) and `note` (why the ship is idle, waiting
+or losing money — see `Aging` below).
 
 `sim/fleet.gd` (`Fleet`) owns every ship. Specs: `speed` (drive tunes),
 `jump_range` (jump extenders), `capacity` by cargo class, `sale_value`.
@@ -342,23 +352,32 @@ when picking the best margin. Route orders skip banned goods and wait at a
 closed port rather than erroring. `fuel_quote` / `pay_fuel`: `hull.fuel_per_ly` x route length,
 bought from the local market (the rest at base x `fuel_without_market`).
 `docking_fee` on arrival at a settlement. `monthly_costs` on the 1st: crew
-and maintenance per ship, interest on loans, ledger trimmed to
-`ledger_months`. `observe(company, system)` stores the market's prices in
-`Company.prices` (with the day); `observe_docked` refreshes them weekly
-where ships are docked. `process_orders` runs route orders daily for docked
-ships: at the stop, sell all, buy (fill or an amount), wait for a full load
-up to `wait_full_max_days`, then `World.depart` to the next stop; auto-trade
-(`auto_trader` module) buys the best known margin for the next stop per
-cargo class. A ship that can't go on stops its route (`orders_stopped`),
-and so does one whose cargo would sell at a loss (`sale_quote`: income vs
-the ship's cost basis); it keeps the cargo, and `World.start_orders` at that
-stop sets `Ship.allow_loss` so a restart sells anyway. `sell` returns and
-emits (`sale` event) the profit against `cargo_cost`; `Sim` sums a day's
-sales per player ship into `Events.profit`.
+and maintenance per ship (`Aging.maintenance`, grows with age), interest on
+loans, ledger trimmed to `ledger_months`. `observe(company, system)` stores
+the market's prices in `Company.prices` (with the day); `observe_docked`
+refreshes them weekly where ships are docked. `process_orders` runs route
+orders daily for docked ships: at the stop, sell all, buy (fill or an
+amount), wait for a full load up to `wait_full_max_days`, service when worn
+(`Aging.service`, see `Aging` below), then `World.depart` to the next stop;
+auto-trade (`auto_trader` module) buys the best known margin for the next
+stop per cargo class. A ship that can't go on stops its route
+(`orders_stopped`), and so does one whose cargo would sell at a loss
+(`sale_quote`: income vs the ship's cost basis); it keeps the cargo, and
+`World.start_orders` at that stop sets `Ship.allow_loss` so a restart sells
+anyway. Each stop reason sets `Ship.note` (see `Aging` below). `sell`
+returns and emits (`sale` event) the profit against `cargo_cost`; `Sim`
+sums a day's sales per player ship into `Events.profit`.
 
 `Company.book(category, amount, month, ship)` moves cash and records it in
-`ledger` (month -> category -> amount) and `ship_ledger`.
-`Calendar.month_index` / `month_name` give ledger months. `Ship` has
+`ledger` (month -> category -> amount) and `ship_ledger` (ship id -> month
+-> category -> amount). Besides cash categories, both also keep a memo
+`"cost_of_sales"` entry per sale (`note_cost_of_sales`, no cash movement:
+what the goods sold had cost), so `cash_net(month, ship)` (raw cash flow)
+and `profit(month, ship)` (goods count when sold, not when bought) can
+both be read off the same ledger. `Trading.loss_reason(company, ship,
+month)` explains a loss month (e.g. cargo sold below cost, a breakdown,
+high maintenance). `Calendar.month_index` / `month_name` give ledger
+months. `Ship` has
 `cargo`, `cargo_cost`, `orders` (+ `order_index`, `orders_active`,
 `stop_handled`, `wait_start`). `World` adds `content`, `month()`,
 `depart()` (fuel + send, used by `send_ship` — which stops a route — and by
@@ -370,6 +389,26 @@ purchases, refits and sales are booked as `ships`. Data: hull
 `fuel_per_ly`, balance
 `trade`. `Sim` wraps the new commands; arrivals of ships on routes don't
 ask for attention.
+
+## Aging
+
+`sim/aging.gd` (`Aging`, static functions on a `World`, config from
+`balance.json aging`) is ship wear, breakdowns and servicing. `reliability`
+is hull reliability x `Ship.condition` (1 = new); `maintenance` grows with
+`age_years` (`built_day` to `w.day`). `daily` (before the fleet moves) wears
+every ship a little, and travelling ships more; a travelling ship's
+breakdown chance is `(1 - reliability) x breakdown_per_day`, and a hit sets
+`broken_until` (pushing `arrival_day` back the same amount), books a repair
+bill (`breakdown_repair_share` of the ship's value) to `"repairs"`, and sets
+`Ship.note`. `service_cap` is the best condition a service can reach,
+falling with age (floored at `service_cap_min`); `needs_service` is true
+once condition falls `service_below` under that cap. `service_quote` prices
+a service off the ship's value, the cap-condition gap and
+`service_cost_share`, for `service_days` in the yard; `service` (docked at
+a shipyard) pays it, sets condition, puts the ship in `REFITTING`, books
+`"repairs"` (negative), and emits a `"servicing"` event. `World.service_ship`
+/ `Sim.service_ship` wrap it for the player and route orders
+(`Trading.process_orders`' `"service"` stop option).
 
 ## Contracts
 
@@ -537,7 +576,8 @@ lines.
 shader (starlanes and ship routes). `render/ship_markers.gd`
 (`ShipMarkers`) draws a chevron per ship (`shaders/chevron.gdshader`,
 company colour, pointing along its heading): travelling ships interpolated
-with `Sim.day_fraction()`, docked ships parked around their star. It draws
+with `Sim.day_fraction()`, docked ships parked around their star, and a
+broken-down ship held still at its stall point. It draws
 the selected ship's remaining route (amber) and a preview route to the
 selected system (cyan), and gives `screen_points` for picking ships.
 
@@ -550,9 +590,13 @@ picking from real screen coordinates.
 ## UI
 
 `ui/theme.tres` is the project theme (Inter font, dark glass
-`PanelContainer` style). `ui/fonts.gd` (`Fonts`) exposes `DISPLAY` (Exo 2),
+`PanelContainer` style, and now `Button`/`OptionButton`/`CheckBox`/
+`PopupMenu`/tooltip/`ScrollBar`/separator styles: glass panels, amber
+pressed, cyan hover). `ui/fonts.gd` (`Fonts`) exposes `DISPLAY` (Exo 2),
 `BODY` (Inter) and `MONO` (JetBrains Mono), plus a `weight()` helper for
-variable-font weight/spacing variants.
+variable-font weight/spacing variants. `ui/motion.gd` (`Motion`) has
+`pop_in` (a modal panel scales/fades in) and `fade_in` (a side panel fades
+in), used by the panels below.
 
 `ui/star_tooltip.gd` (`StarTooltip`) shows a hovered system's name,
 distance from Sol, lane count, each star with a colour dot and spectral
@@ -564,8 +608,9 @@ every on-screen system's id and galactic coordinates, FPS, camera state,
 and the hovered id.
 
 `ui/format.gd` (`Format`) has number/unit formatting shared by the tooltip
-and system UI: `population()` ("7.2 billion"), `thousands()`, `au()`, and
-`spectral()` (spectral type as text, e.g. "G2 V", "white dwarf").
+and system UI: `population()` ("7.2 billion"), `thousands()`, `money_short()`
+("12.3k cr", for chart axes), `au()`, and `spectral()` (spectral type as
+text, e.g. "G2 V", "white dwarf").
 
 `ui/settlement_card.gd` (`SettlementCard`) shows one settlement's name,
 archetype and body, a short summary, population (or "none" plus a
@@ -594,37 +639,55 @@ close button.
 
 `ui/clock_bar.gd` (`ClockBar`) sits top-centre: the date and toggle buttons
 for pause/1x/2x/4x/8x, each calling `Sim.set_speed`; refreshes on
-`Events.day_passed`/`speed_changed`. `ui/market_panel.gd` (`MarketPanel`,
-temporary until Milestone 9 builds the real trading UI) lists a system's
-market on the left: every commodity's price, % change vs base, stock,
-an export/import tag (from `supply_rate`/`demand_rate`), and a
+`Events.day_passed`/`speed_changed`. `ui/market_panel.gd` (`MarketPanel`)
+lists a system's market on the left: every commodity's price with a
+week-over-week ▲/▼ arrow next to its % change vs base, stock, an
+export/import tag (from `supply_rate`/`demand_rate`), and a
 `ui/sparkline.gd` (`Sparkline`) of its last 26 weekly prices (green below
-base, amber above, faint line at base); `show_system(s)` switches market
-and hides for an uninhabited system, and it refreshes on every
-`Events.day_passed`.
+base, amber above, faint line at base; `high_is_good` flips which side
+reads as good, used elsewhere for profit sparklines); `show_system(s)`
+switches market and hides for an uninhabited system, and it refreshes on
+every `Events.day_passed`. The status line shows the general tariff (a
+government's `"*"` rate); rows only add a tariff tag where a commodity's
+duty differs from that general rate.
 
 `ui/fleet_panel.gd` (`FleetPanel`, bottom left) lists the player's ships
-with what each is doing; clicking a row selects it. `ui/shipyard_panel.gd`
-(`ShipyardPanel`) shows hulls for sale (Buy) and, for the player's ships
-docked there, per-slot module pickers with the refit quote, Refit and Sell;
-a dim layer sits behind it. `ui/toast.gd` (`Toast`) shows `Events.notice`
-messages under the clock bar. `ClockBar` shows cash (loan in its tooltip).
-`SystemPanel` has a Shipyard button and, with a ship selected, the send
-line (jumps, ly, days, arrival date, or why not, plus the route's risk of
-a hit once it's non-trivial, coloured by `MapModeBar.danger_ramp`) and
-"Send <ship> here", refreshed daily.
+with what each is doing, plus `note_text` under each row explaining why
+it's idle, waiting or losing money; clicking a row selects it.
+`ui/fleet_screen.gd` (`FleetScreen`, key V or the fleet list title) is the
+full fleet table: doing/why (`FleetPanel.status_text`/`note_text`), age, a
+condition bar, reliability, last month's profit, a 12-month profit
+`Sparkline`, and Show/Orders/Service buttons per ship.
+
+`ui/shipyard_panel.gd` (`ShipyardPanel`) has a hull comparison table for
+ships built here this year (new models marked, with slots/cargo/speed/
+jump/reliability/upkeep/price), and, per owned ship docked there, a
+drag-and-drop fitting view (`SlotBox`/`ModuleChip` inner classes: drag a
+module from the rack onto a slot, or drag between two slots to swap) with
+a fit summary, refit quote, Reset/Refit, Service and Sell; a dim layer sits
+behind it. `ui/toast.gd` (`Toast`) shows `Events.notice` messages under
+the clock bar. `ClockBar` shows cash (loan in its tooltip). `SystemPanel`
+has a Shipyard button and, with a ship selected, the send line (jumps, ly,
+days, arrival date, or why not, plus the route's risk of a hit once it's
+non-trivial, coloured by `MapModeBar.danger_ramp`) and "Send <ship> here",
+refreshed daily.
 
 `MarketPanel` never hides grid cells (a GridContainer would shift the rest
 into the wrong columns); it shows live prices (a player ship docked there) with Buy/Sell
 for that ship, a lot size and cargo aboard, else the prices the company
 last saw and their age, else nothing; a banned good is red-tagged "banned"
-with Buy/Sell disabled, a market's tariff shows per commodity, and a
-closed port disables trading. `OrdersPanel` (O) edits a ship's route
-orders, and has Safest routing (adds `Danger.penalty` to route planning)
-and Insured (shows the monthly premium) toggles per ship; `FinancePanel`
-(L) shows three months of the ledger by category (now including
-`tariffs`, `insurance`, `repairs`) and by ship, with borrow/repay;
-`MapModeBar` (top right, P cycles stars / danger / price maps) picks the
+with Buy/Sell disabled, and a closed port disables trading. `OrdersPanel`
+(O) edits a ship's route orders (sell, buy, wait for a full load,
+auto-trade, service when worn at a shipyard stop), and has Safest routing
+(adds `Danger.penalty` to route planning) and Insured (shows the monthly
+premium) toggles per ship. `ui/chart.gd` (`Chart`) draws bars or lines with
+axis values (`Format.money_short`) and month labels, used by:
+`FinancePanel` (L), rewritten with a ledger table (three months by
+category, including `tariffs`, `insurance`, `repairs`), borrow/repay, a
+company profit-per-month chart, a per-ship profit chart (3-month rolling
+average, since trips span months) and a ship table (age, condition, last
+month, 12 months, `Trading.loss_reason`). `MapModeBar` (top right, P cycles
+stars / danger / price maps) picks the
 map mode: the danger map colours lanes and stars by chance of a hit
 (`danger_ramp`, green/amber/red) via `GalaxyMap.set_lane_colors`/
 `set_tints`, the price maps colour stars and names by known price via
@@ -725,17 +788,26 @@ one jump further, routes through charted systems only).
 `tests/test_trading.gd` (worlds warmed up so prices differ) covers price
 knowledge only from own ships (charting doesn't reveal prices; weekly
 refresh while docked), buying limited by cargo class, space and cash,
-sales at the market price, fuel at departure and docking fees on arrival, monthly
-crew/maintenance/interest, a manual buy-travel-sell loop that makes money
-after costs, a two-stop route running 5 years unattended, waiting for a full
-load, the auto-trader, order refusals, sale profit against cost, and a
-route stopping (cargo kept) before a loss and selling after a restart.
+sales at the market price, fuel at departure and docking fees on arrival,
+monthly crew/age-based maintenance/interest, a manual buy-travel-sell loop
+that makes money after costs, a two-stop route running 5 years unattended,
+waiting for a full load, the auto-trader, order refusals, sale profit
+against cost, and a route stopping (cargo kept) before a loss and selling
+after a restart.
+
+`tests/test_aging.gd` covers `Aging`: condition wearing daily and faster
+while travelling, reliability falling with condition, breakdowns delaying
+arrival and billing a repair, maintenance growing with age, `service_cap`
+falling with age, and `service`/`service_quote` restoring condition and
+refusing when there's nothing to do, not docked, or no shipyard.
 
 `tests/test_contracts.gd` covers the boards (plenty of offers of all three
 kinds, deterministic), accepting (charters take hold space, no double
 accept, refusals: not docked, no cabins; berth and mail counts), delivery
 and reward, a missed deadline's penalty, abandoning, and a contracts-only
-bot that buys a second ship within three years with no failed jobs.
+bot that services a worn ship and runs 4 years, allowing at most 1 in 10
+jobs to fail (breakdowns can make a ship late) and checking worth (cash
+plus ship resale, since an aging ship's value falls) instead of cash.
 
 `tests/test_events.gd` covers event placement (conditions, weighting, one
 per system at a time up to `max_per_system`), effects on prices/closed

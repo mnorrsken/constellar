@@ -19,6 +19,17 @@ static func thousands(n: int) -> String:
 		s = s.left(s.length() - 3)
 	return ("-" if n < 0 else "") + s + out
 
+## Money in few characters: 950 -> "950", 12 400 -> "12k", 1 250 000 ->
+## "1.3M" (sign kept).
+static func money_short(v: float) -> String:
+	var a := absf(v)
+	var sign := "-" if v < 0.0 else ""
+	if a >= 1e6:
+		return "%s%sM" % [sign, _short(a / 1e6)]
+	if a >= 1e3:
+		return "%s%sk" % [sign, _short(a / 1e3)]
+	return "%s%d" % [sign, roundi(a)]
+
 ## Orbit distance: "0.029 AU", "1.33 AU", "45 AU".
 static func au(a: float) -> String:
 	if a < 0.1:

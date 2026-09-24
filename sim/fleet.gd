@@ -109,6 +109,7 @@ func add_ship(company: int, hull_id: String, system_index: int, day: int, ship_n
 	s.modules.assign(_hulls[hull_id].get("default_modules", []))
 	s.system = system_index
 	s.bought_day = day
+	s.built_day = day
 	s.name = ship_name if ship_name != "" else _next_name()
 	ships.append(s)
 	return s
@@ -230,7 +231,8 @@ func advance_day(new_day: int) -> Array[Dictionary]:
 					s.status = Ship.Status.DOCKED
 					events.append({"type": "refitted", "ship": s.id, "system": s.system})
 			Ship.Status.TRAVELING:
-				_move(s, speed(s), events)
+				if s.broken_until <= new_day:  # a broken-down ship waits for repairs
+					_move(s, speed(s), events)
 	return events
 
 ## Moves a ship `ly` along its route, adding passed/arrived events.

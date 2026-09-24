@@ -8,6 +8,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Real UI and finance: ships age (`sim/aging.gd`) — condition (1 = new) wears
+  daily and faster while travelling; reliability is hull reliability x
+  condition; a travelling ship can break down (chance from reliability),
+  losing days and costing a repair bill; maintenance grows with age;
+  servicing at a shipyard restores condition up to a cap that falls with
+  age. A route stop can service the ship when worn. The start ship is now
+  second-hand (5 years old, 90% condition). New hulls: Swift II courier,
+  Starliner II liner, Leviathan II heavy freighter, each announced
+  by a news headline when its production year begins; galaxy-wide news (not
+  tied to a system) now shows in the ticker and log too. Ships carry a note
+  explaining why they're idle, waiting or losing money (no orders, full
+  load, closed port, banned/unmatched cargo, route stopped and why,
+  breakdown), shown in the fleet list and fleet screen; `Company` now books
+  a memo "cost of sales" line per sale and can report cash or profit by
+  ship and month, and explain a loss month. UI: fleet screen (key V) lists
+  every ship with what it's doing, why, age, a condition bar, reliability,
+  last month and a 12-month sparkline, plus Show/Orders/Service buttons;
+  finance panel rewritten with a ledger table, a company profit chart and a
+  per-ship profit chart (`ui/chart.gd`), and a ship table with age,
+  condition and loss reasons; shipyard panel rewritten with a hull
+  comparison table and, per owned ship, a drag-and-drop fitting view (drag
+  a module onto a slot or swap two slots) with a refit quote, plus Service
+  and Sell; market panel shows week-over-week price arrows and the general
+  tariff in the status line; `ui/theme.tres` styles buttons, option
+  buttons, checkboxes, popups, tooltips, scrollbars and separators, and
+  panels use a pop-in/fade-in motion (`ui/motion.gd`).
 - Events, governments and news: `data/events.json` lists 11 events (war,
   zealot takeover, plague, crop failure, mining strike, labour strike,
   pirates, stellar flare, embargo, trade agreement, festival) that roll

@@ -1,20 +1,32 @@
 class_name FinancePanel
 extends PanelContainer
-## The ledger (L): this month and the last two by category, net, and each
-## ship's result; cash and loan with borrow/repay. Charts come in
-## Milestone 9.
+## The finance screen (L): cash and loan with borrow/repay; the ledger by
+## category for the last three months (cash); charts of the company's
+## monthly profit and every ship's (up to two years; goods count when sold,
+## see Company.profit); and a ship table with age, condition, last month's
+## profit and why a ship made a loss.
 
 signal closed
 
 const MUTED := Color(0.55, 0.62, 0.74)
+const TEXT := Color(0.86, 0.9, 0.97)
 const GREEN := Color(0.45, 0.85, 0.55)
 const RED := Color(1.0, 0.45, 0.4)
-const CATEGORIES := ["sales", "purchases", "contracts", "penalties", "tariffs", "fuel", "docking", "crew", "maintenance", "insurance", "repairs", "interest", "ships"]
+const AMBER := Color(0.98, 0.72, 0.3)
+const CATEGORIES := ["sales", "purchases", "contracts", "penalties", "tariffs", "fuel", "docking", "crew",
+	"maintenance", "insurance", "repairs", "interest", "ships"]
 const STEP := 100000.0
+const CHART_MONTHS := 24
+## Line colours for ships in the profit chart.
+const SHIP_COLORS := [Color(0.35, 0.85, 1.0), Color(0.98, 0.72, 0.3), Color(0.75, 0.55, 1.0),
+	Color(0.45, 0.9, 0.55), Color(1.0, 0.5, 0.6), Color(0.9, 0.9, 0.5), Color(0.5, 0.7, 1.0)]
 
 var _title := Label.new()
 var _money := Label.new()
 var _grid := GridContainer.new()
+var _net_chart := Chart.new()
+var _ship_chart := Chart.new()
+var _legend := HFlowContainer.new()
 var _ships := GridContainer.new()
 
 func _ready() -> void:
@@ -40,11 +52,26 @@ func _ready() -> void:
 		head.add_child(c)
 	_money.add_theme_font_override("font", Fonts.MONO)
 	_money.add_theme_font_size_override("font_size", 15)
+	_money.add_theme_color_override("font_color", AMBER)
 	_grid.columns = 4
-	_grid.add_theme_constant_override("h_separation", 28)
-	_ships.columns = 4
-	_ships.add_theme_constant_override("h_separation", 28)
-	for c in [head, _money, HSeparator.new(), _grid, HSeparator.new(), _ships]:
+	_grid.add_theme_constant_override("h_separation", 22)
+	_grid.add_theme_constant_override("v_separation", 2)
+	var charts := VBoxContainer.new()
+	charts.add_theme_constant_override("separation", 6)
+	_ship_chart.custom_minimum_size = Vector2(560, 170)
+	_net_chart.custom_minimum_size = Vector2(560, 150)
+	_legend.add_theme_constant_override("h_separation", 14)
+	for c in [_section("Profit per month  (goods count when sold)"), _net_chart, _section("Profit per ship  (3-month average)"), _ship_chart, _legend]:
+		charts.add_child(c)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 28)
+	top.add_child(_grid)
+	top.add_child(VSeparator.new())
+	top.add_child(charts)
+	_ships.columns = 6
+	_ships.add_theme_constant_override("h_separation", 22)
+	_ships.add_theme_constant_override("v_separation", 2)
+	for c in [head, _money, HSeparator.new(), top, HSeparator.new(), _ships]:
 		box.add_child(c)
 	add_child(box)
 	Events.company_changed.connect(func(_c): _refresh())
@@ -53,6 +80,7 @@ func _ready() -> void:
 
 func open() -> void:
 	visible = true
+	Motion.pop_in(self)
 	_refresh()
 
 func close_panel() -> void:
@@ -69,15 +97,43 @@ func _refresh() -> void:
 		Format.thousands(roundi(p.cash)), Format.thousands(roundi(p.loan)),
 		Format.thousands(roundi(p.loan_max)), roundi(p.interest_per_year * 100.0)]
 	var now := w.month()
-	var months := [now - 2, now - 1, now]
-	for c in _grid.get_children():
+	_fill_ledger(w, p, [now - 2, now - 1, now])
+	var first := maxi(now - CHART_MONTHS + 1, 0)
+	var months := range(first, now + 1)
+	var labels := PackedStringArray()
+	for m in months:
+		# "Mar", with the year at each January.
+		labels.append(Calendar.month_name(m, w.start_year).left(3) + ("" if m % 12 != 0 else " " + str(w.start_year + m / 12)))
+	_net_chart.set_bars(months.map(func(m): return p.profit(m)), labels)
+	var lines := []
+	for c in _legend.get_children():
+		_legend.remove_child(c)
 		c.queue_free()
+	var k := 0
+	for s in w.ships_of(Sim.PLAYER):
+		var color: Color = SHIP_COLORS[k % SHIP_COLORS.size()]
+		k += 1
+		# Trips often span months: a 3-month average shows the trend.
+		var values := []
+		for m in months:
+			var sum := 0.0
+			for back in 3:
+				sum += p.profit(m - back, s.id)
+			values.append(sum / 3.0 if m >= _month_of(s.bought_day) else 0.0)
+		lines.append({"name": s.name, "color": color, "values": values})
+		_legend.add_child(_cell("●  %s" % s.name, color))
+	_ship_chart.set_lines(lines, labels)
+	_fill_ships(w, p, now)
+	(func(): reset_size()).call_deferred()
+
+func _fill_ledger(w: World, p: Company, months: Array) -> void:
+	_clear(_grid)
 	_grid.add_child(_cell("", MUTED))
 	for m in months:
 		_grid.add_child(_cell(Calendar.month_name(m, w.start_year) if m >= 0 else "", MUTED, true))
 	var totals := [0.0, 0.0, 0.0]
 	for cat in CATEGORIES:
-		_grid.add_child(_cell(cat.capitalize(), Color(0.86, 0.9, 0.97)))
+		_grid.add_child(_cell(cat.capitalize(), TEXT))
 		for k in months.size():
 			var v: float = p.ledger.get(months[k], {}).get(cat, 0.0)
 			totals[k] += v
@@ -85,27 +141,47 @@ func _refresh() -> void:
 	_grid.add_child(_cell("Net", Color.WHITE))
 	for v in totals:
 		_grid.add_child(_money_cell(v))
-	for c in _ships.get_children():
-		c.queue_free()
-	_ships.add_child(_cell("Ship", MUTED))
-	for m in months:
-		_ships.add_child(_cell(Calendar.month_name(m, w.start_year) if m >= 0 else "", MUTED, true))
+
+func _fill_ships(w: World, p: Company, now: int) -> void:
+	_clear(_ships)
+	for h in ["Ship", "Age", "Condition", "Last month", "Last 12 months", "Why it made a loss last month"]:
+		_ships.add_child(_cell(h, MUTED))
 	for s in w.ships_of(Sim.PLAYER):
-		_ships.add_child(_cell(s.name, Color(0.86, 0.9, 0.97)))
-		for m in months:
-			_ships.add_child(_money_cell(p.ship_ledger.get(s.id, {}).get(m, 0.0)))
-	(func(): reset_size()).call_deferred()
+		var year_total := 0.0
+		for m in range(now - 11, now + 1):
+			year_total += p.profit(m, s.id)
+		var last := p.profit(now - 1, s.id)
+		_ships.add_child(_cell("%s  ·  %s" % [s.name, w.fleet.hull_def(s).name], TEXT))
+		_ships.add_child(_cell("%d yr" % floori(Aging.age_years(w, s)), TEXT, true))
+		_ships.add_child(_cell("%d%%" % roundi(s.condition * 100.0), GREEN if s.condition > 0.7
+			else (AMBER if s.condition > 0.45 else RED), true))
+		_ships.add_child(_money_cell(last))
+		_ships.add_child(_money_cell(year_total))
+		_ships.add_child(_cell(Trading.loss_reason(p, s.id, now - 1), AMBER))
+
+static func _month_of(day: int) -> int:
+	return Calendar.month_index(maxi(day, 0))
+
+func _clear(grid: Container) -> void:
+	for c in grid.get_children():
+		grid.remove_child(c)
+		c.queue_free()
 
 func _money_cell(v: float) -> Label:
 	var l := _cell("" if absf(v) < 0.5 else Format.thousands(roundi(v)), GREEN if v > 0.0 else RED, true)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	l.custom_minimum_size = Vector2(120, 0)
+	l.custom_minimum_size = Vector2(96, 0)
+	return l
+
+func _section(text: String) -> Label:
+	var l := _cell(text.to_upper(), MUTED)
+	l.add_theme_font_size_override("font_size", 12)
 	return l
 
 func _cell(text: String, color: Color, mono := false) -> Label:
 	var l := Label.new()
 	l.text = text
-	l.add_theme_font_size_override("font_size", 15)
+	l.add_theme_font_size_override("font_size", 14)
 	l.add_theme_color_override("font_color", color)
 	if mono:
 		l.add_theme_font_override("font", Fonts.MONO)

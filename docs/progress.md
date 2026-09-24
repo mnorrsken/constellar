@@ -3,7 +3,7 @@
 Milestone-by-milestone status. See [`constellar-plan.md`](../constellar-plan.md)
 for the plan and acceptance criteria this tracks.
 
-Current test count: **108 tests, 3561 assertions, 0 failures** (`make test`).
+Current test count: **116 tests, 3592 assertions, 0 failures** (`make test`).
 
 - **M0 — Project skeleton — done.** Godot 4.7 project setup, autoloads
   (`Events`/`Defs`/`Sim`), `data/commodities.json`, Makefile, headless test
@@ -56,7 +56,12 @@ Current test count: **108 tests, 3561 assertions, 0 failures** (`make test`).
   plus a zealots government reachable only via an event. Lane danger and
   raids/losses (`sim/danger.gd`), insurance and safest routing. News ticker
   and log, danger map mode, map badges.
-- **M9 — Real UI and finance — pending.**
+- **M9 — Real UI and finance — done.** Ships age and can break down
+  (`sim/aging.gd`); servicing at a shipyard or via a route stop restores
+  condition. New hulls (Swift II, Starliner II, Leviathan II) with news
+  headlines. Fleet screen (V), rewritten finance panel (ledger, profit
+  charts) and shipyard panel (hull comparison, drag-and-drop fitting,
+  Service), themed buttons/checkboxes/popups.
 - **M10 — Influence and goals — pending.**
 - **M11 — Save/load and main menu — pending.**
 - **M12 — Rim Crises, art/audio pass, balance — pending.**

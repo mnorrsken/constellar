@@ -40,6 +40,7 @@ var next_contract_id := 0
 var rng: RandomNumberGenerator
 var events_rng: RandomNumberGenerator
 var danger_rng: RandomNumberGenerator
+var wear_rng: RandomNumberGenerator
 ## Running events (see WorldEvents) and the news they made, oldest first:
 ## {day, text, systems, kind, start}.
 var world_events: Array[WorldEvent] = []
@@ -71,6 +72,7 @@ static func create(world_seed: int, stars_data: Dictionary, content: Dictionary)
 	w.rng = stream(world_seed, "world", "contracts")
 	w.events_rng = stream(world_seed, "world", "events")
 	w.danger_rng = stream(world_seed, "world", "danger")
+	w.wear_rng = stream(world_seed, "world", "wear")
 	WorldEvents.apply_all(w)
 	var company_cfg: Dictionary = balance.get("company", {})
 	w.companies.append(Company.from_dict(0, company_cfg))
@@ -82,7 +84,9 @@ static func create(world_seed: int, stars_data: Dictionary, content: Dictionary)
 	w.events.clear()
 	var start_ship: Dictionary = company_cfg.get("start_ship", {})
 	if w.start_system >= 0 and start_ship.has("hull"):
-		w.fleet.add_ship(0, start_ship.hull, w.start_system, 0, start_ship.get("name", ""))
+		var first := w.fleet.add_ship(0, start_ship.hull, w.start_system, 0, start_ship.get("name", ""))
+		first.built_day = -roundi(float(start_ship.get("age_years", 0)) * Calendar.DAYS_PER_YEAR)
+		first.condition = float(start_ship.get("condition", 1.0))
 		for c in w.companies:
 			Trading.observe(w, c.id, w.start_system)
 	w._warmup_days = int(balance.get("economy", {}).get("warmup_days", 0))
@@ -107,6 +111,7 @@ func advance_day() -> void:
 		Contracts.post_offers(self)
 		events.append({"type": "contracts"})
 	WorldEvents.daily(self)
+	Aging.daily(self)
 	for e in fleet.advance_day(day):
 		var s := fleet.get_ship(e.ship)
 		if s == null:
@@ -119,6 +124,7 @@ func advance_day() -> void:
 			reveal(s.company, e.system)
 		if e.type == "arrived":
 			s.stop_handled = false
+			s.note = ""
 			Contracts.deliver(self, s, e.system)
 			var port := economy.market_at(e.system)
 			if port:
@@ -126,7 +132,10 @@ func advance_day() -> void:
 					companies[s.company].book("docking", -Trading.docking_fee(self, s), month(), s.id)
 				Trading.observe(self, s.company, e.system)
 	Contracts.check_deadlines(self)
-	if Calendar.date(day, 0).day == 1:
+	var date := Calendar.date(day, 0)
+	if date.day == 1 and date.month == 1:
+		_new_hull_news()
+	if date.day == 1:
 		Danger.monthly(self)
 		Trading.monthly_costs(self)
 		WorldEvents.monthly(self)
@@ -197,6 +206,7 @@ func send_ship(company_id: int, ship_id: int, target_system: int) -> Dictionary:
 	var r := depart(s, target_system)
 	if r.ok:
 		s.orders_active = false
+		s.note = ""
 	return r
 
 ## Buys fuel for the trip and sends the ship over its company's charted
@@ -294,6 +304,20 @@ func contracts_of(company_id: int) -> Array[Contract]:
 		if c.company == company_id and c.status == Contract.Status.ACCEPTED:
 			out.append(c)
 	return out
+
+## Services a ship at a shipyard (see Aging.service).
+func service_ship(company_id: int, ship_id: int) -> Dictionary:
+	var s := _own_ship(company_id, ship_id)
+	if s == null:
+		return {"ok": false, "error": "Not your ship"}
+	return Aging.service(self, s)
+
+## New year: the yards' new hull models make the news.
+func _new_hull_news() -> void:
+	for id in content.hulls:
+		var h: Dictionary = content.hulls[id]
+		if int(h.get("year_from", 0)) == year():
+			WorldEvents.post_news(self, "The yards launch the %s (%s)" % [h.name, h.get("class", "")], [], "hull", true)
 
 ## Insures a ship (monthly premium) or cancels its insurance.
 func set_insurance(company_id: int, ship_id: int, on: bool) -> Dictionary:

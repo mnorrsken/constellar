@@ -19,8 +19,11 @@ var known := PackedByteArray()
 ## later, trading posts): no source, no entry.
 var prices: Dictionary = {}
 ## Monthly books: month index -> {category: signed amount}; and per ship:
-## ship id -> {month index: net}. Categories: sales, purchases,
-## fuel, docking, crew, maintenance, interest, ships.
+## ship id -> {month index: {category: signed amount}}. Categories: sales,
+## purchases, contracts, penalties, tariffs, fuel, docking, crew,
+## maintenance, insurance, repairs, interest, ships. Besides the cash,
+## both keep "cost_of_sales": what the goods sold had cost (a memo, not
+## cash), so profit can count goods when they are sold (see profit()).
 var ledger: Dictionary = {}
 var ship_ledger: Dictionary = {}
 
@@ -42,7 +45,8 @@ func book(category: String, amount: float, month: int, ship_id := -1) -> void:
 	m[category] = m.get(category, 0.0) + amount
 	if ship_id >= 0:
 		var s: Dictionary = ship_ledger.get_or_add(ship_id, {})
-		s[month] = s.get(month, 0.0) + amount
+		var cats: Dictionary = s.get_or_add(month, {})
+		cats[category] = cats.get(category, 0.0) + amount
 
 ## Keeps the last `months` months of books.
 func trim_ledger(current_month: int, months: int) -> void:
@@ -53,6 +57,33 @@ func trim_ledger(current_month: int, months: int) -> void:
 		for m in s.keys():
 			if m <= current_month - months:
 				s.erase(m)
+
+## Notes what goods sold in a month had cost (no cash moves).
+func note_cost_of_sales(amount: float, month: int, ship_id: int) -> void:
+	var m: Dictionary = ledger.get_or_add(month, {})
+	m.cost_of_sales = m.get("cost_of_sales", 0.0) - amount
+	var cats: Dictionary = ship_ledger.get_or_add(ship_id, {}).get_or_add(month, {})
+	cats.cost_of_sales = cats.get("cost_of_sales", 0.0) - amount
+
+## Cash in minus cash out in a month (for one ship, or the whole company
+## with ship_id -1).
+func cash_net(month: int, ship_id := -1) -> float:
+	var total := 0.0
+	var cats: Dictionary = ledger.get(month, {}) if ship_id < 0 else ship_ledger.get(ship_id, {}).get(month, {})
+	for k in cats:
+		if k != "cost_of_sales":
+			total += cats[k]
+	return total
+
+## Profit in a month: like cash_net, but goods count when they are sold
+## (at what they cost) instead of when they are bought. Ship or company.
+func profit(month: int, ship_id := -1) -> float:
+	var total := 0.0
+	var cats: Dictionary = ledger.get(month, {}) if ship_id < 0 else ship_ledger.get(ship_id, {}).get(month, {})
+	for k in cats:
+		if k != "purchases":
+			total += cats[k]
+	return total
 
 func is_known(system_index: int) -> bool:
 	return system_index < known.size() and known[system_index] != 0

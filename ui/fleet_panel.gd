@@ -1,16 +1,18 @@
 class_name FleetPanel
 extends PanelContainer
-## Bottom-left list of the player's ships: name, hull and what each is doing.
-## Click a row to select that ship.
+## Bottom-left list of the player's ships: name, what each is doing and,
+## under it, why it is idle, waiting or losing money. Click a row to select
+## that ship; V (or the title button) opens the full fleet screen.
 
 signal ship_selected(ship_id: int)
 signal orders_requested(ship_id: int)
+signal screen_requested
 
 const MUTED := Color(0.55, 0.62, 0.74)
 
 var selected := -1
 
-var _title := Label.new()
+var _title := Button.new()
 var _rows := VBoxContainer.new()
 
 func _ready() -> void:
@@ -25,6 +27,11 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 6)
 	_title.add_theme_font_override("font", Fonts.weight(Fonts.DISPLAY, 700))
 	_title.add_theme_font_size_override("font_size", 18)
+	_title.flat = true
+	_title.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_title.focus_mode = Control.FOCUS_NONE
+	_title.tooltip_text = "Open the fleet screen (V)"
+	_title.pressed.connect(func(): screen_requested.emit())
 	_rows.add_theme_constant_override("separation", 2)
 	box.add_child(_title)
 	box.add_child(_rows)
@@ -40,8 +47,9 @@ func select(ship_id: int) -> void:
 func refresh() -> void:
 	var world: World = Sim.world
 	var ships := world.ships_of(Sim.PLAYER)
-	_title.text = "Fleet  ·  %d ship%s" % [ships.size(), "" if ships.size() == 1 else "s"]
+	_title.text = "Fleet  ·  %d ship%s   ▸ V" % [ships.size(), "" if ships.size() == 1 else "s"]
 	for child in _rows.get_children():
+		_rows.remove_child(child)
 		child.queue_free()
 	for s in ships:
 		var b := Button.new()
@@ -50,10 +58,9 @@ func refresh() -> void:
 		b.focus_mode = Control.FOCUS_NONE
 		var cargo := s.cargo_tonnes()
 		var jobs := Contracts.active_for(world, s).size()
-		b.text = "%s   ·   %s%s%s%s" % [s.name, status_text(world, s),
+		b.text = "%s   ·   %s%s%s" % [s.name, status_text(world, s),
 			"   ·   %s t aboard" % Format.thousands(roundi(cargo)) if cargo >= 1.0 else "",
-			"   ·   %d contract%s" % [jobs, "" if jobs == 1 else "s"] if jobs > 0 else "",
-			"   ·   awaiting orders" if Sim.waiting.has(s.id) else ""]
+			"   ·   %d contract%s" % [jobs, "" if jobs == 1 else "s"] if jobs > 0 else ""]
 		b.tooltip_text = "%s  ·  %s t cargo  ·  %.2f ly/day  ·  %.0f ly jump" % [
 			world.fleet.hull_def(s).name, Format.thousands(roundi(world.fleet.total_capacity(s))),
 			world.fleet.speed(s), world.fleet.jump_range(s)]
@@ -72,7 +79,33 @@ func refresh() -> void:
 		row.add_child(b)
 		row.add_child(orders)
 		_rows.add_child(row)
+		var why := note_text(world, s)
+		if why != "":
+			var l := Label.new()
+			l.text = "      " + why
+			l.add_theme_font_size_override("font_size", 13)
+			l.add_theme_color_override("font_color", Color(0.98, 0.72, 0.3, 0.9))
+			_rows.add_child(l)
 	(func(): offset_top = offset_bottom).call_deferred()
+
+## Why a ship is idle, waiting or losing money, or "" when all is well.
+static func note_text(world: World, s: Ship) -> String:
+	if s.status == Ship.Status.TRAVELING and s.broken_until > world.day:
+		return s.note if s.note != "" else "broken down"
+	if s.status == Ship.Status.REFITTING:
+		return ""
+	if s.status == Ship.Status.DOCKED and not s.orders_active:
+		if s.note.begins_with("route stopped"):
+			return s.note
+		return "idle: awaiting orders" if Sim.waiting.has(s.id) else "idle: no orders"
+	if s.note != "":
+		return s.note
+	var reason := Trading.loss_reason(Sim.player(), s.id, world.month() - 1)
+	if reason != "":
+		return "lost money last month: " + reason
+	if Aging.needs_service(world, s):
+		return "worn (%d%%): service it at a shipyard" % roundi(s.condition * 100.0)
+	return ""
 
 static func status_text(world: World, s: Ship) -> String:
 	match s.status:

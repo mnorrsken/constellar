@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3]
+[gd_scene load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://main.gd" id="1_main"]
 [ext_resource type="Script" path="res://render/galaxy_map.gd" id="2_map"]
@@ -22,6 +22,7 @@
 [ext_resource type="Script" path="res://ui/contracts_panel.gd" id="20_contracts"]
 [ext_resource type="Script" path="res://ui/news_ticker.gd" id="21_ticker"]
 [ext_resource type="Script" path="res://ui/news_panel.gd" id="22_news"]
+[ext_resource type="Script" path="res://ui/fleet_screen.gd" id="23_fleet_screen"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("7_sky")
@@ -110,6 +111,9 @@ script = ExtResource("20_contracts")
 
 [node name="NewsPanel" type="PanelContainer" parent="UI"]
 script = ExtResource("22_news")
+
+[node name="FleetScreen" type="PanelContainer" parent="UI"]
+script = ExtResource("23_fleet_screen")
 
 [node name="Tooltip" type="PanelContainer" parent="UI"]
 script = ExtResource("4_tooltip")

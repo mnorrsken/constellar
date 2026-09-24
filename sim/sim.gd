@@ -124,6 +124,10 @@ func accept_contract(contract_id: int, ship_id: int) -> Dictionary:
 func abandon_contract(contract_id: int) -> Dictionary:
 	return _run(world.abandon_contract(PLAYER, contract_id))
 
+## Services a ship docked at a shipyard.
+func service_ship(ship_id: int) -> Dictionary:
+	return _run(world.service_ship(PLAYER, ship_id))
+
 ## Insures a ship (monthly premium) or cancels its insurance.
 func set_insurance(ship_id: int, on: bool) -> Dictionary:
 	return _run(world.set_insurance(PLAYER, ship_id, on))
@@ -210,11 +214,18 @@ func _flush_events() -> void:
 				if stopped and stopped.company == PLAYER:
 					Events.notice.emit("%s stopped its route: %s" % [stopped.name, e.reason])
 					attention.append([stopped.id, stopped.destination()])
-			"arrived", "refitted", "departed", "bought", "sold", "refitting":
+			"breakdown":
+				fleet_moved = true
+				cash_changed[e.company] = true
+				var broken := world.fleet.get_ship(e.ship)
+				if broken and broken.company == PLAYER:
+					Events.notice.emit("%s broke down: %d days lost, repairs %s cr" % [broken.name, e.days,
+						Format.thousands(roundi(e.repairs))])
+			"arrived", "refitted", "departed", "bought", "sold", "refitting", "servicing":
 				fleet_moved = true
 				if e.type == "sold":
 					waiting.erase(e.ship)
-				if e.type in ["bought", "sold", "refitting"]:
+				if e.type in ["bought", "sold", "refitting", "servicing"]:
 					cash_changed[e.company] = true
 				var ship := world.fleet.get_ship(e.ship)
 				if ship and e.type in ["departed", "arrived"]:

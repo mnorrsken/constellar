@@ -35,10 +35,19 @@ Esc closes the system view first, then deselects.
 Ships: click a ship's chevron on the map or its row in the fleet list
 (bottom left), select a star, and press S (or the card's Send button) to
 send it there; the card shows jumps, days and the arrival date, or why the
-ship can't go. The system card's Shipyard button opens the shipyard (buy,
-refit, sell) at industrial and high-tech worlds. The game pauses and flies
-to a ship when it arrives or leaves the yard; sending it on resumes the
-game, unless other ships are still awaiting orders.
+ship can't go. The system card's Shipyard button opens the shipyard: buy
+new hulls, and for your own ships there, drag modules onto slots (or drag
+between slots to swap) to refit, plus Service and Sell. The game pauses and
+flies to a ship when it arrives or leaves the yard; sending it on resumes
+the game, unless other ships are still awaiting orders.
+
+Ships wear with age and travel; a worn ship is less reliable and can break
+down under way, costing days and a repair bill. Servicing at a shipyard
+(or a route stop's "Service when worn" option) restores it, though older
+ships can't be serviced back to full. V, or the fleet list title, opens the
+fleet screen: every ship's status, why it's idle or losing money, age,
+condition, reliability, last month's and a year of results, and
+Show/Orders/Service buttons.
 
 Fog of war: you only see the glow of distant stars. A system and everything
 one jump from it are charted once one of your ships gets there; routes only
@@ -48,7 +57,9 @@ Trading: with a ship docked, the market panel (M) shows live prices with
 Buy/Sell buttons (lot size at the top); elsewhere it shows the last prices
 your ships saw and how old they are. O opens the selected ship's route
 orders (add the selected system as a stop; sell, buy, wait for a full load,
-auto-trade; Start route). L shows the finances (ledger, borrow, repay).
+auto-trade, service when worn at a shipyard; Start route). L shows the
+finances: cash, loan (borrow/repay), a ledger table, profit charts and a
+ship table with age, condition and loss reasons.
 P cycles the map mode: stars, danger (lanes and stars coloured by the
 chance of a hit), then the price maps. Every sale shows its profit (or
 loss) floating up from the ship. A route that would sell at a loss stops

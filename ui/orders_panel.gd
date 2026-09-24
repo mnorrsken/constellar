@@ -2,8 +2,9 @@ class_name OrdersPanel
 extends PanelContainer
 ## Route orders for one ship (Transport Tycoon style): a looping list of
 ## stops. Each stop: sell all cargo, buy one good (0 t = fill the hold),
-## wait for a full load, or auto-trade (needs an auto-trader module). The
-## ship's routing (shortest or safest) and insurance are set here too.
+## wait for a full load, auto-trade (needs an auto-trader module), or get
+## serviced when worn (at a shipyard). The ship's routing (shortest or
+## safest) and insurance are set here too.
 ## Every edit is applied at once; a running route restarts with the change.
 
 signal closed
@@ -73,6 +74,7 @@ func open(id: int, selected_system: int) -> void:
 	ship_id = id
 	add_system = selected_system
 	visible = true
+	Motion.pop_in(self)
 	_refresh()
 
 func close_panel() -> void:
@@ -163,7 +165,12 @@ func _stop_row(s: Ship, i: int) -> Control:
 	buy.disabled = stop.get("auto", false)
 	buy.item_selected.connect(func(k): _edit(func(o):
 		o[i].buy = [] if k == 0 else [{"commodity": ids[k - 1], "amount": 0}]))
-	for c in [sell, buy, wait, auto]:
+	var service := _check("Service when worn", stop.get("service", false),
+		func(on): _edit(func(o): o[i].service = on))
+	service.disabled = not w.fleet.is_shipyard(int(stop.system))
+	service.tooltip_text = "At this shipyard, service the ship when its condition is well below what its age allows." \
+		if not service.disabled else "Only at a shipyard"
+	for c in [sell, buy, wait, auto, service]:
 		opts.add_child(c)
 	box.add_child(opts)
 	panel.add_child(box)

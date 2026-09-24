@@ -82,6 +82,8 @@ func show_system(s: StarSystem) -> void:
 		return
 	_system = s.index
 	_title.text = "Market  ·  %s" % s.settlement.name
+	if not visible:
+		Motion.fade_in(self)
 	visible = true
 	_refresh()
 
@@ -110,6 +112,10 @@ func _refresh() -> void:
 	else:
 		_status.text = "No price information: none of your ships has docked here."
 		_status.add_theme_color_override("font_color", MUTED)
+	var st := w.galaxy.systems[_system].settlement
+	var general := float(w.content.governments.get(st.government, {}).get("tariffs", {}).get("*", 0.0)) * m.tariff_mult
+	if general > 0.0:
+		_status.text += "  ·  %d%% tariff on sales" % roundi(general * 100.0)
 	_grid.visible = live or not known.is_empty()
 	_hold.visible = live
 	_lot.visible = live
@@ -136,12 +142,19 @@ func _refresh() -> void:
 		row[0].add_theme_color_override("font_color", Color(1.0, 0.45, 0.4) if banned else Color(0.86, 0.9, 0.97))
 		row[1].text = Format.thousands(roundi(prices[c]))
 		row[2].text = "%+d%%" % roundi((ratio - 1.0) * 100.0)
+		# Live: an arrow for the move since last week.
+		if live and m.history.size() >= 2:
+			var before: float = m.history[m.history.size() - 2][c]
+			if prices[c] > before * 1.005:
+				row[2].text += " ▲"
+			elif prices[c] < before * 0.995:
+				row[2].text += " ▼"
 		row[2].add_theme_color_override("font_color", GREEN if ratio < 0.97 else (AMBER if ratio > 1.03 else MUTED))
 		row[3].text = Format.thousands(roundi(m.stock[c])) if live else "—"
 		if banned:
 			row[4].text = "banned"
 			row[4].add_theme_color_override("font_color", Color(1.0, 0.45, 0.4))
-		elif duty > 0.0:
+		elif absf(duty - general) > 0.001:  # the general rate is in the status line
 			row[4].text = "duty %d%%" % roundi(duty * 100.0)
 			row[4].add_theme_color_override("font_color", AMBER)
 		elif m.supply_rate[c] > m.demand_rate[c]:
@@ -203,6 +216,12 @@ func _button(text: String, action: Callable) -> Button:
 	b.text = text
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_font_size_override("font_size", 13)
+	# Compact: a row per good must fit on screen.
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var sb: StyleBox = get_theme_stylebox(state, "Button").duplicate()
+		sb.content_margin_top = 1
+		sb.content_margin_bottom = 1
+		b.add_theme_stylebox_override(state, sb)
 	b.pressed.connect(action)
 	return b
 

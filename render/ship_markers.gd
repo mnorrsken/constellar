@@ -76,7 +76,9 @@ func _process(_delta: float) -> void:
 		var pos: Vector3
 		var heading: Vector3
 		if s.status == Ship.Status.TRAVELING:
-			var at: Array = world.fleet.route_point(s, world.fleet.speed(s) * frac)
+			# A broken-down ship sits still until it is repaired.
+			var ahead := 0.0 if s.broken_until > world.day else world.fleet.speed(s) * frac
+			var at: Array = world.fleet.route_point(s, ahead)
 			pos = GalaxyCoords.to_world(at[0])
 			heading = GalaxyCoords.to_world(at[1])
 		else:

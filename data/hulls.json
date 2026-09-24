@@ -70,5 +70,29 @@
 		"year_from": 3412, "year_to": 3470, "tech": 7,
 		"allowed": ["*"],
 		"default_modules": ["container", "container", "container", "container", "bulk", "bulk"]
+	},
+	{
+		"id": "courier_ii", "name": "Swift II courier", "class": "Courier",
+		"slots": 2, "slot_tonnes": 80, "speed": 0.6, "jump_range": 13.0, "fuel_per_ly": 2,
+		"price": 240000, "crew_cost": 3000, "maintenance": 1800, "reliability": 0.98,
+		"year_from": 3418, "year_to": 3480, "tech": 6,
+		"allowed": ["container", "cold", "secure", "mail", "cabins", "suites", "drive_tune", "jump_extender", "armour", "auto_trader"],
+		"default_modules": ["container", "mail"]
+	},
+	{
+		"id": "starliner_ii", "name": "Starliner II", "class": "Liner",
+		"slots": 7, "slot_tonnes": 320, "speed": 0.4, "jump_range": 13.0, "fuel_per_ly": 9,
+		"price": 3100000, "crew_cost": 14000, "maintenance": 7000, "reliability": 0.97,
+		"year_from": 3421, "year_to": 3480, "tech": 8,
+		"allowed": ["cabins", "suites", "mail", "cold", "container", "armour", "drive_tune", "jump_extender", "auto_trader"],
+		"default_modules": ["cabins", "cabins", "cabins", "suites", "suites", "suites", "mail"]
+	},
+	{
+		"id": "leviathan_ii", "name": "Leviathan II heavy freighter", "class": "Heavy freighter",
+		"slots": 9, "slot_tonnes": 650, "speed": 0.24, "jump_range": 12.0, "fuel_per_ly": 16,
+		"price": 3600000, "crew_cost": 12000, "maintenance": 9500, "reliability": 0.96,
+		"year_from": 3426, "year_to": 3490, "tech": 8,
+		"allowed": ["*"],
+		"default_modules": ["container", "container", "container", "container", "container", "bulk", "bulk", "bulk", "bulk"]
 	}
 ]

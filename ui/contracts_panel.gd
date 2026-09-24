@@ -64,6 +64,7 @@ func open(system_index: int, selected_ship: int) -> void:
 	system = system_index
 	ship_id = selected_ship
 	visible = true
+	Motion.pop_in(self)
 	_refresh()
 
 func close_panel() -> void:
