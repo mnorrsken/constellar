@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- A faded Milky Way backdrop from ESO's all-sky photo, placed where it
+  really is in the sky (the band on the galactic plane, the bright centre
+  toward Sagittarius), replacing the dim procedural band.
 - The fleet panel is a fixed-size ship picker, so big fleets stay tidy:
   "Ships (n)" opens a scrollable list (⚠ marks ships that need a look),
   ◀ ▶ step through the fleet, "All" opens the fleet screen.

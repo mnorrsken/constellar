@@ -571,8 +571,13 @@ range. No scene tree dependency, so it's tested for every system in
 `data/stars.json`.
 
 `render/shaders/` holds the star, lane, grid, ring and sky shaders; `sky`
-draws faint background stars and a Milky Way band along the galactic
-plane, bulging toward +X (galactic centre).
+draws faint background stars and the Milky Way from ESO's all-sky photo
+(`assets/sky/milky_way.jpg`, 4096×2048 equirectangular in galactic
+coordinates, imported VRAM-compressed with mipmaps). Each view direction
+is turned into galactic longitude/latitude, so the band lies on the grid
+plane with the bulge toward +X (galactic centre), as seen from Sol. It is
+faded: a blurred mip level mixed with some of the sharp photo, a black
+point, less saturation, a blue tint and low strength (all uniforms).
 
 `GalaxyMap.set_known(bytes)` applies fog of war: every star still glows,
 but lanes (both ends charted), drop lines and name labels are only built

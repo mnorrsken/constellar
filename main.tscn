@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://main.gd" id="1_main"]
 [ext_resource type="Script" path="res://render/galaxy_map.gd" id="2_map"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://ui/debug_overlay.gd" id="5_debug"]
 [ext_resource type="Script" path="res://ui/hud.gd" id="6_hud"]
 [ext_resource type="Shader" path="res://render/shaders/sky.gdshader" id="7_sky"]
+[ext_resource type="Texture2D" path="res://assets/sky/milky_way.jpg" id="27_milky_way"]
 [ext_resource type="Script" path="res://ui/system_panel.gd" id="8_panel"]
 [ext_resource type="Script" path="res://ui/system_view.gd" id="9_view"]
 [ext_resource type="Script" path="res://ui/clock_bar.gd" id="10_clock"]
@@ -29,6 +30,7 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("7_sky")
+shader_parameter/milky_way = ExtResource("27_milky_way")
 
 [sub_resource type="Sky" id="Sky_space"]
 sky_material = SubResource("ShaderMaterial_sky")

@@ -114,6 +114,10 @@ database](https://codeberg.org/astronexus/hyg) v4.4, licensed CC BY-SA 4.0.
 Known exoplanets (`data/known_planets.json`) are drawn loosely from the
 [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/).
 
+The Milky Way backdrop (`assets/sky/milky_way.jpg`) is [ESO/S.
+Brunier](https://www.eso.org/public/images/eso0932a/), licensed CC BY 4.0
+(scaled down).
+
 Fonts (`assets/fonts/`): Exo 2, Inter and JetBrains Mono, licensed SIL Open
 Font License 1.1.
 
