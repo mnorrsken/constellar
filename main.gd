@@ -24,7 +24,7 @@ const PICK_RADIUS_PX := 16.0
 @onready var sounds: UiSounds = $UiSounds
 
 ## Zoomed in this close (camera distance) on the selected star, its
-## government's music plays; farther out, the "space" theme.
+## world type's music plays; farther out, the "space" theme.
 const MUSIC_ZOOM := 22.0
 ## Sound levels K cycles through: everything, no music, silence.
 const SOUND_LEVELS := ["all sound on", "music off", "all sound off"]
@@ -147,7 +147,7 @@ func _on_double_clicked(screen_pos: Vector2) -> void:
 		open_system_view()
 
 ## The music for what the player looks at: the system view's system, or the
-## selected star when zoomed in on it; else deep space.
+## selected star when zoomed in on it (its world type's theme); else deep space.
 func _music_theme() -> String:
 	var i := -1
 	if system_view.visible and system_view.system:
@@ -158,7 +158,7 @@ func _music_theme() -> String:
 	if i < 0 or not Sim.player().is_known(i):
 		return MusicPlayer.DEFAULT
 	var st := Sim.galaxy.systems[i].settlement
-	return st.government if st else MusicPlayer.DEFAULT
+	return st.archetype if st else MusicPlayer.DEFAULT
 
 ## K: all sound, no music, silence.
 func cycle_sound() -> void:

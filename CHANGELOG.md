@@ -217,6 +217,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Music now follows a system's world type (archetype) instead of its
+  government: core, agricultural, mining, refinery, water, industrial,
+  frontier, research, military, robot and free_port each get a themed loop
+  (mode, instrumentation and, where fitting, ambience like wind, drips,
+  drills or birdsong), replacing the old per-government themes. Softer
+  sound overall: bells and other struck notes fade in and ring less
+  brightly, plucks are rounder, the mix is gently filtered, and themes
+  crossfade over 5 s instead of 2.5 s.
 - UI now renders at 1.25x scale (1536x864 logical UI on a 1920x1080 window),
   with a larger default font and star name labels. System view body labels
   are placed by measured text width (settlement first, others below if

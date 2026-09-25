@@ -782,25 +782,31 @@ system"; market, system view and shipyard stay closed. F2 calls
 `tools/make_audio.py` (`make audio`; plain Python, no libraries, deterministic)
 synthesizes music and UI sounds into `assets/audio/`, gitignored — `make
 audio`/`run`/`editor`/`import` depend on `assets/audio/music/space.wav`,
-which the Makefile rebuilds whenever the script changes. Each government
-gets a music loop (mode, tempo, chord progression and layers — pad, drone,
-bass, arpeggio, bells, melody, drums, scatter — through a Schroeder reverb,
-loudness-matched, 22.05 kHz mono, 27-46 s; the reverb tail is folded back
-onto the start and a WAV `smpl` chunk marks the loop, which Godot's importer
-detects and imports with QOA compression): concordance (stately Lydian,
-bells), democracy (Ionian, harp-like arpeggio, light beat), corporate
-(Dorian sequencer bass), theocracy (Phrygian choir and drone, tolling
-bells), junta (Aeolian marching drums, ostinato), feudal (Dorian lute over a
-drone, frame drum), custodians (whole-tone glassy sixteenths, ticking),
-anarchy (Locrian, sour detuned pad, irregular hits), zealots (Hijaz, low
-choir, toms), plus a `space` theme (slow Lydian pads) for the open map and
-empty systems. UI sounds (`assets/audio/ui/*.wav`, 44.1 kHz: click, select,
+which the Makefile rebuilds whenever the script changes. Each world type
+(archetype) gets a music loop (mode, tempo, chord progression and layers —
+pad, drone, bass, arpeggio, bells, melody, drums, scatter, plus struck-metal
+or steam hits, filtered-noise wind/drill/rumble beds, water-drop and
+birdsong chirps — through a gentle 5 kHz low-pass and a Schroeder reverb,
+loudness-matched, 22.05 kHz mono, 27-48 s; the reverb tail is folded back onto the start and a WAV
+`smpl` chunk marks the loop, which Godot's importer detects and imports
+with QOA compression): core (stately Lydian organ, bells), agricultural
+(Ionian bowed strings, pizzicato, a violin tune, birdsong), mining (Aeolian
+drone and hummed choir, drill rumble, heavy toms, picks ringing, rockfalls),
+refinery (Mixolydian, gas-giant wind, airy choir, slow pump double-thump,
+far bells), water (Dorian glass pad, water drops, thin wind, high bells),
+industrial (Phrygian four-to-the-floor, grinding sequencer bass, anvil
+clangs, a steam hiss every other bar), frontier (Mixolydian strummed
+guitar, harmonica, loping beat), research (Lydian sine pad, random glass
+blips, a bell tune), military (marching drums, ostinato), robot (whole-tone
+glassy sixteenths, ticking), free_port (Hijaz marimba, oud-like lute, hand
+drums), plus a `space` theme (slow Lydian pads) for the open map and empty
+systems. UI sounds (`assets/audio/ui/*.wav`, 44.1 kHz: click, select,
 open, close, confirm, error, chime, coin, loss, hail, alert, pause, resume)
 are shorter synthesized cues. `default_bus_layout.tres` adds `Music`
 (-4 dB) and `UI` (-8 dB) buses.
 
 `audio/music_player.gd` (`MusicPlayer`, node "Music" in `main.tscn`) has
-`play_theme(id)`, crossfading 2.5 s between two players; an unknown or
+`play_theme(id)`, crossfading 5 s between two players; an unknown or
 missing theme falls back to "space"; skipped on the headless Dummy audio
 driver, which never releases a playing stream. `audio/ui_sounds.gd`
 (`UiSounds`, node "UiSounds") plays a click on every `BaseButton` (found via
@@ -814,7 +820,7 @@ gained `refused(text)` (emitted by `Sim._run` on a refused command),
 
 `main.gd` picks the music: the system view's system, or a zoomed-in
 (camera rig distance ≤ 22, focused on it) and charted selected star, plays
-its government's theme; otherwise "space". Selecting a star plays "select";
+its world type's theme; otherwise "space". Selecting a star plays "select";
 modal panels play open/close. K cycles music/sound/off (mutes the `Music`/
 `UI` buses) with a notice; the HUD hint shows "K sound".
 

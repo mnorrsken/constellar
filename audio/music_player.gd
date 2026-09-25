@@ -1,13 +1,13 @@
 class_name MusicPlayer
 extends Node
-## Background music: a looping theme per government (and "space" for empty
+## Background music: a looping theme per world type (and "space" for empty
 ## systems and the open map), from assets/audio/music/<id>.wav (made by
 ## tools/make_audio.py). play_theme() crossfades to another theme. Without
 ## the generated files the game simply stays quiet.
 
 const DIR := "res://assets/audio/music/"
 const DEFAULT := "space"
-const FADE_SECONDS := 2.5
+const FADE_SECONDS := 5.0
 const SILENT_DB := -50.0
 
 ## Theme playing now ("" = none).

@@ -3,11 +3,12 @@
 
     python3 tools/make_audio.py [--only NAME ...]      (or: make audio)
 
-Music: one seamless loop per government (the file name is the government id
-in data/governments.json) plus "space" for empty systems and the open map.
+Music: one seamless loop per world type (the file name is the archetype id
+in data/archetypes.json) plus "space" for empty systems and the open map.
 Each theme is a mode, a tempo, a chord progression and a set of layers
-(pads, drones, plucked strings, bells, drums, a melody), mixed through a
-small reverb. The tail that rings past the loop end is folded back onto the
+(pads, bowed strings, drones, plucked strings, bells, drums, a melody, and
+sounds of the place: struck metal and steam, wind, drills, water drops,
+birds), mixed through a small reverb. The tail that rings past the loop end is folded back onto the
 start, and the WAV carries a loop point, so Godot loops it without a seam.
 
 UI: short synthesized blips and chimes (a little starship-console, not too
@@ -69,6 +70,10 @@ TABLES = {
     "choir": wavetable([(1, 1.0), (2, 0.6), (3, 0.8), (4, 1.0), (5, 0.7), (6, 0.4), (7, 0.3),
                         (8, 0.2), (9, 0.25), (10, 0.15), (11, 0.1), (12, 0.08)]),
     "glass": wavetable([(1, 1.0), (3, 0.35), (5, 0.12), (7, 0.05)]),
+    # Bowed strings, played softly: harmonics falling a bit faster than a
+    # saw's, the body's resonances a little stronger (ten harmonics, so a
+    # violin's high notes stay under Nyquist).
+    "strings": wavetable([(n, (1.4 if n in (3, 4, 5) else 1.0) / n ** 1.3) for n in range(1, 11)]),
 }
 
 
@@ -112,8 +117,8 @@ def pluck(buf, sr, start, freq, amp, dur=2.5, damping=0.996, rng=None):
     rng = rng or random.Random(1)
     period = max(2, int(sr / freq))
     ring = [rng.uniform(-1.0, 1.0) for _ in range(period)]
-    # Soften the attack a little.
-    for _ in range(2):
+    # Soften the attack: each pass takes off more of the bright pick noise.
+    for _ in range(4):
         ring = [(ring[k] + ring[k - 1]) * 0.5 for k in range(period)]
     i0 = int(start * sr)
     n = int(dur * sr)
@@ -130,10 +135,12 @@ def pluck(buf, sr, start, freq, amp, dur=2.5, damping=0.996, rng=None):
         idx = idx + 1 if idx + 1 < period else 0
 
 
-def bell(buf, sr, start, freq, amp, dur=3.0, ratio=3.5, index=2.5):
-    """FM bell: bright at the strike, mellowing as it rings."""
+def bell(buf, sr, start, freq, amp, dur=3.0, ratio=3.5, index=2.5, attack=0.0):
+    """FM bell: bright at the strike, mellowing as it rings. An `attack` (s)
+    fades the strike in, for a mallet rather than a hammer."""
     i0 = int(start * sr)
     n = int(dur * sr)
+    ramp = attack * sr
     w = 2.0 * math.pi * freq / sr
     wm = w * ratio
     size = len(buf)
@@ -142,7 +149,8 @@ def bell(buf, sr, start, freq, amp, dur=3.0, ratio=3.5, index=2.5):
         if j >= size:
             break
         env = math.exp(-3.0 * i / (dur * sr))
-        buf[j] += amp * env * math.sin(w * i + index * env * math.sin(wm * i))
+        fade = min(1.0, i / ramp) if ramp else 1.0
+        buf[j] += amp * fade * env * math.sin(w * i + index * env * math.sin(wm * i))
 
 
 def kick(buf, sr, start, amp, low=45.0, high=110.0, dur=0.45):
@@ -183,6 +191,21 @@ def noise_hit(buf, sr, start, amp, dur=0.15, bright=True, rng=None, body=0.0):
         env = math.exp(-t * 5.0 / dur)
         s = y + (body * math.sin(2.0 * math.pi * 180.0 * t) if body else 0.0)
         buf[j] += amp * env * s
+
+
+def chirp(buf, sr, start, f0, f1, dur, amp):
+    """A sine gliding f0 -> f1 that swells and fades (birdsong, water drops)."""
+    i0 = int(start * sr)
+    n = int(dur * sr)
+    ph = 0.0
+    size = len(buf)
+    for i in range(n):
+        j = i0 + i
+        if j >= size:
+            break
+        x = i / n
+        ph += 2.0 * math.pi * (f0 + (f1 - f0) * x) / sr
+        buf[j] += amp * math.sin(math.pi * x) ** 2 * math.sin(ph)
 
 
 def lowpass(buf, sr, cutoff):
@@ -294,9 +317,10 @@ def layer_pad(song, buf, amp=0.18, table="soft_saw", centre=62, detune=0.004, at
     for start, dur, notes in song.chords:
         for n in notes:
             f = midi_hz(near(n, centre))
-            for d in (-detune, 0.0, detune):
+            # Each voice wobbles at its own rate, like players in a section.
+            for k, d in enumerate((-detune, 0.0, detune)):
                 tone(buf, SR, start, dur, f * (1.0 + d), table, amp / 3.0, attack=attack, decay=0.5,
-                     sustain=0.8, release=release, vibrato=vibrato, vib_rate=4.5,
+                     sustain=0.8, release=release, vibrato=vibrato, vib_rate=4.5 + 0.35 * k,
                      phase=song.rng.random())
 
 
@@ -340,27 +364,32 @@ def layer_arp(song, buf, amp=0.2, step=0.5, kind="pluck", centre=67, shape="updo
         f = midi_hz(n)
         if kind == "pluck":
             pluck(buf, SR, t, f, amp, dur=1.6, rng=song.rng)
+        elif kind == "pizz":
+            pluck(buf, SR, t, f, amp, dur=0.7, damping=0.985, rng=song.rng)
         elif kind == "bell":
-            bell(buf, SR, t, f, amp, dur=1.8, ratio=3.5, index=1.8)
+            bell(buf, SR, t, f, amp, dur=1.8, ratio=3.5, index=1.0, attack=0.02)
+        elif kind == "marimba":
+            bell(buf, SR, t, f, amp, dur=0.6, ratio=4.0, index=0.5, attack=0.008)
         else:
-            tone(buf, SR, t, song.beat * step * 0.7, f, table, amp, attack=0.004, decay=0.08,
+            tone(buf, SR, t, song.beat * step * 0.7, f, table, amp, attack=0.02, decay=0.08,
                  sustain=0.3, release=0.12)
         t += step * song.beat
         k += 1
 
 
-def layer_bells(song, buf, amp=0.15, every=2.0, chance=1.0, octave=1, ratio=3.5, dur=4.0):
+def layer_bells(song, buf, amp=0.15, every=2.0, chance=1.0, octave=1, ratio=3.5, dur=4.0, index=1.2):
     """A bell on chord tones every few beats (some skipped)."""
     t = 0.0
     while t < song.length - 1e-6:
         if song.rng.random() < chance:
             n = song.rng.choice(song.chord_at(t)) + 12 * octave
-            bell(buf, SR, t, midi_hz(near(n, 72 + 12 * (octave - 1))), amp, dur=dur, ratio=ratio)
+            bell(buf, SR, t, midi_hz(near(n, 72 + 12 * (octave - 1))), amp, dur=dur, ratio=ratio, index=index,
+                 attack=0.03)
         t += every * song.beat
 
 
 def layer_melody(song, buf, amp=0.18, kind="pluck", rhythm=(1, 1, 0.5, 0.5, 1), centre=69, rest=0.2,
-                 table="glass", second_half_only=True):
+                 table="glass", second_half_only=True, attack=0.03, vibrato=0.004):
     """A seeded melody: a four-bar phrase, played again with its end changed."""
     phrase = []
     t = 0.0
@@ -387,10 +416,10 @@ def layer_melody(song, buf, amp=0.18, kind="pluck", rhythm=(1, 1, 0.5, 0.5, 1), 
             if kind == "pluck":
                 pluck(buf, SR, base + t, f, amp, dur=2.0, rng=song.rng)
             elif kind == "bell":
-                bell(buf, SR, base + t, f, amp, dur=2.5, ratio=2.0, index=1.2)
+                bell(buf, SR, base + t, f, amp, dur=2.5, ratio=2.0, index=0.8, attack=0.03)
             else:
-                tone(buf, SR, base + t, d * song.beat * 0.9, f, table, amp, attack=0.03, decay=0.2,
-                     sustain=0.7, release=0.3, vibrato=0.004, vib_rate=5.5)
+                tone(buf, SR, base + t, d * song.beat * 0.9, f, table, amp, attack=attack, decay=0.2,
+                     sustain=0.7, release=0.3, vibrato=vibrato, vib_rate=5.5)
 
 
 def layer_drums(song, buf, kicks=(0, 2), snares=(), hats=(), amp=0.5, snare_amp=0.25, hat_amp=0.06,
@@ -423,84 +452,179 @@ def layer_scatter(song, buf, amp=0.2, count=10):
             kick(buf, SR, t, amp * 1.5, low=38.0, high=80.0, dur=0.7)
 
 
+def layer_hits(song, buf, pattern=(), every=1, amp=0.1, kind="clang", octave=1, ratio=1.41, index=3.0,
+               dur=0.5):
+    """Hits on beats of every `every`-th bar: struck metal on the chord root
+    (an inharmonic FM ratio), or a burst of steam."""
+    for bar in range(0, song.bars, every):
+        for b in pattern:
+            t = bar * song.bar + b * song.beat
+            if kind == "hiss":
+                noise_hit(buf, SR, t, amp, dur=dur, bright=True, rng=song.rng)
+            else:
+                f = midi_hz(near(song.chord_at(t)[0], 60 + 12 * octave))
+                bell(buf, SR, t, f, amp, dur=dur, ratio=ratio, index=index, attack=0.006)
+
+
+def layer_noise(song, buf, amp=0.1, lo=200.0, hi=1200.0, bars=4):
+    """A bed of filtered noise (wind, a drill's rumble) whose cutoff swells
+    lo -> hi -> lo every `bars` bars; amp is its RMS. It repeats exactly over
+    the loop, so it leaves no tail to fold back."""
+    n = int(song.length * SR)
+    cycles = max(1, round(song.bars / bars))
+    noise = [song.rng.uniform(-1.0, 1.0) for _ in range(n)]
+    out = [0.0] * n
+    y1 = y2 = 0.0
+    # Two passes: the first only settles the filter, so the end meets the start.
+    for keep in (False, True):
+        for i in range(n):
+            s = 0.5 - 0.5 * math.cos(2.0 * math.pi * cycles * i / n)
+            a = 1.0 - math.exp(-2.0 * math.pi * lo * (hi / lo) ** s / SR)
+            y1 += a * (noise[i] - y1)
+            y2 += a * (y1 - y2)
+            if keep:
+                out[i] = (0.4 + 0.6 * s) * y2
+    rms = math.sqrt(sum(x * x for x in out) / n) or 1.0
+    for i in range(n):
+        buf[i] += out[i] * amp / rms
+
+
+def layer_drops(song, buf, amp=0.1, every=0.5, chance=0.35, centre=81):
+    """Water drops: quick rising blips on chord tones, now and then."""
+    t = 0.0
+    while t < song.length - 1e-6:
+        if song.rng.random() < chance:
+            f = midi_hz(near(song.rng.choice(song.chord_at(t)), centre))
+            chirp(buf, SR, t, f, f * 1.6, 0.07, amp)
+        t += every * song.beat
+
+
+def layer_birds(song, buf, amp=0.03, count=6):
+    """Birdsong: a few short phrases of high chirps at random moments."""
+    for _ in range(count):
+        t = song.rng.uniform(0.0, song.length - 2.0)
+        f = song.rng.uniform(2600.0, 4200.0)
+        for _ in range(song.rng.randint(2, 5)):
+            d = song.rng.uniform(0.05, 0.12)
+            f1 = f * song.rng.choice((0.8, 1.15, 1.3))
+            chirp(buf, SR, t, f, f1, d, amp)
+            t += d + song.rng.uniform(0.03, 0.12)
+            f = f1 if 2000.0 < f1 < 5000.0 else f
+
+
 LAYERS = {
     "pad": layer_pad, "drone": layer_drone, "bass": layer_bass, "arp": layer_arp, "bells": layer_bells,
-    "melody": layer_melody, "drums": layer_drums, "scatter": layer_scatter,
+    "melody": layer_melody, "drums": layer_drums, "scatter": layer_scatter, "hits": layer_hits,
+    "noise": layer_noise, "drops": layer_drops, "birds": layer_birds,
 }
 
-## Themes: government id (or "space") -> the music. Layers are
+## Themes: world type (archetype id, or "space") -> the music. Layers are
 ## (name, cutoff Hz or 0, {arguments}).
 THEMES = {
     # The open map and empty systems: slow, wide, no beat.
     "space": {"tempo": 50, "root": 43, "scale": "lydian", "prog": [0, 1, 0, 4], "reverb": 0.55, "layers": [
         ("pad", 1600, {"amp": 0.2, "table": "soft_saw", "centre": 58, "attack": 3.0, "release": 4.0}),
         ("drone", 900, {"amp": 0.16, "table": "sine"}),
-        ("bells", 0, {"amp": 0.07, "every": 3, "chance": 0.45, "octave": 1, "dur": 5.0}),
+        ("bells", 3500, {"amp": 0.07, "every": 3, "chance": 0.45, "octave": 1, "dur": 5.0}),
     ]},
-    # Old empire: stately and bright (Lydian), bells over a warm pad.
-    "concordance": {"tempo": 72, "root": 50, "scale": "lydian", "prog": [0, 4, 1, 0], "reverb": 0.45, "layers": [
+    # Old capital worlds: stately and bright (Lydian), bells over an organ.
+    "core": {"tempo": 72, "root": 50, "scale": "lydian", "prog": [0, 4, 1, 0], "reverb": 0.45, "layers": [
         ("pad", 2200, {"amp": 0.18, "table": "organ", "centre": 62}),
         ("bass", 700, {"amp": 0.26, "pattern": (0,), "pluck_like": False, "table": "sine"}),
-        ("arp", 0, {"amp": 0.1, "step": 1.0, "kind": "bell", "centre": 74}),
+        ("arp", 3500, {"amp": 0.1, "step": 1.0, "kind": "bell", "centre": 74}),
         ("melody", 3000, {"amp": 0.11, "kind": "tone", "table": "glass", "rhythm": (2, 1, 1), "centre": 74}),
     ]},
-    # Hopeful and open (Ionian), a harp-like arpeggio and a light beat.
-    "democracy": {"tempo": 92, "root": 53, "scale": "ionian", "prog": [0, 5, 3, 4], "reverb": 0.35, "layers": [
-        ("pad", 2000, {"amp": 0.14, "table": "soft_saw", "centre": 64}),
+    # Farms: soft violins and a cello (Ionian), pizzicato, a violin tune, birds.
+    "agricultural": {"tempo": 72, "root": 50, "scale": "ionian", "prog": [0, 3, 5, 4], "reverb": 0.45,
+                     "layers": [
+        ("pad", 1800, {"amp": 0.2, "table": "strings", "centre": 62, "attack": 2.5, "release": 3.0,
+                       "detune": 0.003, "vibrato": 0.004}),
+        ("bass", 900, {"amp": 0.13, "pattern": (0, 2), "pluck_like": False, "table": "strings"}),
+        ("arp", 3500, {"amp": 0.2, "step": 1.0, "kind": "pizz", "centre": 67, "shape": "up"}),
+        ("melody", 2600, {"amp": 0.16, "kind": "tone", "table": "strings", "rhythm": (2, 1, 1, 3, 1),
+                          "centre": 74, "rest": 0.1, "attack": 0.25, "vibrato": 0.006}),
+        ("birds", 0, {"amp": 0.06, "count": 7}),
+    ]},
+    # Down the shafts: a low drone and hummed choir (Aeolian), drill rumble,
+    # heavy toms, picks ringing on rock, the odd rockfall.
+    "mining": {"tempo": 66, "root": 38, "scale": "aeolian", "prog": [0, 5, 0, 6], "reverb": 0.5, "layers": [
+        ("drone", 500, {"amp": 0.2, "table": "soft_saw"}),
+        ("pad", 1000, {"amp": 0.12, "table": "choir", "centre": 53, "attack": 2.0}),
+        ("noise", 0, {"amp": 0.05, "lo": 50.0, "hi": 260.0, "bars": 4}),
+        ("drums", 0, {"kicks": (0, 2.5), "amp": 0.45, "toms": True}),
+        ("hits", 2500, {"pattern": (1.0, 1.5), "every": 2, "amp": 0.09, "octave": 2, "ratio": 2.76, "index": 2.0,
+                     "dur": 0.35}),
+        ("scatter", 1200, {"amp": 0.25, "count": 6}),
+    ]},
+    # Skimming a gas giant: howling wind, an airy choir (Mixolydian), a slow
+    # double-thump of pumps, a far bell.
+    "refinery": {"tempo": 60, "root": 45, "scale": "mixolydian", "prog": [0, 6, 3, 0], "reverb": 0.5,
+                 "layers": [
+        ("noise", 0, {"amp": 0.045, "lo": 300.0, "hi": 2400.0, "bars": 4}),
+        ("pad", 1800, {"amp": 0.16, "table": "choir", "centre": 60, "attack": 3.0, "vibrato": 0.002}),
+        ("drone", 700, {"amp": 0.14, "table": "sine"}),
+        ("drums", 0, {"kicks": (0, 0.5), "amp": 0.25}),
+        ("bells", 3500, {"amp": 0.06, "every": 4, "chance": 0.6, "octave": 1, "ratio": 2.0, "dur": 4.0}),
+    ]},
+    # Ice fields: cold glass (Dorian), dripping water, a thin wind, high bells.
+    "water": {"tempo": 80, "root": 50, "scale": "dorian", "prog": [0, 3, 0, 4], "reverb": 0.55, "layers": [
+        ("pad", 2600, {"amp": 0.15, "table": "glass", "centre": 64, "attack": 2.0}),
+        ("bass", 700, {"amp": 0.2, "pattern": (0,), "pluck_like": False, "table": "sine"}),
+        ("drops", 3500, {"amp": 0.15, "every": 0.5, "chance": 0.35, "centre": 81}),
+        ("noise", 0, {"amp": 0.02, "lo": 400.0, "hi": 1500.0, "bars": 8}),
+        ("bells", 3500, {"amp": 0.07, "every": 3, "chance": 0.6, "octave": 2, "ratio": 2.0, "dur": 3.0}),
+    ]},
+    # Factories: a pounding four-to-the-floor, a grinding sequencer bass
+    # (Phrygian), anvils ringing, a steam valve every other bar.
+    "industrial": {"tempo": 100, "root": 40, "scale": "phrygian", "prog": [0, 1, 0, 6], "reverb": 0.3,
+                   "layers": [
+        ("pad", 1200, {"amp": 0.12, "table": "bright_saw", "centre": 55, "attack": 1.0, "detune": 0.008}),
+        ("bass", 600, {"amp": 0.26, "pattern": (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5), "table": "square"}),
+        ("drums", 0, {"kicks": (0, 1, 2, 3), "snares": (1, 3), "hats": (0.5, 1.5, 2.5, 3.5), "amp": 0.34,
+                      "snare_amp": 0.2, "hat_amp": 0.04}),
+        ("hits", 2500, {"pattern": (0.75, 2.25, 3.5), "amp": 0.1, "octave": 1, "ratio": 1.41, "index": 3.0,
+                     "dur": 0.7}),
+        ("hits", 3500, {"kind": "hiss", "pattern": (3.0,), "every": 2, "amp": 0.12, "dur": 0.9}),
+    ]},
+    # The rim: a strummed guitar and a harmonica (Mixolydian), a loping beat.
+    "frontier": {"tempo": 100, "root": 43, "scale": "mixolydian", "prog": [0, 6, 3, 0], "reverb": 0.3,
+                 "layers": [
+        ("arp", 3500, {"amp": 0.14, "step": 0.5, "kind": "pluck", "centre": 60, "shape": "up"}),
         ("bass", 800, {"amp": 0.24, "pattern": (0, 2), "table": "soft_saw"}),
-        ("arp", 0, {"amp": 0.16, "step": 0.5, "kind": "pluck", "centre": 64}),
-        ("drums", 0, {"kicks": (0, 2), "hats": (1, 3), "amp": 0.3, "hat_amp": 0.035}),
-        ("melody", 0, {"amp": 0.14, "kind": "pluck", "centre": 72}),
+        ("drums", 0, {"kicks": (0, 2), "snares": (1, 3), "amp": 0.22, "snare_amp": 0.1, "toms": True}),
+        ("melody", 2000, {"amp": 0.09, "kind": "tone", "table": "square", "rhythm": (1, 0.5, 0.5, 2),
+                          "centre": 69, "attack": 0.05, "vibrato": 0.008}),
     ]},
-    # Businesslike: a pulsing sequencer bass (Dorian), clean and cool.
-    "corporate": {"tempo": 104, "root": 45, "scale": "dorian", "prog": [0, 3, 0, 6], "reverb": 0.25, "layers": [
-        ("pad", 1500, {"amp": 0.12, "table": "glass", "centre": 64, "attack": 0.8}),
-        ("bass", 900, {"amp": 0.26, "pattern": (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5), "table": "bright_saw"}),
-        ("drums", 0, {"kicks": (0, 2), "hats": (0.5, 1.5, 2.5, 3.5), "amp": 0.34, "hat_amp": 0.04}),
-        ("arp", 2600, {"amp": 0.08, "step": 0.25, "kind": "tone", "table": "square", "centre": 72,
-                       "shape": "up"}),
+    # Laboratories: curious and sparkling (Lydian), glass blips, bell tunes.
+    "research": {"tempo": 84, "root": 52, "scale": "lydian", "prog": [0, 1, 0, 5], "reverb": 0.45, "layers": [
+        ("pad", 2000, {"amp": 0.14, "table": "sine", "centre": 64, "attack": 2.5}),
+        ("arp", 3200, {"amp": 0.09, "step": 0.5, "kind": "tone", "table": "glass", "centre": 76,
+                       "shape": "random"}),
+        ("bells", 3500, {"amp": 0.07, "every": 2, "chance": 0.4, "octave": 2, "ratio": 3.5, "dur": 2.5}),
+        ("melody", 3500, {"amp": 0.09, "kind": "bell", "rhythm": (1.5, 0.5, 2), "centre": 72}),
     ]},
-    # Solemn: a choir over a drone (Phrygian), slow tolling bells.
-    "theocracy": {"tempo": 60, "root": 48, "scale": "phrygian", "prog": [0, 1, 0, 6], "reverb": 0.6, "layers": [
-        ("pad", 2200, {"amp": 0.2, "table": "choir", "centre": 62, "attack": 2.0, "vibrato": 0.003}),
-        ("drone", 700, {"amp": 0.16, "table": "organ"}),
-        ("bells", 0, {"amp": 0.12, "every": 4, "chance": 1.0, "octave": 0, "ratio": 1.4, "dur": 5.0}),
-    ]},
-    # Martial: a marching drum, a low ostinato, brass-like chords (Aeolian).
-    "junta": {"tempo": 96, "root": 45, "scale": "aeolian", "prog": [0, 5, 6, 4], "reverb": 0.3, "layers": [
+    # Garrisons: a marching drum, a low ostinato, brass-like chords (Aeolian).
+    "military": {"tempo": 96, "root": 45, "scale": "aeolian", "prog": [0, 5, 6, 4], "reverb": 0.3, "layers": [
         ("pad", 1400, {"amp": 0.15, "table": "bright_saw", "centre": 57, "attack": 0.4}),
         ("bass", 700, {"amp": 0.28, "pattern": (0, 0.5, 1.5, 2, 2.5, 3.5), "table": "soft_saw"}),
         ("drums", 0, {"kicks": (0, 1, 2, 3), "snares": (1, 3), "amp": 0.3, "snare_amp": 0.2, "fill_every": 4}),
     ]},
-    # Old and rustic: a lute over a drone, a frame drum (Dorian).
-    "feudal": {"tempo": 84, "root": 50, "scale": "dorian", "prog": [0, 6, 0, 4], "reverb": 0.35, "layers": [
-        ("drone", 900, {"amp": 0.16, "table": "organ"}),
-        ("arp", 0, {"amp": 0.14, "step": 1.0, "kind": "pluck", "centre": 60, "shape": "up"}),
-        ("melody", 0, {"amp": 0.2, "kind": "pluck", "rhythm": (1, 0.5, 0.5, 1, 1), "centre": 67,
-                       "second_half_only": False, "rest": 0.1}),
-        ("drums", 0, {"kicks": (0,), "snares": (2.5,), "amp": 0.18, "snare_amp": 0.16, "toms": True}),
-    ]},
     # Machines: glassy sixteenths on a whole-tone scale, a ticking clock.
-    "custodians": {"tempo": 112, "root": 57, "scale": "whole", "prog": [0, 1, 0, 5], "reverb": 0.4, "layers": [
+    "robot": {"tempo": 112, "root": 57, "scale": "whole", "prog": [0, 1, 0, 5], "reverb": 0.4, "layers": [
         ("pad", 1800, {"amp": 0.12, "table": "sine", "centre": 64, "attack": 2.0}),
-        ("arp", 3500, {"amp": 0.1, "step": 0.25, "kind": "tone", "table": "glass", "centre": 76,
+        ("arp", 2600, {"amp": 0.1, "step": 0.25, "kind": "tone", "table": "glass", "centre": 76,
                        "shape": "random"}),
         ("drums", 0, {"kicks": (), "hats": (0, 0.75, 1.5, 2, 2.75, 3.5), "hat_amp": 0.05}),
-        ("bells", 0, {"amp": 0.06, "every": 2, "chance": 0.5, "octave": 1, "ratio": 2.0, "dur": 2.0}),
+        ("bells", 3500, {"amp": 0.06, "every": 2, "chance": 0.5, "octave": 1, "ratio": 2.0, "dur": 2.0}),
     ]},
-    # Lawless: a wide, sour pad, a gritty bass, hits at odd moments (Locrian).
-    "anarchy": {"tempo": 88, "root": 44, "scale": "locrian", "prog": [0, 1, 4, 0], "reverb": 0.35, "layers": [
-        ("pad", 1400, {"amp": 0.16, "table": "bright_saw", "centre": 58, "detune": 0.012, "attack": 1.0}),
-        ("bass", 500, {"amp": 0.3, "pattern": (0, 1.5, 2.75), "table": "square"}),
-        ("scatter", 1800, {"amp": 0.22, "count": 14}),
-    ]},
-    # Zeal: a low choir over a drone, heavy toms (Hijaz).
-    "zealots": {"tempo": 66, "root": 46, "scale": "hijaz", "prog": [0, 1, 0, 6], "reverb": 0.5, "layers": [
-        ("pad", 1600, {"amp": 0.2, "table": "choir", "centre": 55, "attack": 1.5, "vibrato": 0.004}),
-        ("drone", 600, {"amp": 0.18, "table": "organ"}),
-        ("drums", 0, {"kicks": (0, 2), "amp": 0.35, "toms": True}),
-        ("melody", 2500, {"amp": 0.1, "kind": "tone", "table": "choir", "rhythm": (1.5, 0.5, 2),
-                          "centre": 67}),
+    # A bazaar: marimba and an oud-like lute (Hijaz), hand drums.
+    "free_port": {"tempo": 108, "root": 50, "scale": "hijaz", "prog": [0, 6, 1, 0], "reverb": 0.3, "layers": [
+        ("arp", 3500, {"amp": 0.11, "step": 0.5, "kind": "marimba", "centre": 67}),
+        ("bass", 700, {"amp": 0.24, "pattern": (0, 1.5, 2, 3), "table": "soft_saw"}),
+        ("drums", 0, {"kicks": (0, 1.5, 2.5), "snares": (3,), "hats": (0.5, 1, 2, 3, 3.5), "amp": 0.3,
+                      "snare_amp": 0.14, "hat_amp": 0.04, "toms": True}),
+        ("melody", 3500, {"amp": 0.22, "kind": "pluck", "rhythm": (0.5, 0.5, 1, 0.5, 0.5, 1), "centre": 69,
+                       "second_half_only": False, "rest": 0.15}),
     ]},
 }
 
@@ -515,6 +639,8 @@ def render_theme(name, spec):
         if cutoff:
             lowpass(buf, SR, cutoff)
         mix_into(mix, buf)
+    # Round off the top end of everything: softer hats, strikes and edges.
+    lowpass(mix, SR, 5000.0)
     reverb(mix, SR, wet=spec.get("reverb", 0.3))
     dc_block(mix, SR)
     # Fold what rings past the end back onto the start: a seamless loop.
