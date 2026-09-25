@@ -8,7 +8,8 @@ extends PanelContainer
 ## (or drag between slots to swap), see the ship as refitted, the price and
 ## days, then Refit. The rack greys out modules this port doesn't make
 ## (tech level). Service and Sell at shipyards only. Opened from the system
-## card; Esc closes.
+## card; Esc closes. With many ships here, their list scrolls so the panel
+## stays on screen.
 
 signal closed
 
@@ -19,6 +20,8 @@ const CYAN := Color(0.35, 0.85, 1.0)
 const GREEN := Color(0.45, 0.85, 0.55)
 ## A hull this many years old or less is marked NEW.
 const NEW_YEARS := 2
+## Screen space kept free above and below the panel.
+const MARGIN := 24.0
 ## Module colours by kind on the slot diagram.
 const KIND_COLORS := {
 	"bulk": Color(0.75, 0.6, 0.4), "container": Color(0.35, 0.75, 0.95), "liquid": Color(0.5, 0.55, 1.0),
@@ -32,6 +35,7 @@ var _title := Label.new()
 var _cash := Label.new()
 var _hulls := VBoxContainer.new()
 var _refits := VBoxContainer.new()
+var _refit_scroll := ScrollContainer.new()
 ## The selected hull's card: model, numbers, standard fit, Buy.
 var _preview := ShipViewer.new()
 var _detail_name := Label.new()
@@ -107,6 +111,9 @@ func _ready() -> void:
 	_hulls.add_theme_constant_override("separation", 3)
 	_hulls.custom_minimum_size = Vector2(500, 0)
 	_refits.add_theme_constant_override("separation", 14)
+	_refits.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_refit_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_refit_scroll.add_child(_refits)
 	_new_ships.add_theme_constant_override("separation", 18)
 	_new_ships.add_child(_hulls)
 	_new_ships.add_child(VSeparator.new())
@@ -118,7 +125,7 @@ func _ready() -> void:
 	_no_yard.add_theme_color_override("font_color", MUTED)
 	_no_yard.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_no_yard.custom_minimum_size = Vector2(900, 0)
-	for c in [head, _new_title, _new_ships, _no_yard, HSeparator.new(), _section("Your ships here"), _refits]:
+	for c in [head, _new_title, _new_ships, _no_yard, HSeparator.new(), _section("Your ships here"), _refit_scroll]:
 		box.add_child(c)
 	add_child(box)
 	Events.company_changed.connect(func(_c): _refresh())
@@ -161,7 +168,16 @@ func _refresh() -> void:
 		_refits.add_child(_cell("None of your ships is docked here.", MUTED, 14))
 	for s in here:
 		_refits.add_child(_fitting(s))
-	(func(): reset_size()).call_deferred()
+	_fit_height.call_deferred()
+
+## Sizes the ships list so the whole panel fits the screen (longer lists
+## scroll), then re-centres the panel.
+func _fit_height() -> void:
+	var others := get_combined_minimum_size().y - _refit_scroll.custom_minimum_size.y
+	var room := get_viewport_rect().size.y - 2.0 * MARGIN - others
+	_refit_scroll.custom_minimum_size.y = maxf(minf(_refits.get_combined_minimum_size().y, room), Fit.LEAST)
+	reset_size()
+	position = ((get_viewport_rect().size - size) * 0.5).round()
 
 ## One ship's fitting view: header with service and sale, the slot
 ## diagram, the module rack, and the refit quote.

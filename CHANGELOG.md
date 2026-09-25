@@ -235,6 +235,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- The shipyard ran off the top and bottom of the screen with two or more
+  ships docked, hiding the title and the refit controls; the ships list
+  now scrolls and the panel stays on screen.
 - The clock bar could show several speed buttons pressed at once.
 - Profit (charts, ship tables, loss reasons) no longer counts buying or refitting
   ships as a loss; the cash ledger still shows it.

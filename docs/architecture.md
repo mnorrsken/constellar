@@ -715,8 +715,9 @@ jump/reliability/fuel/crew/maintenance, standard fit and Buy (or how much
 more cash is needed). Per owned ship docked there it has a
 drag-and-drop fitting view (`SlotBox`/`ModuleChip` inner classes: drag a
 module from the rack onto a slot, or drag between two slots to swap) with
-a fit summary, refit quote, Reset/Refit, Service and Sell; a dim layer sits
-behind it. `ui/toast.gd` (`Toast`) shows `Events.notice` messages under
+a fit summary, refit quote, Reset/Refit, Service and Sell, in a
+ScrollContainer sized so the whole panel fits the screen (24 px margin;
+the panel is re-centred after each refresh); a dim layer sits behind it. `ui/toast.gd` (`Toast`) shows `Events.notice` messages under
 the clock bar. `ClockBar` shows cash (loan in its tooltip). `SystemPanel`
 has a Shipyard button and, with a ship selected, the send line (jumps, ly,
 days, arrival date, or why not, plus the route's risk of a hit once it's
