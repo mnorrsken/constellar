@@ -36,6 +36,9 @@ this order:
 
 The viewport is 1920×1080 with `canvas_items` stretch mode and a 1.25x UI
 scale (`window/stretch/scale`), so logical UI space is 1536×864.
+`main.gd` maximizes the window at start when `main.tscn` is the running
+scene and the display isn't headless; test runs and capture scenes (which
+load `main.tscn` as a child) keep the 1600×900 window.
 
 ## Data
 

@@ -88,6 +88,10 @@ func _ready() -> void:
 		sig.connect(func(_x = null): _apply_price_map(map_mode.commodity))
 	Events.charted.connect(_on_charted)
 	Events.attention.connect(_on_attention)
+	# Play in a maximized window. Automated runs keep the window as it is:
+	# headless ones, and test/capture scenes that load this scene as a child.
+	if DisplayServer.get_name() != "headless" and get_tree().current_scene == self:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED)
 
 func _process(_delta: float) -> void:
 	music.play_theme(_music_theme())

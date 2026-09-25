@@ -228,6 +228,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   sound overall: bells and other struck notes fade in and ring less
   brightly, plucks are rounder, the mix is gently filtered, and themes
   crossfade over 5 s instead of 2.5 s.
+- The game starts in a maximized window (not in headless runs or capture
+  scenes).
 - Esc no longer switches to the space music: a star's theme keeps playing
   while the camera stays zoomed in on it, even with nothing selected.
 - UI now renders at 1.25x scale (1536x864 logical UI on a 1920x1080 window),
