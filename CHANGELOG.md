@@ -228,6 +228,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   sound overall: bells and other struck notes fade in and ring less
   brightly, plucks are rounder, the mix is gently filtered, and themes
   crossfade over 5 s instead of 2.5 s.
+- Esc no longer switches to the space music: a star's theme keeps playing
+  while the camera stays zoomed in on it, even with nothing selected.
 - UI now renders at 1.25x scale (1536x864 logical UI on a 1920x1080 window),
   with a larger default font and star name labels. System view body labels
   are placed by measured text width (settlement first, others below if

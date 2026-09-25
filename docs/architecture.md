@@ -825,8 +825,10 @@ gained `refused(text)` (emitted by `Sim._run` on a refused command),
 (`Sim._flush_events`, player commands only) for these to listen to.
 
 `main.gd` picks the music: the system view's system, or a zoomed-in
-(camera rig distance ≤ 22, focused on it) and charted selected star, plays
-its world type's theme; otherwise "space". Selecting a star plays "select";
+(camera rig distance ≤ 22, focused on it) and charted star, plays its
+world type's theme; otherwise "space". The star is the last one selected
+(`_music_star`), so Esc clearing the selection keeps the music until the
+camera zooms out or moves away. Selecting a star plays "select";
 modal panels play open/close. K cycles music/sound/off (mutes the `Music`/
 `UI` buses) with a notice; the HUD hint shows "K sound".
 

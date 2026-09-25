@@ -29,6 +29,9 @@ const MUSIC_ZOOM := 22.0
 ## Sound levels K cycles through: everything, no music, silence.
 const SOUND_LEVELS := ["all sound on", "music off", "all sound off"]
 var _sound_level := 0
+## The star last selected: its music keeps playing while the camera stays
+## zoomed in on it, also after Esc clears the selection.
+var _music_star := -1
 @onready var map_mode: MapModeBar = $UI/MapModeBar
 @onready var overlay_dim: ColorRect = $UI/OverlayDim
 @onready var floating: FloatingNumbers = $UI/FloatingNumbers
@@ -147,14 +150,17 @@ func _on_double_clicked(screen_pos: Vector2) -> void:
 		open_system_view()
 
 ## The music for what the player looks at: the system view's system, or the
-## selected star when zoomed in on it (its world type's theme); else deep space.
+## last selected star while zoomed in on it (its world type's theme); else
+## deep space.
 func _music_theme() -> String:
+	if map.selected >= 0:
+		_music_star = map.selected
 	var i := -1
 	if system_view.visible and system_view.system:
 		i = system_view.system.index
-	elif map.selected >= 0 and camera.rig.distance <= MUSIC_ZOOM \
-			and camera.rig.focus.distance_to(map.system_position(map.selected)) < 1.0:
-		i = map.selected
+	elif _music_star >= 0 and camera.rig.distance <= MUSIC_ZOOM \
+			and camera.rig.focus.distance_to(map.system_position(_music_star)) < 1.0:
+		i = _music_star
 	if i < 0 or not Sim.player().is_known(i):
 		return MusicPlayer.DEFAULT
 	var st := Sim.galaxy.systems[i].settlement
