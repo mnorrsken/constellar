@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- MIT license for the code and own assets, and THIRD-PARTY-NOTICES.md for
+  the parts under other licenses (Godot, HYG star data, the ESO Milky Way
+  image, the fonts).
+
 ## [0.1.0] - 2026-09-26
 
 ### Added
