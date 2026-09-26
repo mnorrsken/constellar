@@ -6,6 +6,10 @@ set -euo pipefail
 
 logs=$(mktemp -d)
 
+# A fresh checkout has no .godot cache, and its first import loads the UI
+# theme before the fonts are imported, logging errors a second pass doesn't.
+make import > "$logs/first-import.log" 2>&1 || true
+
 make import 2>&1 | tee "$logs/import.log"
 if grep -E "ERROR|SCRIPT|WARNING" "$logs/import.log"; then
   echo "::error::make import reported problems (above)"

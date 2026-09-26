@@ -65,6 +65,10 @@ jobs:
           sed -i 's/^config\/version=.*/config\/version="${{ steps.version.outputs.version }}"/' project.godot
           grep '^config/version=' project.godot
 
+      # First import of a fresh checkout logs font errors (see check.sh).
+      - name: Warm up the import cache
+        run: make import > /dev/null 2>&1 || true
+
       - name: Export
         run: |
           make export-windows 2>&1 | tee export.log
