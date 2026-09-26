@@ -926,3 +926,33 @@ and the news log, lane danger from governments and running events, armour
 halving risk, safest routing avoiding danger, raids and losses (cargo and
 freight charters lost, repairs, insurance payout, ship removed from the
 fleet on a loss), and the insurance premium.
+
+## Builds and releases
+
+`export_presets.cfg` has two presets: "Windows Desktop" (x86_64, the pack
+embedded in one `Constellar.exe`, project icon) and "macOS" (universal,
+zipped `.app`, ad-hoc signed, bundle id `com.mnorrsken.constellar`). The
+arm64 Mac build needs `rendering/textures/vram_compression/import_etc2_astc`
+on in `project.godot`. `make export-windows` / `make export-mac` write
+`build/windows/Constellar.exe` and `build/macos/Constellar.zip` (Godot's
+export templates for the exact engine version must be installed). Both
+take their version from `application/config/version`.
+
+`packaging/windows/constellar.wxs` (built by `build-msi.ps1` with WiX 6) is
+a per-user MSI: `%LocalAppData%\Programs\Constellar\Constellar.exe` plus a
+Start menu shortcut, no HKLM, a fixed UpgradeCode so a new version replaces
+the old one. `packaging/macos/build-dmg.sh` unzips the export, renames
+Godot's "Constellar- Merchant Empire.app" to `Constellar.app` (the ad-hoc
+signature survives), adds an `/Applications` link and makes a compressed
+DMG.
+
+`.github/workflows/ci.yml` runs `.github/scripts/check.sh` (import with the
+log grepped, tests, a 20-frame headless run) on pushes to main and PRs,
+with Godot installed by `.github/scripts/install-godot.sh`
+(`GODOT_VERSION` in the workflows). `release.yml` runs on `v*` tags, or by
+hand as a dry run that builds version 0.0.0 and publishes nothing: check →
+export on Linux (templates cached, `config/version` stamped from the tag) →
+Windows: MSI built, installed, run headless, uninstalled → macOS: DMG
+built, mounted, app run headless → a GitHub release with both installers,
+`checksums.txt`, and notes from the tag's `## [X.Y.Z]` CHANGELOG section
+plus install steps. Nothing is signed or notarized.

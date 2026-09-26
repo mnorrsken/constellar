@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Constellar's Windows installer.
+
+  A PER-USER install into %LocalAppData%\Programs\Constellar with a Start
+  menu shortcut, so installing needs no administrator rights. Nothing here
+  touches HKLM or any shared location.
+
+  UpgradeCode must never change across releases: it is what lets a new
+  version replace an old one instead of installing beside it.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+      Name="Constellar: Merchant Empire"
+      Manufacturer="Martin Norrsken"
+      Version="$(var.Version)"
+      UpgradeCode="7F35F66A-8616-4002-9EED-0885F11005E6"
+      Scope="perUser"
+      Compressed="yes"
+      InstallerVersion="500">
+
+    <SummaryInformation Description="Constellar: Merchant Empire, a space trade strategy game" />
+
+    <MajorUpgrade
+        AllowSameVersionUpgrades="yes"
+        DowngradeErrorMessage="A newer version of Constellar is already installed. Uninstall it first." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- The game's own icon, for the shortcut and Settings > Installed apps. -->
+    <Icon Id="Constellar.exe" SourceFile="$(var.ExePath)" />
+    <Property Id="ARPPRODUCTICON" Value="Constellar.exe" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/mnorrsken/constellar" />
+    <Property Id="ARPNOREPAIR" Value="1" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="Constellar" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <ComponentGroup Id="ProductComponents">
+      <!-- One file: Godot embeds the game data in the executable. -->
+      <Component Id="GameExecutable" Directory="INSTALLFOLDER">
+        <File Id="ConstellarExe" Name="Constellar.exe" Source="$(var.ExePath)" KeyPath="yes" />
+      </Component>
+      <Component Id="StartMenuShortcut" Directory="ProgramMenuFolder">
+        <Shortcut
+            Id="ConstellarShortcut"
+            Name="Constellar"
+            Description="Constellar: Merchant Empire"
+            Target="[INSTALLFOLDER]Constellar.exe"
+            WorkingDirectory="INSTALLFOLDER"
+            Icon="Constellar.exe" />
+        <!-- A per-user shortcut needs an HKCU value as its key path. -->
+        <RegistryValue
+            Root="HKCU"
+            Key="Software\Constellar"
+            Name="StartMenuShortcut"
+            Type="integer"
+            Value="1"
+            KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <Feature Id="Main" Title="Constellar" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+  </Package>
+</Wix>

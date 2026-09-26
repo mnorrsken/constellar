@@ -26,6 +26,8 @@ Godot is installed via Homebrew (`brew install --cask godot`), on PATH as
 - `make audio` — regenerate the music loops and UI sounds
   (`tools/make_audio.py`, plain Python). The WAVs are not in git; `make
   run`/`editor`/`import` build them when the script changes
+- `make export-windows` / `make export-mac` — export the game to `build/`
+  (needs Godot's export templates for this exact version)
 - `make clean` — remove the `.godot/` cache
 
 Override the binary if needed: `make test GODOT=/path/to/godot`.
@@ -104,6 +106,24 @@ Save PNGs to a scratch dir, never the repo.
 
 Commit messages: `feat: …`, `fix: …`, `docs: …` (short, imperative). Never
 commit `.godot/` (gitignored). Commit only verified work.
+
+## Release notes
+
+Follows the wiki "GitHub Release Process"; what differs here:
+
+- CHANGELOG headings are Keep a Changelog: `## [X.Y.Z] - YYYY-MM-DD` (the
+  `## [Unreleased]` section becomes it). `release.yml` takes the notes from
+  that exact heading and fails without it.
+- A `vX.Y.Z` tag runs `.github/workflows/release.yml`: checks, Godot export
+  on Linux, a per-user MSI (WiX 6, `packaging/windows/`) and a DMG
+  (`packaging/macos/build-dmg.sh`), each installed or mounted and run
+  headless, then the GitHub release with checksums. CI stamps
+  `config/version` in `project.godot` from the tag; don't bump it by hand.
+- Before tagging a change to the process, dry-run it: `gh workflow run
+  release.yml` builds and tests everything as 0.0.0 and publishes nothing.
+- Nothing is signed: SmartScreen warns on Windows, and Gatekeeper blocks the
+  first start on macOS (the release notes say how to get past both).
+- Godot upgrades: bump `GODOT_VERSION` in both workflows.
 
 ## GDScript notes
 

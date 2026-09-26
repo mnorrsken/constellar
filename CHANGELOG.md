@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Installers: each release tag builds a Windows installer (per-user MSI with
+  a Start menu shortcut) and a macOS disk image (universal app), tests both,
+  and publishes them as a GitHub release. CI runs the import, tests and a
+  headless run on every push.
 - A faded Milky Way backdrop from ESO's all-sky photo, placed where it
   really is in the sky (the band on the galactic plane, the bright centre
   toward Sagittarius), replacing the dim procedural band.

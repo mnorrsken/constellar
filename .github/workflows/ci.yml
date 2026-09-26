@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Tags are covered by release.yml, which runs the same checks before it
+# builds anything.
+
+permissions:
+  contents: read
+
+env:
+  # Keep in step with release.yml and the Godot the project is made with.
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  check:
+    name: Import, test and run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Godot
+        run: .github/scripts/install-godot.sh
+
+      - name: Import, test, headless run
+        run: .github/scripts/check.sh

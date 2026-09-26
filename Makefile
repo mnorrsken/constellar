@@ -13,7 +13,7 @@ HYG := build/hyg_v44.csv.gz
 # Music and UI sounds are generated from tools/make_audio.py (not in git).
 AUDIO := assets/audio/music/space.wav
 
-.PHONY: help run editor build import test soak stars audio clean
+.PHONY: help run editor build import test soak stars audio export-windows export-mac clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -41,6 +41,16 @@ test: ## Run headless sim tests (non-zero exit on failure)
 
 soak: ## Run the economy for 20 game years headless and check market health
 	$(GODOT) --headless --path $(PROJECT) --script res://tools/soak.gd
+
+# Exports need Godot's export templates for this exact version (Editor >
+# Manage Export Templates). Installers are built from these by CI (release.yml).
+export-windows: import ## Export the Windows game to build/windows/Constellar.exe
+	mkdir -p build/windows
+	$(GODOT) --headless --path $(PROJECT) --export-release "Windows Desktop" build/windows/Constellar.exe
+
+export-mac: import ## Export the macOS app (zipped) to build/macos/Constellar.zip
+	mkdir -p build/macos
+	$(GODOT) --headless --path $(PROJECT) --export-release "macOS" build/macos/Constellar.zip
 
 stars: $(HYG) ## Rebuild data/stars.json (systems + lanes) from the HYG catalogue
 	python3 tools/build_stars.py $(HYG)

@@ -5,6 +5,21 @@ decaying interstellar civilisation: buy ships, fit them out, set up trade
 routes, and grow rich and powerful through trade. You do not win by
 fighting.
 
+## Install
+
+Download the installer from the repository's
+[Releases](https://github.com/mnorrsken/constellar/releases) page:
+
+- **Windows:** the `.msi`. It installs for your user only (no administrator
+  rights) into `%LocalAppData%\Programs\Constellar` and adds a Start menu
+  shortcut. It is not signed, so SmartScreen may say "Windows protected your
+  PC": choose More info, then Run anyway.
+- **macOS** (Intel: 11 or later; Apple silicon: 13 or later): open the
+  `.dmg` and drag Constellar onto Applications. It is not notarized, so the
+  first start is blocked: open System Settings > Privacy & Security and
+  choose Open Anyway (or run
+  `xattr -dr com.apple.quarantine /Applications/Constellar.app`).
+
 ## Running
 
 Godot 4.7 is installed via Homebrew (`brew install --cask godot`), on PATH
@@ -18,6 +33,8 @@ make import    # headless import; catches script/asset errors
 make soak      # run the economy 20 game years headless and check market health
 make stars     # rebuild data/stars.json from the HYG star catalogue
 make audio     # regenerate the music and UI sounds
+make export-windows  # export build/windows/Constellar.exe (needs export templates)
+make export-mac      # export build/macos/Constellar.zip (needs export templates)
 make clean     # remove the .godot/ cache
 ```
 
