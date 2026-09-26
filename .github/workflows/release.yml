@@ -90,7 +90,9 @@ jobs:
           codesign -dvv "$app" 2>&1 | grep -q "Signature=adhoc"
           exe=$(defaults read "$app/Contents/Info" CFBundleExecutable)
           "$app/Contents/MacOS/$exe" --headless --quit-after 40
-          hdiutil detach /tmp/constellar
+          # The volume can stay busy for a moment after the game exits.
+          for i in 1 2 3 4 5; do hdiutil detach /tmp/constellar && break; sleep 2; done
+          [ ! -d /tmp/constellar/Constellar.app ] || hdiutil detach -force /tmp/constellar
           echo "Disk image built; the app is signed and starts cleanly."
 
       - name: Upload the Windows game
