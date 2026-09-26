@@ -87,10 +87,12 @@ Buy/Sell buttons (lot size at the top); elsewhere it shows the last prices
 your ships saw and how old they are. O opens the selected ship's route
 orders (add the selected system as a stop; sell, buy, wait for a full load,
 auto-trade, service when worn at a shipyard; Start route). L shows the
-finances: cash, loan (borrow/repay), a ledger table, profit charts and a
-ship table with age, condition and loss reasons.
+finances: cash, loan (borrow/repay), company value, your goal's progress (or
+a bankruptcy warning), a ledger table, profit charts and a ship table with
+age, condition and loss reasons.
 P cycles the map mode: stars, danger (lanes and stars coloured by the
-chance of a hit), then the price maps. Every sale shows its profit (or
+chance of a hit), influence (charted markets tinted by your tier there),
+then the price maps. Every sale shows its profit (or
 loss) floating up from the ship. A route that would sell at a loss stops
 and pauses the game; restart it to sell anyway.
 
@@ -110,7 +112,22 @@ buttons on the clock bar, top centre).
 Contracts: C, or the system card's Contracts button, shows a market's job
 board (freight, passengers, mail) for a docked ship, and your running jobs
 with Abandon. Deliver on time for the reward; miss the deadline or abandon
-and you pay the penalty.
+and you pay the penalty. Express jobs (marked "· express": mail, luxury
+passengers, and some cargo) pay a bonus on top for delivering early.
+
+Influence: selling goods (best where a market is short of them) and
+delivering contracts there raises your standing at that system, shown as a
+bar with tier marks on the system card. A trading post (25) gives live
+prices and half docking fees; a trade concession (50) halves tariffs and
+gives first pick of new contracts there for a week (lost again below 40);
+as patron (75) you can veto a running tariff hike or broker peace in a war
+between two systems that both depend on you, and wars and coups are rarer
+wherever you're patron.
+
+Goals: pick a victory goal in the finance panel (company value, or Merchant
+Prince — patron of five systems) or stay in the sandbox; reaching it shows
+an outcome screen but you can keep playing. Three months running with no
+cash and the loan maxed out bankrupts the house instead, ending the game.
 
 Sound: music follows the star you zoom in on (its world type's theme, or a
 calmer "space" theme when zoomed out); K cycles music/sound/off. All music

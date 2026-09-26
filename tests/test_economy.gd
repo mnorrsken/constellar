@@ -176,3 +176,41 @@ func test_one_year_stays_healthy(t: Object) -> void:
 	t.ok(float(clamped) / traded < float(content.balance.economy.soak.max_clamp_share),
 		"few prices at the clamps after a year (%d of %d)" % [clamped, traded])
 	t.eq(w.economy.markets[0].history.size(), 52, "a year of weekly history")
+
+func test_traffic_fills_up_to_the_fill_share(t: Object) -> void:
+	var cfg := CFG.duplicate(true)
+	cfg.traffic["fill"] = 1.5
+	var e := Economy.new()
+	e._cfg = cfg
+	e.commodity_ids = PackedStringArray(["a", "b", "c"])
+	var cheap := _market(cfg)
+	var dear := _market(cfg)
+	dear.system = 1
+	cheap.stock[0] = cheap.target[0] * 20.0  # a glut next door
+	cheap.refresh_prices()
+	e.markets.assign([cheap, dear])
+	e.links = [[cheap, dear, 5.0]]
+	for i in 20:
+		e.run_traffic()
+	t.ok(dear.stock[0] > dear.target[0] * 1.05, "traders fill past the target stock")
+	t.ok(dear.stock[0] <= dear.target[0] * 1.5 + 0.01, "but not past the fill share")
+
+## Robots wear out parts: a robot world uses machinery and electronics by
+## its robot count (balance "robot_needs"), like people use food.
+func test_robots_use_machinery_and_electronics(t: Object) -> void:
+	var content := Content.load_world_content("res://data/")
+	var w := World.create(1, Content.load_object("res://data/stars.json"), content)
+	var e := w.economy
+	var mach := e.index_of("machinery")
+	var elec := e.index_of("electronics")
+	var found := false
+	for m in e.markets:
+		var st := w.galaxy.systems[m.system].settlement
+		if st.robots > 0 and st.population == 0:
+			found = true
+			var per := float(content.balance.economy.volume_scale) * e.size_of(st.robots, 0.0)
+			t.ok(m.demand_rate[mach] >= float(content.balance.economy.robot_needs.machinery) * per - 0.01,
+				"%s uses machinery for its robots" % st.name)
+			t.ok(m.demand_rate[elec] > 0.0, "and electronics")
+			break
+	t.ok(found, "a robot world without people")

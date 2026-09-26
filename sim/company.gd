@@ -1,7 +1,8 @@
 class_name Company
 extends RefCounted
-## A merchant house: money and debt. The player is company 0; rival houses
-## later are more companies using the same World commands.
+## A merchant house: money and debt, influence, a goal. The player is
+## company 0; rival houses later are more companies using the same World
+## commands.
 
 var id: int
 var name: String
@@ -26,6 +27,22 @@ var prices: Dictionary = {}
 ## cash), so profit can count goods when they are sold (see profit()).
 var ledger: Dictionary = {}
 var ship_ledger: Dictionary = {}
+## Influence 0..100 per system (see Influence), trading posts and trade
+## concessions held: system index -> true.
+var influence := PackedFloat64Array()
+var posts: Dictionary = {}
+var concessions: Dictionary = {}
+## The highest tier reached per system so far: system index -> tier (a new
+## one is news once, not every time the monthly decay dips and it recovers).
+var tiers_reached: Dictionary = {}
+## The victory goal (balance.json "goals" id; "" = sandbox) and the day it
+## was reached (-1 = not yet).
+var goal := ""
+var goal_day := -1
+## Months in a row that ended with no cash and the loan maxed out; at
+## balance "bankruptcy_months" the house is bankrupt.
+var months_in_red := 0
+var bankrupt := false
 
 static func from_dict(company_id: int, d: Dictionary) -> Company:
 	var c := Company.new()

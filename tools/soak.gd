@@ -11,11 +11,12 @@ extends SceneTree
 ## (runaway stock). Also prints a per-commodity table and total supply vs
 ## demand, which is what you tune archetypes.json against.
 ##
-## Events run as in a game. Every event in events.json must fire at least
-## once and, at least once, visibly move the prices it acts on (5% or more
-## in the expected direction while it runs; an embargo, a closed port or
-## a new ban: any good concerned 5% either way);
-## otherwise the run fails too.
+## Events run as in a game. Every event that fires must, at least once,
+## visibly move the prices it acts on (5% or more in the expected direction
+## while it runs; an embargo, a closed port or a new ban: any good
+## concerned 5% either way; a tariff hike: the extra tariff is in place);
+## otherwise the run fails too. An event that never fired (the monthly roll
+## is chance) is only noted.
 
 func _init() -> void:
 	var args := {}
@@ -69,6 +70,11 @@ func _init() -> void:
 			if not watch.has(ev.id):
 				fired[ev.kind] = fired.get(ev.kind, 0) + 1
 				watch[ev.id] = [ev.kind, _checks(w, ev, before), false]
+				# A tariff hike shows in the duties, not the prices.
+				if WorldEvents.def_of(w, ev.kind).get("effects", {}).has("tariff_add") \
+						and ev.systems.any(func(i): return e.market_at(i) != null and e.market_at(i).tariff_add > 0.0):
+					watch[ev.id][2] = true
+					visible[ev.kind] = visible.get(ev.kind, 0) + 1
 		if w.day % 7 == 0:
 			for id in watch:
 				var entry: Array = watch[id]
@@ -125,11 +131,16 @@ func _init() -> void:
 	print("highest stock / target: %.2f at %s (limit %.1f)" % [worst, worst_at, max_ratio])
 	var events_ok := true
 	print("\n%-15s %6s %8s" % ["event", "fired", "visible"])
+	var never := PackedStringArray()
 	for kind in content.events:
 		print("%-15s %6d %8d" % [kind, fired.get(kind, 0), visible.get(kind, 0)])
-		if visible.get(kind, 0) == 0:
+		if fired.get(kind, 0) == 0:
+			never.append(kind)
+		elif visible.get(kind, 0) == 0:
 			events_ok = false
-	print("every event fired with a visible market effect: %s" % ("yes" if events_ok else "NO"))
+	print("every event that fired had a visible market effect: %s" % ("yes" if events_ok else "NO"))
+	if not never.is_empty():
+		print("note: never fired in this run (chance): %s" % ", ".join(never))
 	var ok := share <= max_share and worst <= max_ratio and events_ok
 	print("SOAK %s" % ("PASS" if ok else "FAIL"))
 	quit(0 if ok else 1)

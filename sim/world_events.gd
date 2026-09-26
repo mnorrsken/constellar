@@ -8,7 +8,9 @@ class_name WorldEvents
 ## port, embargo, tariffs waived, lane danger) hold while it runs and are
 ## rebuilt from all running events by apply_all(); one-off effects
 ## (government change, stability, population) happen when it starts.
-## Every start and end posts a headline to the news.
+## Every start and end posts a headline to the news. A patron can end some
+## early (Influence.veto, broker_peace), and events with a "patron_weight"
+## are that much less likely where any company is patron.
 
 static func cfg(w: World) -> Dictionary:
 	return w.content.balance.get("events", {})
@@ -111,6 +113,12 @@ static func _busy(w: World, kind: String, systems: Array) -> bool:
 	return false
 
 static func _weight(w: World, d: Dictionary, systems: Array) -> float:
+	var weight := _base_weight(w, d, systems)
+	if d.has("patron_weight") and systems.any(func(i): return Influence.patron_of(w, i) >= 0):
+		weight *= float(d.patron_weight)
+	return weight
+
+static func _base_weight(w: World, d: Dictionary, systems: Array) -> float:
 	match d.get("weight", ""):
 		"war":
 			var war := 0.0
@@ -166,6 +174,18 @@ static func start(w: World, kind: String, systems: Array, on_lane := false) -> W
 	apply_all(w)
 	return ev
 
+## Ends a running event early (a patron's veto or peace) with a headline.
+static func stop(w: World, ev: WorldEvent, headline: String) -> void:
+	w.world_events.erase(ev)
+	post_news(w, headline, ev.systems, ev.kind, false)
+	apply_all(w)
+
+static func get_event(w: World, event_id: int) -> WorldEvent:
+	for ev in w.world_events:
+		if ev.id == event_id:
+			return ev
+	return null
+
 ## Rebuilds every market's event state and the lane dangers from the
 ## running events.
 static func apply_all(w: World) -> void:
@@ -174,6 +194,7 @@ static func apply_all(w: World) -> void:
 		m.demand_mult.fill(1.0)
 		m.closed = false
 		m.isolated = false
+		m.tariff_add = 0.0
 		m.tariff_mult = 1.0
 		for c in m.banned.size():
 			m.banned[c] = 1 if Trading.is_banned(w, m.system, c) else 0
@@ -191,6 +212,7 @@ static func apply_all(w: World) -> void:
 			m.isolated = m.isolated or fx.get("isolated", false)
 			if fx.get("tariffs_waived", false):
 				m.tariff_mult = 0.0
+			m.tariff_add += float(fx.get("tariff_add", 0.0))
 		if ev.systems.size() == 2 and fx.has("lane_danger"):
 			var key := Danger.key(ev.systems[0], ev.systems[1])
 			w.danger[key] = minf(w.danger.get(key, 0.0) + float(fx.lane_danger), cap)

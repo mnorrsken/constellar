@@ -1,6 +1,8 @@
 class_name SystemPanel
 extends PanelContainer
-## Card on the right of the map for the selected star system. With a ship
+## Card on the right of the map for the selected star system: the
+## settlement, the player's influence there (with its actions), buttons for
+## the system view, market, shipyard and contracts. With a ship
 ## selected it also offers to send that ship here (route length, days,
 ## arrival date, or why it cannot go). The settlement details scroll when
 ## the card would run below `bottom_limit` (the news ticker); the title
@@ -19,6 +21,7 @@ var _title := Label.new()
 var _facts := Label.new()
 var _bodies := Label.new()
 var _card := SettlementCard.new()
+var _influence := InfluenceCard.new()
 var _button := Button.new()
 var _market_button := Button.new()
 var _yard_button := Button.new()
@@ -96,7 +99,7 @@ func _ready() -> void:
 		closed.emit())
 	head.add_child(_title)
 	head.add_child(close)
-	_details = [HSeparator.new(), _card, HSeparator.new(), _bodies, buttons, _contracts_button]
+	_details = [HSeparator.new(), _card, _influence, HSeparator.new(), _bodies, buttons, _contracts_button]
 	_detail_box.add_theme_constant_override("separation", 8)
 	_detail_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for c in _details:
@@ -141,6 +144,7 @@ func show_system(s: StarSystem) -> void:
 	_facts.text = "%s  ·  %s  ·  %s region" % [
 		", ".join(types), where, SettlementGen.region_of(s.position.length(), Defs.world_content.balance)]
 	_card.show_system(s)
+	_influence.show_system(s.index)
 	var planets := s.planets.filter(func(p): return p.type != "belt").size()
 	var belts := s.planets.size() - planets
 	_bodies.text = "%d planet%s%s" % [planets, "" if planets == 1 else "s",

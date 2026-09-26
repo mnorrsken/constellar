@@ -136,9 +136,11 @@ func _refresh() -> void:
 		_status.text = "No price information: none of your ships has docked here."
 		_status.add_theme_color_override("font_color", MUTED)
 	var st := w.galaxy.systems[_system].settlement
-	var general := float(w.content.governments.get(st.government, {}).get("tariffs", {}).get("*", 0.0)) * m.tariff_mult
+	var general := (float(w.content.governments.get(st.government, {}).get("tariffs", {}).get("*", 0.0)) + m.tariff_add) \
+		* m.tariff_mult * Influence.tariff_factor(w, Sim.PLAYER, _system)
 	if general > 0.0:
-		_status.text += "  ·  %d%% tariff on sales" % roundi(general * 100.0)
+		_status.text += "  ·  %d%% tariff on sales%s" % [roundi(general * 100.0),
+			" (your concession)" if Influence.has_concession(w, Sim.PLAYER, _system) else ""]
 	_grid.visible = live or not known.is_empty()
 	_scroll.visible = _grid.visible
 	_hold.visible = live
@@ -162,7 +164,7 @@ func _refresh() -> void:
 		var row: Array = _cells[c]
 		var ratio: float = prices[c] / m.base_price[c]
 		var banned := Trading.is_banned(w, _system, c)
-		var duty := Trading.tariff(w, _system, c)
+		var duty := Trading.tariff(w, _system, c, Sim.PLAYER)
 		row[0].add_theme_color_override("font_color", Color(1.0, 0.45, 0.4) if banned else Color(0.86, 0.9, 0.97))
 		row[1].text = Format.thousands(roundi(prices[c]))
 		row[2].text = "%+d%%" % roundi((ratio - 1.0) * 100.0)

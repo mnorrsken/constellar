@@ -8,9 +8,57 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Express contracts: mail, luxury passengers and freight of goods marked
+  "express" (luxury foods, medicine, biologics, luxuries) pay a bonus for
+  early delivery, up to half the reward, shrinking toward the deadline. The
+  contracts panel tags them ("· express") and shows the running bonus; the
+  delivery notice shows it too.
+- Influence and diplomacy: selling goods (worth more where the market is
+  short of them) and delivering contracts raises a company's standing at
+  that system, scaled down by market size, and decays a little each month.
+  At 25 a company may open a trading post there (live prices, half docking
+  fees), at 50 sign a trade concession (half tariffs, first pick of new
+  contracts for a week, lost again below 40), at 75 it is patron (wars and
+  coups are rarer there; veto a running tariff hike, or broker peace in a
+  war where both sides depend on it). A new tariff-hike event raises a
+  government's rates until vetoed or it runs its course. UI: the system
+  panel's influence card (score bar with tier marks, holdings, next action,
+  veto/broker-peace buttons), a "Map: influence" mode tinting charted
+  markets by tier, and tariff/concession notes on the market and settlement
+  cards.
+- Victory goals and bankruptcy: a company can aim for a goal — company
+  value 25M cr, or Merchant Prince (patron of 5 systems) — picked in the
+  finance panel (until a proper new-game menu exists), checked monthly, or
+  stay in the sandbox. Reaching a goal posts news and an outcome screen
+  (keep playing); three months running with no cash and the loan maxed out
+  bankrupts the house instead (its ships stop, a bankruptcy screen ends the
+  game), with a warning each month before that. Finance panel shows company
+  value, goal progress and the bankruptcy warning.
 - MIT license for the code and own assets, and THIRD-PARTY-NOTICES.md for
   the parts under other licenses (Godot, HYG star data, the ESO Milky Way
   image, the fonts).
+
+### Changed
+
+- Economy rebalanced: consumption now tracks potential supply everywhere
+  (was up to 10x demand for atomics, 7x weapons, 4.5x robots, 2x
+  water/fuel/textiles/machinery), so surpluses sit at producers and prices
+  differ across the map instead of everything sagging to the price floor.
+  Robot worlds now wear out machinery, electronics and fuel with their
+  robot count, same as population needs; population needs themselves are
+  higher across the board. More archetypes use machinery, robots and
+  weapons; fewer weapons and atomics are made.
+- Background traffic reworked: it now only runs between neighbouring
+  systems (was 2 lanes), costs mostly scale with distance, and a single
+  route can move at most 15% of the source market's stock a week (was
+  50%), so weekly prices swing about 1% instead of 17%. Traders now also
+  top a market up to 1.5x its target stock. Long routes are now
+  profitable (the best 10% of routes earn ~530 cr/day at 1 jump rising to
+  ~1,100 at 4-8 jumps, versus 8-jump routes losing money before); markets
+  take about a year of warm-up to settle instead of a few months.
+- Contract rewards are higher across the board and now grow a little
+  faster than distance, so long jobs pay noticeably more per light year
+  (median reward at packet speed roughly doubled).
 
 ## [0.1.0] - 2026-09-26
 

@@ -10,11 +10,11 @@
 	{ "id": "textiles",       "name": "Textiles",       "cargo_class": "container", "base_price": 150 },
 	{ "id": "electronics",    "name": "Electronics",    "cargo_class": "container", "base_price": 480 },
 	{ "id": "robots",         "name": "Robots",         "cargo_class": "container", "base_price": 900 },
-	{ "id": "luxury_foods",   "name": "Luxury Foods",   "cargo_class": "cold",      "base_price": 380 },
-	{ "id": "medicine",       "name": "Medicine",       "cargo_class": "cold",      "base_price": 600 },
-	{ "id": "biologics",      "name": "Biologics",      "cargo_class": "cold",      "base_price": 750 },
+	{ "id": "luxury_foods",   "name": "Luxury Foods",   "cargo_class": "cold",      "base_price": 380, "express": true },
+	{ "id": "medicine",       "name": "Medicine",       "cargo_class": "cold",      "base_price": 600, "express": true },
+	{ "id": "biologics",      "name": "Biologics",      "cargo_class": "cold",      "base_price": 750, "express": true },
 	{ "id": "rare_elements",  "name": "Rare Elements",  "cargo_class": "secure",    "base_price": 1200 },
-	{ "id": "luxuries",       "name": "Luxuries",       "cargo_class": "secure",    "base_price": 1500 },
+	{ "id": "luxuries",       "name": "Luxuries",       "cargo_class": "secure",    "base_price": 1500, "express": true },
 	{ "id": "weapons",        "name": "Weapons",        "cargo_class": "secure",    "base_price": 1100 },
 	{ "id": "atomics",        "name": "Atomics",        "cargo_class": "secure",    "base_price": 2000 }
 ]

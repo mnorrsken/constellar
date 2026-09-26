@@ -17,24 +17,28 @@ static func commodity_class(w: World, c: int) -> String:
 	return w.content.commodities[w.economy.commodity_ids[c]].cargo_class
 
 ## The government's duty on goods sold at a system (share of the income):
-## its tariff profile (governments.json "tariffs": per good or "*"),
-## waived under a trade agreement.
-static func tariff(w: World, system_index: int, c: int) -> float:
+## its tariff profile (governments.json "tariffs": per good or "*") plus
+## any tariff hike, waived under a trade agreement, and lower for a company
+## holding the trade concession there (company_id -1: the general rate).
+static func tariff(w: World, system_index: int, c: int, company_id := -1) -> float:
 	var st := w.galaxy.systems[system_index].settlement
 	var m := w.economy.market_at(system_index)
 	if st == null or m == null:
 		return 0.0
 	var profile: Dictionary = w.content.governments.get(st.government, {}).get("tariffs", {})
-	return float(profile.get(w.economy.commodity_ids[c], profile.get("*", 0.0))) * m.tariff_mult
+	var rate := (float(profile.get(w.economy.commodity_ids[c], profile.get("*", 0.0))) + m.tariff_add) * m.tariff_mult
+	return rate * Influence.tariff_factor(w, company_id, system_index) if company_id >= 0 else rate
 
 ## Banned goods can't be bought or sold there (governments.json "bans").
 static func is_banned(w: World, system_index: int, c: int) -> bool:
 	var st := w.galaxy.systems[system_index].settlement
 	return st != null and w.economy.commodity_ids[c] in w.content.governments.get(st.government, {}).get("bans", [])
 
+## At the ship's port (lower at its company's trading post there).
 static func docking_fee(w: World, ship: Ship) -> float:
 	var t := cfg(w)
-	return float(t.get("docking_fee", 0)) + float(t.get("docking_fee_per_slot", 0)) * int(w.fleet.hull_def(ship).slots)
+	return (float(t.get("docking_fee", 0)) + float(t.get("docking_fee_per_slot", 0)) * int(w.fleet.hull_def(ship).slots)) \
+		* Influence.docking_factor(w, ship.company, ship.system)
 
 ## Tonnes of hold space of the commodity's cargo class still free (freight
 ## charters take their share).
@@ -113,7 +117,7 @@ static func buy(w: World, ship: Ship, c: int, qty: float) -> Dictionary:
 	return {"ok": true, "qty": qty, "cost": cost}
 
 ## Sells up to `qty` t of cargo; the government's tariff is taken from the
-## income.
+## income. The sale adds to the company's influence there.
 static func sell(w: World, ship: Ship, c: int, qty: float) -> Dictionary:
 	var check := _at_market(w, ship)
 	if not check.ok:
@@ -125,6 +129,7 @@ static func sell(w: World, ship: Ship, c: int, qty: float) -> Dictionary:
 	if qty <= 0.0:
 		return {"ok": false, "error": "No such cargo aboard"}
 	var company := w.companies[ship.company]
+	var shortage := m.price[c] / m.base_price[c]
 	var gross := m.sell(c, qty)
 	var basis: float = ship.cargo_cost.get(c, 0.0) * qty / ship.cargo[c]
 	ship.cargo[c] -= qty
@@ -134,9 +139,10 @@ static func sell(w: World, ship: Ship, c: int, qty: float) -> Dictionary:
 		ship.cargo_cost.erase(c)
 	company.book("sales", gross, w.month(), ship.id)
 	company.note_cost_of_sales(basis, w.month(), ship.id)
-	var duty := gross * tariff(w, ship.system, c)
+	var duty := gross * tariff(w, ship.system, c, ship.company)
 	if duty > 0.0:
 		company.book("tariffs", -duty, w.month(), ship.id)
+	Influence.gain(w, ship.company, ship.system, gross, shortage)
 	observe(w, ship.company, ship.system)
 	w.events.append({"type": "cargo", "ship": ship.id, "company": ship.company})
 	w.events.append({"type": "sale", "ship": ship.id, "company": ship.company,
@@ -155,7 +161,7 @@ static func sale_quote(w: World, ship: Ship) -> Dictionary:
 	for c in ship.cargo:
 		if is_banned(w, ship.system, c):
 			continue
-		income += m.quote_sell(c, ship.cargo[c]) * (1.0 - tariff(w, ship.system, c))
+		income += m.quote_sell(c, ship.cargo[c]) * (1.0 - tariff(w, ship.system, c, ship.company))
 		cost += ship.cargo_cost.get(c, 0.0)
 	return {"income": income, "cost": cost}
 
@@ -315,7 +321,7 @@ static func _auto_buy(w: World, s: Ship, next_system: int) -> void:
 		var cls := commodity_class(w, c)
 		if free_space(w, s, c) < 1.0 or is_banned(w, s.system, c) or is_banned(w, next_system, c):
 			continue
-		var margin: float = known.price[c] * (1.0 - tariff(w, next_system, c)) - m.price[c]
+		var margin: float = known.price[c] * (1.0 - tariff(w, next_system, c, s.company)) - m.price[c]
 		if margin > m.price[c] * 0.05 and margin > best.get(cls, [0.0])[0]:
 			best[cls] = [margin, c]
 	if best.is_empty():

@@ -2,6 +2,7 @@
 	{
 		"id": "war", "name": "War", "badge": "danger",
 		"scope": "pair", "chance_per_month": 0.04, "days": [120, 480], "weight": "war",
+		"patron_weight": 0.3, "brokerable": true,
 		"where": { "min_population": 10000, "not_governments": ["custodians"] },
 		"effects": {
 			"demand": { "weapons": 4.0, "grain": 1.6, "medicine": 2.5, "fuel": 1.5 },
@@ -13,6 +14,7 @@
 	{
 		"id": "zealots", "name": "Zealot takeover", "badge": "politics",
 		"scope": "system", "chance_per_month": 0.025, "days": [360, 360], "weight": "instability",
+		"patron_weight": 0.3,
 		"where": { "min_population": 10000, "max_stability": 0.7,
 			"not_governments": ["zealots", "custodians", "concordance"] },
 		"effects": { "government": "zealots", "demand": { "luxuries": 0.3, "luxury_foods": 0.5 } },
@@ -90,5 +92,14 @@
 		"effects": { "demand": { "luxuries": 2.5, "luxury_foods": 2.5 }, "stability": 0.03 },
 		"headline": "Festival season at {a}: luxuries in demand",
 		"end_headline": "The festival at {a} is over"
+	},
+	{
+		"id": "tariff_hike", "name": "Tariff hike", "badge": "politics",
+		"scope": "system", "chance_per_month": 0.04, "days": [240, 480], "weight": "size",
+		"vetoable": true,
+		"where": { "min_population": 10000, "not_governments": ["custodians"] },
+		"effects": { "tariff_add": 0.1 },
+		"headline": "{a} raises its tariffs by ten points on all goods",
+		"end_headline": "{a} drops its extra tariffs"
 	}
 ]

@@ -196,9 +196,9 @@ func _fill_cargo(w: World, s: Ship) -> void:
 		_cargo.add_child(_cell(Format.thousands(roundi(paid)), MUTED, 13, true))
 		var worth := -1.0
 		if m and here and not m.closed:
-			worth = m.quote_sell(c, t) / t * (1.0 - Trading.tariff(w, at, c))
+			worth = m.quote_sell(c, t) / t * (1.0 - Trading.tariff(w, at, c, s.company))
 		elif not known.is_empty():
-			worth = float(known.price[c]) * (1.0 - Trading.tariff(w, at, c))
+			worth = float(known.price[c]) * (1.0 - Trading.tariff(w, at, c, s.company))
 		if worth < 0.0 or Trading.is_banned(w, at, c):
 			_cargo.add_child(_cell("banned" if Trading.is_banned(w, at, c) else "unknown", MUTED, 13))
 		else:

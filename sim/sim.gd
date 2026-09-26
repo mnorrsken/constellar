@@ -148,6 +148,21 @@ func cheat() -> void:
 	Events.notice.emit("Cheat: everything charted, +%s cr" % Format.thousands(roundi(CHEAT_CASH)))
 	_flush_events()
 
+func open_trading_post(system_index: int) -> Dictionary:
+	return _run(world.open_trading_post(PLAYER, system_index))
+
+func sign_concession(system_index: int) -> Dictionary:
+	return _run(world.sign_concession(PLAYER, system_index))
+
+func veto_event(event_id: int) -> Dictionary:
+	return _run(world.veto_event(PLAYER, event_id))
+
+func broker_peace(event_id: int) -> Dictionary:
+	return _run(world.broker_peace(PLAYER, event_id))
+
+func set_goal(goal_id: String) -> Dictionary:
+	return _run(world.set_goal(PLAYER, goal_id))
+
 func take_loan(amount: float) -> Dictionary:
 	return _run(world.take_loan(PLAYER, amount))
 
@@ -188,7 +203,8 @@ func _contract_notice(e: Dictionary) -> void:
 			Events.notice.emit("Contract taken: %s to %s by %s" % [what, to,
 				Calendar.format(c.deadline, world.start_year)])
 		"contract_done":
-			Events.notice.emit("Delivered %s to %s: +%s cr" % [what, to, Format.thousands(roundi(e.reward))])
+			var early := "  (%s early-delivery bonus)" % Format.thousands(roundi(e.bonus)) if e.get("bonus", 0.0) > 0.0 else ""
+			Events.notice.emit("Delivered %s to %s: +%s cr%s" % [what, to, Format.thousands(roundi(e.reward)), early])
 		"contract_failed":
 			Events.notice.emit("Contract failed: %s to %s, penalty %s cr" % [what, to,
 				Format.thousands(roundi(e.penalty))])
@@ -202,7 +218,10 @@ func _flush_events() -> void:
 	var profits := {}  # player ship id -> summed profit
 	var contracts_moved := false
 	var events_moved := false
+	var influence_moved := false
 	for e in world.drain_events():
+		if e.type in ["sale", "contract_done"]:
+			influence_moved = true
 		match e.type:
 			"charted":
 				charted[e.company] = true
@@ -253,6 +272,11 @@ func _flush_events() -> void:
 			"news":
 				events_moved = events_moved or e.item.kind != "loss"
 				Events.news_posted.emit(e.item)
+				if e.item.start and WorldEvents.def_of(world, e.item.kind).get("vetoable", false):
+					for i in e.item.systems:
+						if Influence.is_patron(world, PLAYER, i):
+							Events.notice.emit("As patron of %s you can veto this: see its system card" %
+								WorldEvents.place_name(world, i))
 			"raided", "lost":
 				fleet_moved = true
 				cash_changed[e.company] = true
@@ -262,6 +286,38 @@ func _flush_events() -> void:
 					# Bad news pauses the game, but the ship needs no new orders.
 					if auto_pause and speed != 0:
 						set_speed(0)
+			"influence", "goal_set":
+				influence_moved = true
+			"influence_tier":
+				influence_moved = true
+				if e.company == PLAYER:
+					var what: String = ["", "you may open a trading post", "you may sign a trade concession",
+						"you are its patron"][e.tier]
+					Events.notice.emit("Influence at %s: %s" % [WorldEvents.place_name(world, e.system), what])
+			"post_opened", "concession_signed", "concession_lost", "vetoed", "peace":
+				influence_moved = true
+				cash_changed[e.company] = true
+				if e.company == PLAYER:
+					Events.confirmed.emit(e.type)
+					if e.type == "concession_lost":
+						var lost := "Your influence at %s fell: the trade concession is revoked" % WorldEvents.place_name(world, e.system)
+						Events.notice.emit(lost)
+						Events.alert.emit(lost)
+			"goal_reached":
+				if e.company == PLAYER:
+					Events.goal_reached.emit(e.company)
+			"bankruptcy_warning":
+				if e.company == PLAYER:
+					var warn := "No cash and the loan maxed out: bankrupt in %d month%s unless cash comes in" % [
+						e.limit - e.months, "" if e.limit - e.months == 1 else "s"]
+					Events.notice.emit(warn)
+					Events.alert.emit(warn)
+			"bankrupt":
+				fleet_moved = true
+				if e.company == PLAYER:
+					if speed != 0:
+						set_speed(0)
+					Events.bankrupt.emit(e.company)
 			"contract_accepted", "contract_done", "contract_failed":
 				contracts_moved = true
 				if e.type == "contract_accepted" and e.company == PLAYER:
@@ -279,6 +335,8 @@ func _flush_events() -> void:
 		Events.profit.emit(id, profits[id])
 	if events_moved:
 		Events.world_events_changed.emit()
+	if influence_moved:
+		Events.influence_changed.emit()
 	if contracts_moved:
 		Events.contracts_changed.emit()
 	if fleet_moved:

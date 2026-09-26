@@ -1,18 +1,20 @@
 class_name MapModeBar
 extends HBoxContainer
 ## Map mode picker in the top-right corner: normal star colours; danger
-## (lanes and stars coloured by the chance of a hit); or stars tinted by
-## what the player knows of one good's price there (green cheap, white
-## normal, red dear, grey unknown). P cycles through the modes.
+## (lanes and stars coloured by the chance of a hit); influence (stars by
+## the player's influence tier there); or stars tinted by what the player
+## knows of one good's price there (green cheap, white normal, red dear,
+## grey unknown). P cycles through the modes.
 
-## `commodity` is the price map's good (-1 = none); `danger` is on for the
-## danger map.
+## `commodity` is the price map's good (-1 = none); `danger` or `influence`
+## is on for those maps.
 signal mode_changed(commodity: int)
 
-const FIRST_PRICE := 2  # items: stars, danger, then one per good
+const FIRST_PRICE := 3  # items: stars, danger, influence, then one per good
 
 var commodity := -1
 var danger := false
+var influence := false
 
 var _pick := OptionButton.new()
 
@@ -25,6 +27,7 @@ func _ready() -> void:
 	_pick.focus_mode = Control.FOCUS_NONE
 	_pick.add_item("Map: stars")
 	_pick.add_item("Map: danger")
+	_pick.add_item("Map: influence")
 	for id in Sim.world.economy.commodity_ids:
 		_pick.add_item("Price map: %s" % Defs.commodities[id].name)
 	_pick.item_selected.connect(_select)
@@ -37,6 +40,7 @@ func cycle() -> void:
 func _select(item: int) -> void:
 	_pick.select(item)
 	danger = item == 1
+	influence = item == 2
 	commodity = item - FIRST_PRICE if item >= FIRST_PRICE else -1
 	mode_changed.emit(commodity)
 

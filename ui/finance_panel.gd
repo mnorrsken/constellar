@@ -1,6 +1,8 @@
 class_name FinancePanel
 extends PanelContainer
-## The finance screen (L): cash and loan with borrow/repay; the ledger by
+## The finance screen (L): cash and loan with borrow/repay; company value,
+## the victory goal (picked here until a new-game menu exists) and a
+## bankruptcy warning; the ledger by
 ## category for the last three months (cash); charts of the company's
 ## monthly profit and every ship's (up to two years; goods count when sold,
 ## see Company.profit); and a ship table with age, condition, last month's
@@ -14,7 +16,7 @@ const GREEN := Color(0.45, 0.85, 0.55)
 const RED := Color(1.0, 0.45, 0.4)
 const AMBER := Color(0.98, 0.72, 0.3)
 const CATEGORIES := ["sales", "purchases", "contracts", "penalties", "tariffs", "fuel", "docking", "crew",
-	"maintenance", "insurance", "repairs", "interest", "ships"]
+	"maintenance", "insurance", "repairs", "interest", "influence", "ships"]
 const STEP := 100000.0
 const CHART_MONTHS := 24
 ## Line colours for ships in the profit chart.
@@ -23,6 +25,12 @@ const SHIP_COLORS := [Color(0.35, 0.85, 1.0), Color(0.98, 0.72, 0.3), Color(0.75
 
 var _title := Label.new()
 var _money := Label.new()
+var _value := Label.new()
+var _goal_pick := OptionButton.new()
+var _goal_status := Label.new()
+var _warning := Label.new()
+## Goal ids in _goal_pick's order ("" = sandbox).
+var _goal_ids: Array[String] = [""]
 var _grid := GridContainer.new()
 var _net_chart := Chart.new()
 var _ship_chart := Chart.new()
@@ -53,6 +61,31 @@ func _ready() -> void:
 	_money.add_theme_font_override("font", Fonts.MONO)
 	_money.add_theme_font_size_override("font_size", 15)
 	_money.add_theme_color_override("font_color", AMBER)
+	for l in [_value, _goal_status]:
+		l.add_theme_font_override("font", Fonts.MONO)
+		l.add_theme_font_size_override("font_size", 15)
+	_value.add_theme_color_override("font_color", TEXT)
+	_goal_status.add_theme_color_override("font_color", MUTED)
+	_warning.add_theme_font_size_override("font_size", 15)
+	_warning.add_theme_color_override("font_color", RED)
+	_goal_pick.focus_mode = Control.FOCUS_NONE
+	_goal_pick.add_item("Goal: none (sandbox)")
+	var goals: Dictionary = Defs.world_content.balance.get("goals", {})
+	for id in goals:
+		var g: Dictionary = goals[id]
+		_goal_ids.append(id)
+		match id:
+			"value":
+				_goal_pick.add_item("Goal: company value %s cr" % Format.money_short(float(g.target)))
+			"prince":
+				_goal_pick.add_item("Goal: %s (patron of %d systems)" % [g.name, int(g.patrons)])
+			_:
+				_goal_pick.add_item("Goal: %s" % g.get("name", id))
+	_goal_pick.item_selected.connect(func(k): Sim.set_goal(_goal_ids[k]))
+	var standing := HBoxContainer.new()
+	standing.add_theme_constant_override("separation", 18)
+	for c in [_value, _goal_pick, _goal_status]:
+		standing.add_child(c)
 	_grid.columns = 4
 	_grid.add_theme_constant_override("h_separation", 22)
 	_grid.add_theme_constant_override("v_separation", 2)
@@ -71,12 +104,13 @@ func _ready() -> void:
 	_ships.columns = 6
 	_ships.add_theme_constant_override("h_separation", 22)
 	_ships.add_theme_constant_override("v_separation", 2)
-	for c in [head, _money, HSeparator.new(), top, HSeparator.new(), _ships]:
+	for c in [head, _money, standing, _warning, HSeparator.new(), top, HSeparator.new(), _ships]:
 		box.add_child(c)
 	add_child(box)
 	Events.company_changed.connect(func(_c): _refresh())
 	Events.day_passed.connect(func(_d): _refresh())
 	Events.fleet_changed.connect(_refresh)
+	Events.influence_changed.connect(_refresh)
 
 func open() -> void:
 	visible = true
@@ -96,6 +130,24 @@ func _refresh() -> void:
 	_money.text = "Cash %s cr     Loan %s of %s cr at %d%% a year" % [
 		Format.thousands(roundi(p.cash)), Format.thousands(roundi(p.loan)),
 		Format.thousands(roundi(p.loan_max)), roundi(p.interest_per_year * 100.0)]
+	_value.text = "Company value %s cr" % Format.thousands(roundi(Goals.company_value(w, Sim.PLAYER)))
+	_value.tooltip_text = "Cash minus the loan, plus what your ships would sell for and what their cargo cost"
+	_goal_pick.select(maxi(_goal_ids.find(p.goal), 0))
+	var g := Goals.progress(w, Sim.PLAYER)
+	match g.goal:
+		"value":
+			_goal_status.text = "%s of %s cr" % [Format.money_short(g.current), Format.money_short(g.target)]
+		"prince":
+			_goal_status.text = "patron of %d of %d" % [g.current, g.target]
+		_:
+			_goal_status.text = ""
+	if p.goal_day >= 0:
+		_goal_status.text = "reached %s" % Calendar.format(p.goal_day, w.start_year)
+	_goal_status.add_theme_color_override("font_color", GREEN if p.goal_day >= 0 else MUTED)
+	var limit := int(w.content.balance.get("bankruptcy_months", 3))
+	_warning.visible = p.months_in_red > 0 or p.bankrupt
+	_warning.text = "Bankrupt." if p.bankrupt else \
+		"No cash and the loan is maxed out: %d of %d months in the red before bankruptcy." % [p.months_in_red, limit]
 	var now := w.month()
 	_fill_ledger(w, p, [now - 2, now - 1, now])
 	var first := maxi(now - CHART_MONTHS + 1, 0)

@@ -175,3 +175,60 @@ func _bot(w: World, s: Ship) -> void:
 				best = v
 	if best >= 0:
 		w.send_ship(0, s.id, best)
+
+func test_express_jobs_pay_a_bonus_for_early_delivery(t: Object) -> void:
+	var w := _world()
+	w.reveal_all(0)
+	var kinds := {}
+	for c in w.contracts:
+		kinds[c.kind + ("_express" if c.express else "")] = true
+	t.ok(kinds.has("mail_express") and not kinds.has("mail"), "all mail is express")
+	t.ok(kinds.has("freight") and kinds.has("freight_express"), "some freight is express, some not")
+	var mail: Contract = null
+	var plain: Contract = null
+	for c in w.contracts:
+		if c.kind == "mail" and mail == null:
+			mail = c
+		if c.kind == "freight" and not c.express and plain == null:
+			plain = c
+	mail.accepted_day = w.day
+	plain.accepted_day = w.day
+	var half := w.day + (mail.deadline - w.day) / 2
+	var full := Contracts.early_bonus(w, mail, w.day)
+	t.ok(is_equal_approx(full, roundf(mail.reward * 0.5 / 100.0) * 100.0), "at once: half the reward on top")
+	t.ok(Contracts.early_bonus(w, mail, half) < full and Contracts.early_bonus(w, mail, half) > 0.0, "less when later")
+	t.eq(Contracts.early_bonus(w, mail, mail.deadline), 0.0, "nothing at the deadline")
+	t.eq(Contracts.early_bonus(w, plain, w.day), 0.0, "ordinary freight has no bonus")
+	# Delivered early through the real delivery: the bonus is paid and booked.
+	var s := w.ships_of(0)[0]
+	s.system = mail.origin
+	s.modules.assign(["mail", "mail", "mail"])
+	mail.accepted_day = -1
+	t.ok(w.accept_contract(0, mail.id, s.id).ok, "mail taken")
+	var cash := w.companies[0].cash
+	w.day += 5
+	Contracts.deliver(w, s, mail.destination)
+	var done: Array = w.drain_events().filter(func(e): return e.type == "contract_done")
+	t.ok(done.size() == 1 and done[0].bonus > 0.0, "paid a bonus: %s" % [done])
+	t.ok(is_equal_approx(w.companies[0].cash - cash, mail.reward + done[0].bonus), "reward plus bonus booked")
+
+func test_long_jobs_pay_more_per_light_year(t: Object) -> void:
+	var w := _world()
+	var short := {}
+	var long := {}
+	for c in w.contracts:
+		if c.kind != "mail":
+			continue
+		var ly: float = w.contract_cache[Vector2i(c.origin, c.destination)]
+		var per := c.reward / (c.amount * ly)
+		if ly < 10.0:
+			short[per] = true
+		elif ly > 30.0:
+			long[per] = true
+	t.ok(not short.is_empty() and not long.is_empty(), "short and long mail jobs")
+	var avg := func(d: Dictionary) -> float:
+		var sum := 0.0
+		for k in d:
+			sum += k
+		return sum / d.size()
+	t.ok(avg.call(long) > avg.call(short) * 1.2, "a long job's light year pays more (%.0f vs %.0f per sack and ly)" % [avg.call(long), avg.call(short)])

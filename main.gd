@@ -20,6 +20,7 @@ const PICK_RADIUS_PX := 16.0
 @onready var news_panel: NewsPanel = $UI/NewsPanel
 @onready var fleet_screen: FleetScreen = $UI/FleetScreen
 @onready var ship_panel: ShipPanel = $UI/ShipPanel
+@onready var outcome: OutcomePanel = $UI/OutcomePanel
 @onready var music: MusicPlayer = $Music
 @onready var sounds: UiSounds = $UiSounds
 
@@ -88,6 +89,13 @@ func _ready() -> void:
 		sig.connect(func(_x = null): _apply_price_map(map_mode.commodity))
 	Events.charted.connect(_on_charted)
 	Events.attention.connect(_on_attention)
+	Events.influence_changed.connect(func(): if map_mode.influence: _apply_price_map(map_mode.commodity))
+	Events.goal_reached.connect(func(_c):
+		_overlay_opened()
+		outcome.show_goal())
+	Events.bankrupt.connect(func(_c):
+		_overlay_opened()
+		outcome.show_bankrupt())
 	# Play in a maximized window. Automated runs keep the window as it is:
 	# headless ones, and test/capture scenes that load this scene as a child.
 	if DisplayServer.get_name() != "headless" and get_tree().current_scene == self:
@@ -357,10 +365,12 @@ func _overlay_open() -> bool:
 
 ## The modal panels (one open at a time, over a dimmed map).
 func _overlays() -> Array:
-	return [shipyard, orders_panel, finance_panel, contracts_panel, news_panel, fleet_screen]
+	return [shipyard, orders_panel, finance_panel, contracts_panel, news_panel, fleet_screen, outcome]
 
-## Map modes: the danger map (lanes and stars by the chance of a hit), or
-## stars tinted by the known price of one good (c; -1 = off).
+## Map modes: the danger map (lanes and stars by the chance of a hit), the
+## influence map (charted markets by the player's influence tier, dim where
+## there is none), or stars tinted by the known price of one good (c; -1 =
+## off).
 func _apply_price_map(c: int) -> void:
 	tooltip.price_commodity = c
 	if map_mode.danger:
@@ -377,6 +387,21 @@ func _apply_price_map(c: int) -> void:
 		map.set_tints(stars)
 		return
 	map.set_lane_colors({})
+	if map_mode.influence:
+		var w: World = Sim.world
+		var marks := [Influence.threshold(w, Influence.Tier.POST), Influence.threshold(w, Influence.Tier.CONCESSION),
+			Influence.threshold(w, Influence.Tier.PATRON)]
+		var tints := {}
+		for s in w.galaxy.systems:
+			var v := Influence.of(w, Sim.PLAYER, s.index)
+			if w.economy.market_at(s.index) == null or not Sim.player().is_known(s.index):
+				tints[s.index] = Color(0.28, 0.3, 0.36)
+			elif v < 1.0:
+				tints[s.index] = Color(0.5, 0.55, 0.64)
+			else:
+				tints[s.index] = InfluenceCard.tier_color(v, marks)
+		map.set_tints(tints)
+		return
 	if c < 0:
 		map.set_tints({})
 		return
@@ -393,7 +418,7 @@ func _apply_price_map(c: int) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	var k := event as InputEventKey
-	if k == null or not k.pressed or k.echo:
+	if k == null or not k.pressed or k.echo or outcome.game_over:
 		return
 	var overlay := _overlay_open()
 	match k.physical_keycode:
@@ -410,6 +435,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				news_panel.close_panel()
 			elif fleet_screen.visible:
 				fleet_screen.close_panel()
+			elif outcome.visible:
+				outcome.close_panel()
 			elif system_view.visible:
 				system_view.close_view()
 			elif ship_panel.visible:

@@ -29,12 +29,14 @@ var recipes: Array[Dictionary] = []
 var history: Array[PackedFloat32Array] = []
 ## Running events (set by WorldEvents.apply_all): output and consumption
 ## multipliers per commodity, a closed port (no trade), an embargo (no
-## background traffic), and tariffs (0 = waived by a trade agreement).
+## background traffic), extra tariff points (a tariff hike) and a tariff
+## multiplier (0 = waived by a trade agreement).
 ## `banned`: 1 per good the government bans (no background traffic in it).
 var supply_mult := PackedFloat64Array()
 var demand_mult := PackedFloat64Array()
 var closed := false
 var isolated := false
+var tariff_add := 0.0
 var tariff_mult := 1.0
 var banned := PackedByteArray()
 

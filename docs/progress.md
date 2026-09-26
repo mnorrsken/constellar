@@ -3,7 +3,7 @@
 Milestone-by-milestone status. See [`constellar-plan.md`](../constellar-plan.md)
 for the plan and acceptance criteria this tracks.
 
-Current test count: **116 tests, 3592 assertions, 0 failures** (`make test`).
+Current test count: **132 tests, 3675 assertions, 0 failures** (`make test`).
 
 - **M0 — Project skeleton — done.** Godot 4.7 project setup, autoloads
   (`Events`/`Defs`/`Sim`), `data/commodities.json`, Makefile, headless test
@@ -62,6 +62,14 @@ Current test count: **116 tests, 3592 assertions, 0 failures** (`make test`).
   headlines. Fleet screen (V), rewritten finance panel (ledger, profit
   charts) and shipyard panel (hull comparison, drag-and-drop fitting,
   Service), themed buttons/checkboxes/popups.
-- **M10 — Influence and goals — pending.**
+- **M10 — Influence and goals — done.** Per-system influence
+  (`sim/influence.gd`) grows from sales (more where a good is scarce) and
+  delivered contracts, and decays monthly; tiers unlock a trading post, a
+  trade concession (lower tariffs, first pick of new contracts) and patron
+  status (veto a tariff hike, broker peace, rarer wars/coups there).
+  `sim/goals.gd`: a company value goal and a Merchant Prince (patron of 5
+  systems) goal, checked monthly, plus bankruptcy after months in the red.
+  Influence card on the system panel, an influence map mode, an outcome
+  screen for reaching a goal or going bankrupt.
 - **M11 — Save/load and main menu — pending.**
 - **M12 — Rim Crises, art/audio pass, balance — pending.**

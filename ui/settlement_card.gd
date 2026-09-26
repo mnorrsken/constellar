@@ -66,6 +66,8 @@ func show_system(s: StarSystem) -> void:
 	for id in profile:
 		if float(profile[id]) > 0.0:
 			duties.append("%s %d%%" % ["all goods" if id == "*" else Defs.commodities[id].name, roundi(float(profile[id]) * 100.0)])
+	if m != null and m.tariff_add > 0.0:
+		duties.append("+%d%% hike" % roundi(m.tariff_add * 100.0))
 	_row("Tariffs", "none" if duties.is_empty() else ("waived (agreement)" if waived else ", ".join(duties)))
 	var bans: Array = gov.get("bans", [])
 	if not bans.is_empty():

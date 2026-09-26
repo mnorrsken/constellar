@@ -79,6 +79,8 @@ static func create(world_seed: int, stars_data: Dictionary, content: Dictionary)
 	for c in w.companies:
 		c.known.resize(w.galaxy.size())
 		c.known.fill(0)
+		c.influence.resize(w.galaxy.size())
+		c.influence.fill(0.0)
 		if w.start_system >= 0:
 			w.reveal(c.id, w.start_system)
 	w.events.clear()
@@ -108,6 +110,7 @@ func advance_day() -> void:
 	day += 1
 	if markets_moved:
 		Trading.observe_docked(self)
+		Influence.observe_posts(self)
 		Contracts.post_offers(self)
 		events.append({"type": "contracts"})
 	WorldEvents.daily(self)
@@ -138,6 +141,8 @@ func advance_day() -> void:
 	if date.day == 1:
 		Danger.monthly(self)
 		Trading.monthly_costs(self)
+		Influence.monthly(self)
+		Goals.monthly(self)
 		WorldEvents.monthly(self)
 	Trading.process_orders(self)
 
@@ -327,6 +332,32 @@ func set_insurance(company_id: int, ship_id: int, on: bool) -> Dictionary:
 	s.insured = on
 	events.append({"type": "orders", "ship": ship_id, "company": company_id})
 	return {"ok": true}
+
+# --- influence and goals (see Influence, Goals) --------------------------------------
+
+func open_trading_post(company_id: int, system_index: int) -> Dictionary:
+	return Influence.open_post(self, company_id, system_index)
+
+func sign_concession(company_id: int, system_index: int) -> Dictionary:
+	return Influence.sign_concession(self, company_id, system_index)
+
+## A patron blocks a running event (a tariff hike) at its system.
+func veto_event(company_id: int, event_id: int) -> Dictionary:
+	var ev := WorldEvents.get_event(self, event_id)
+	if ev == null:
+		return {"ok": false, "error": "That is over already"}
+	return Influence.veto(self, company_id, ev)
+
+## A patron of both sides ends a war.
+func broker_peace(company_id: int, event_id: int) -> Dictionary:
+	var ev := WorldEvents.get_event(self, event_id)
+	if ev == null:
+		return {"ok": false, "error": "That is over already"}
+	return Influence.broker_peace(self, company_id, ev)
+
+## Picks the company's goal (balance.json "goals" id, "" = sandbox).
+func set_goal(company_id: int, goal_id: String) -> Dictionary:
+	return Goals.set_goal(self, company_id, goal_id)
 
 ## "Safest" routing (around dangerous lanes) or the shortest route.
 func set_routing(company_id: int, ship_id: int, safest: bool) -> Dictionary:

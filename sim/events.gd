@@ -51,3 +51,13 @@ signal charted(company_id: int)
 ## Something the player should look at and act on: one of their ships
 ## arrived or left the yard. The game has paused (if auto_pause is on).
 signal attention(ship_id: int, system_index: int)
+
+## Influence moved (trade, contracts, the monthly decay, posts,
+## concessions, a veto or peace), or a company picked a goal.
+signal influence_changed
+
+## A company reached its victory goal.
+signal goal_reached(company_id: int)
+
+## A company went bankrupt (the game pauses).
+signal bankrupt(company_id: int)

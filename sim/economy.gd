@@ -92,7 +92,8 @@ func run_traffic() -> void:
 	var per_ly := float(t.get("per_ly", 0.01))
 	var capacity := float(t.get("capacity", 60.0)) * float(_cfg.get("volume_scale", 1.0))
 	var max_share := float(t.get("max_share", 0.25))
-	var full := float(_cfg.get("overstock_start", 1.0))
+	# Traders fill a market up to this share of its target stock.
+	var full := float(t.get("fill", _cfg.get("overstock_start", 1.0)))
 	for link in links:
 		var ends := [[link[0], link[1]], [link[1], link[0]]]
 		# Embargoes and closed ports stop the NPC traders.
@@ -138,6 +139,9 @@ func _add_recipes(m: Market, st: Settlement, arch: Dictionary) -> void:
 		m.add_recipe(_scaled(needs, m.size), {})
 	if m.human_size > 0.0:
 		m.add_recipe(_scaled(_cfg.get("population_needs", {}), m.human_size), {})
+	# Robots wear out parts: machinery and electronics, by the robot count.
+	if st.robots > 0:
+		m.add_recipe(_scaled(_cfg.get("robot_needs", {}), size_of(st.robots, 0.0)), {})
 
 ## {commodity id: per-size rate} -> {commodity index: tonnes per day}
 func _scaled(rates: Dictionary, factor: float) -> Dictionary:

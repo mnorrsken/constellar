@@ -2,8 +2,9 @@ class_name Contract
 extends RefCounted
 ## One job on a market's contract board: carry freight (the client's own
 ## cargo, loaded free), a group of passengers or mail sacks from `origin` to
-## `destination` by `deadline`. Delivered on time = `reward`; missed =
-## `penalty` and the job is taken away.
+## `destination` by `deadline`. Delivered on time = `reward` (plus a bonus
+## for early delivery on express jobs); missed = `penalty` and the job is
+## taken away.
 
 enum Status { OFFERED, ACCEPTED, DONE, FAILED }
 
@@ -22,6 +23,14 @@ var penalty := 0.0
 var deadline := 0
 ## Offered until this day (then it disappears from the board).
 var offered_until := 0
+## Only a concession holder at the origin may take it before this day
+## (first pick; -1 = open to all).
+var reserved_until := -1
+## Mail, luxury passengers and "express" goods: early delivery pays a bonus
+## (see Contracts.early_bonus).
+var express := false
+## The day it was accepted (-1 = still on the board).
+var accepted_day := -1
 var status := Status.OFFERED
 var company := -1
 var ship := -1

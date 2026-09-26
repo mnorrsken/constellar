@@ -1,8 +1,9 @@
 class_name ContractsPanel
 extends PanelContainer
 ## Contracts (C): the job board of one market, with Accept for a player ship
-## docked there, and the player's running jobs with Abandon. Opened from the
-## system card or with C; Esc closes.
+## docked there, and the player's running jobs with Abandon (express jobs
+## show their early-delivery bonus). Opened from the system card or with C;
+## Esc closes.
 
 signal closed
 
@@ -121,7 +122,7 @@ func _fill_offers(w: World, ship: Ship) -> void:
 				note = "out of range"
 			if note == "" and not Contracts.fits(w, ship, c):
 				note = "no room"
-		_offers.add_child(_cell(KIND_NAMES.get(c.kind, c.kind), TEXT, 14))
+		_offers.add_child(_kind_cell(w, c))
 		_offers.add_child(_cell(_load(c), TEXT, 14))
 		_offers.add_child(_cell(to.name if charted else "uncharted system", TEXT if charted else MUTED, 14))
 		_offers.add_child(_cell(trip, trip_color, 14, true))
@@ -157,11 +158,28 @@ func _fill_jobs(w: World) -> void:
 		_jobs.add_child(_cell(w.galaxy.systems[c.origin].name, MUTED, 14))
 		_jobs.add_child(_cell(w.galaxy.systems[c.destination].name, TEXT, 14))
 		_jobs.add_child(_cell(_date_left(w, c.deadline), AMBER if left <= 10 else TEXT, 14, true))
-		_jobs.add_child(_money(c.reward, GREEN))
+		var pay := _money(c.reward, GREEN)
+		if c.express:
+			var bonus := Contracts.early_bonus(Sim.world, c, w.day)
+			pay.text += "  +%s" % Format.money_short(bonus)
+			pay.tooltip_text = "Express: %s cr bonus if delivered today; it shrinks toward the deadline" % Format.thousands(roundi(bonus))
+			pay.mouse_filter = Control.MOUSE_FILTER_PASS
+		_jobs.add_child(pay)
 		var abandon := _button("Abandon  −%s" % Format.thousands(roundi(c.penalty)),
 			func(): Sim.abandon_contract(c.id))
 		abandon.tooltip_text = "Give the job up and pay the penalty"
 		_jobs.add_child(abandon)
+
+## "Mail · express" for express jobs (with the bonus in the tooltip).
+func _kind_cell(w: World, c: Contract) -> Label:
+	var l := _cell(KIND_NAMES.get(c.kind, c.kind), TEXT, 14)
+	if c.express:
+		l.text += "  · express"
+		l.add_theme_color_override("font_color", AMBER)
+		l.tooltip_text = "Up to +%d%% of the reward for early delivery: the faster, the more" % roundi(
+			float(w.content.balance.get("contracts", {}).get("express_bonus", 0.0)) * 100.0)
+		l.mouse_filter = Control.MOUSE_FILTER_PASS
+	return l
 
 ## The selected player ship if docked here, else any docked here.
 func _docked_ship() -> Ship:
