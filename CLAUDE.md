@@ -117,14 +117,13 @@ Follows the wiki "GitHub Release Process"; what differs here:
 - Bump `config/version` in `project.godot` in the release commit: the tag
   must match it or `release.yml` refuses to build.
 - A `vX.Y.Z` tag runs `.github/workflows/release.yml` (laid out like
-  fringeworlds'): checks; the Windows export on Linux and the macOS export
-  plus DMG (`packaging/macos/build-dmg.sh`) on a Mac, where the app's
-  signature is checked and it is run headless; a per-user MSI (WiX 6,
-  `packaging/windows/`) built on Windows and installed/uninstalled (the game
-  is not started there: a headless run on the Windows runner hung); then the
-  GitHub release with checksums.
+  fringeworlds'; it only builds and publishes, no game tests): the Windows
+  export on Linux, the macOS export plus DMG
+  (`packaging/macos/build-dmg.sh`) on a Mac, a per-user MSI (WiX 6,
+  `packaging/windows/`) built on Windows, then the GitHub release with
+  checksums. `ci.yml` runs the checks on every push.
 - Before tagging a change to the process, dry-run it: `gh workflow run
-  release.yml` builds and tests everything as 0.0.0 and publishes nothing.
+  release.yml` builds everything and publishes nothing.
 - Nothing is signed: SmartScreen warns on Windows, and Gatekeeper blocks the
   first start on macOS (the release notes say how to get past both).
 - Godot upgrades: bump the default version in

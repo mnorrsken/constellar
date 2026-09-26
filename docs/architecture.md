@@ -952,10 +952,9 @@ import with its log grepped, tests, a 20-frame headless run) on pushes to
 main and PRs. Godot and its export templates come from the composite
 action `.github/actions/setup-godot` (pinned version, cached per runner OS;
 the same action as fringeworlds). `release.yml` runs on `v*` tags, or by
-hand as a dry run that publishes nothing: tests (and the tag must equal
-`config/version`) → Windows export on Linux, macOS export on a Mac with the
-DMG built, mounted, its signature checked and the app run headless → MSI
-built on Windows, installed and uninstalled (not run: a headless start on
-the Windows runner hung) → a GitHub release with both installers,
-`checksums.txt`, install steps and the version's `## [X.Y.Z]` CHANGELOG
-section. Every job has a timeout. Nothing is signed or notarized.
+hand as a dry run that publishes nothing. It only builds, no game tests:
+the tag must equal `config/version` → Windows export on Linux, macOS
+export and DMG on a Mac → MSI built on Windows → a GitHub release with
+both installers, `checksums.txt`, install steps and the version's
+`## [X.Y.Z]` CHANGELOG section. Every job has a timeout. Nothing is signed
+or notarized.

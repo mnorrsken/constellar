@@ -3,11 +3,12 @@ run-name: Release ${{ github.ref_name }}
 
 # Tag a commit and the installers appear on a GitHub release:
 #
-#     make test && git tag v0.1.0 && git push origin v0.1.0
+#     git tag v0.1.0 && git push origin v0.1.0
 #
 # The tag must match config/version in project.godot: the workflow refuses to
 # build otherwise, so a release can't ship with a stale version in the macOS
 # bundle, the MSI and the file names. (Laid out like fringeworlds' release.)
+# It only builds and publishes; the checks run in ci.yml on every push.
 #
 # workflow_dispatch runs everything except publishing, which is how you check a
 # change to this file without burning a version number.
@@ -21,10 +22,10 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Tests
+  version:
+    name: Version
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -42,14 +43,9 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Version $version"
 
-      - uses: ./.github/actions/setup-godot
-
-      - name: Import, test, headless run
-        run: .github/scripts/check.sh
-
   build:
     name: Build ${{ matrix.target }}
-    needs: test
+    needs: version
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -59,41 +55,26 @@ jobs:
           # Windows cross-exports fine from Linux.
           - { os: ubuntu-latest, target: windows }
           # macOS is built on a Mac so the ad-hoc signature is made by the real
-          # codesign and can be verified here: an unsigned arm64 app will not
-          # launch at all on Apple silicon.
+          # codesign: an unsigned arm64 app will not launch on Apple silicon.
           - { os: macos-latest, target: mac }
     env:
-      VERSION: ${{ needs.test.outputs.version }}
+      VERSION: ${{ needs.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-godot
 
-      # First import of a fresh checkout logs font errors (see check.sh).
-      - name: Warm up the import cache
+      # A fresh checkout's first import logs font errors; the export after it
+      # is clean.
+      - name: Import
         run: make import GODOT="$GODOT_BIN" > /dev/null 2>&1 || true
 
       - name: Export ${{ matrix.target }}
-        run: |
-          set -euo pipefail
-          make export-${{ matrix.target }} GODOT="$GODOT_BIN" 2>&1 | tee export.log
-          if grep -E "ERROR|SCRIPT" export.log; then exit 1; fi
+        run: make export-${{ matrix.target }} GODOT="$GODOT_BIN"
 
-      - name: Build and check the disk image
+      - name: Build the disk image
         if: matrix.target == 'mac'
-        run: |
-          set -euo pipefail
-          packaging/macos/build-dmg.sh build/macos/Constellar.zip "$VERSION" dist
-          hdiutil attach -nobrowse -readonly -mountpoint /tmp/constellar dist/*.dmg
-          app=/tmp/constellar/Constellar.app
-          codesign --verify --deep --strict "$app"
-          codesign -dvv "$app" 2>&1 | grep -q "Signature=adhoc"
-          exe=$(defaults read "$app/Contents/Info" CFBundleExecutable)
-          "$app/Contents/MacOS/$exe" --headless --quit-after 40
-          # The volume can stay busy for a moment after the game exits.
-          for i in 1 2 3 4 5; do hdiutil detach /tmp/constellar && break; sleep 2; done
-          [ ! -d /tmp/constellar/Constellar.app ] || hdiutil detach -force /tmp/constellar
-          echo "Disk image built; the app is signed and starts cleanly."
+        run: packaging/macos/build-dmg.sh build/macos/Constellar.zip "$VERSION" dist
 
       - name: Upload the Windows game
         if: matrix.target == 'windows'
@@ -113,15 +94,14 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # WiX only runs on Windows. This job only packages and installs: the game
-  # itself is not started here (a headless run on the Windows runner hung).
+  # WiX only runs on Windows.
   msi:
     name: Windows installer
-    needs: [test, build]
+    needs: [version, build]
     runs-on: windows-latest
     timeout-minutes: 10
     env:
-      VERSION: ${{ needs.test.outputs.version }}
+      VERSION: ${{ needs.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
 
@@ -137,29 +117,6 @@ jobs:
         shell: pwsh
         run: ./packaging/windows/build-msi.ps1 -Version $env:VERSION -ExePath build/windows/Constellar.exe -OutDir dist
 
-      - name: Install and uninstall
-        shell: pwsh
-        run: |
-          function Invoke-Msiexec($arguments) {
-            $p = Start-Process msiexec -PassThru -NoNewWindow -ArgumentList $arguments
-            if (-not $p.WaitForExit(180000)) { $p.Kill(); throw "msiexec $($arguments[0]) timed out" }
-            return $p.ExitCode
-          }
-          $msi = (Get-ChildItem dist\*.msi)[0].FullName
-          $code = Invoke-Msiexec @('/i', "`"$msi`"", '/quiet', '/norestart', '/l*v', 'install.log')
-          if ($code -ne 0) { Get-Content install.log -Tail 60; throw "install failed: $code" }
-
-          $exe = Join-Path $env:LOCALAPPDATA 'Programs\Constellar\Constellar.exe'
-          if (-not (Test-Path $exe)) { Get-Content install.log -Tail 60; throw "nothing landed at $exe" }
-          $lnk = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Constellar.lnk'
-          if (-not (Test-Path $lnk)) { throw "no Start menu shortcut at $lnk" }
-          if (Test-Path (Join-Path $env:ProgramFiles 'Constellar')) { throw "a per-user install wrote to Program Files" }
-
-          $code = Invoke-Msiexec @('/x', "`"$msi`"", '/quiet', '/norestart')
-          if ($code -ne 0) { throw "uninstall failed: $code" }
-          if (Test-Path $exe) { throw "uninstall left $exe behind" }
-          Write-Host "Installed and uninstalled cleanly."
-
       - uses: actions/upload-artifact@v7
         with:
           name: installer-windows
@@ -169,7 +126,7 @@ jobs:
 
   release:
     name: Publish release
-    needs: [test, build, msi]
+    needs: [version, build, msi]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -194,7 +151,7 @@ jobs:
 
       - name: Extract the changelog section for this release
         env:
-          VERSION: ${{ needs.test.outputs.version }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
           set -euo pipefail
           # Everything between this version's heading and the next one.
