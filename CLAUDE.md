@@ -114,16 +114,21 @@ Follows the wiki "GitHub Release Process"; what differs here:
 - CHANGELOG headings are Keep a Changelog: `## [X.Y.Z] - YYYY-MM-DD` (the
   `## [Unreleased]` section becomes it). `release.yml` takes the notes from
   that exact heading and fails without it.
-- A `vX.Y.Z` tag runs `.github/workflows/release.yml`: checks, Godot export
-  on Linux, a per-user MSI (WiX 6, `packaging/windows/`) and a DMG
-  (`packaging/macos/build-dmg.sh`), each installed or mounted and run
-  headless, then the GitHub release with checksums. CI stamps
-  `config/version` in `project.godot` from the tag; don't bump it by hand.
+- Bump `config/version` in `project.godot` in the release commit: the tag
+  must match it or `release.yml` refuses to build.
+- A `vX.Y.Z` tag runs `.github/workflows/release.yml` (laid out like
+  fringeworlds'): checks; the Windows export on Linux and the macOS export
+  plus DMG (`packaging/macos/build-dmg.sh`) on a Mac, where the app's
+  signature is checked and it is run headless; a per-user MSI (WiX 6,
+  `packaging/windows/`) built on Windows and installed/uninstalled (the game
+  is not started there: a headless run on the Windows runner hung); then the
+  GitHub release with checksums.
 - Before tagging a change to the process, dry-run it: `gh workflow run
   release.yml` builds and tests everything as 0.0.0 and publishes nothing.
 - Nothing is signed: SmartScreen warns on Windows, and Gatekeeper blocks the
   first start on macOS (the release notes say how to get past both).
-- Godot upgrades: bump `GODOT_VERSION` in both workflows.
+- Godot upgrades: bump the default version in
+  `.github/actions/setup-godot/action.yml`.
 
 ## GDScript notes
 

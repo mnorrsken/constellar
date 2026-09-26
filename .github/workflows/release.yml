@@ -1,119 +1,151 @@
 name: Release
 run-name: Release ${{ github.ref_name }}
 
-# A v* tag builds the Windows and macOS installers and publishes a GitHub
-# release with them. Run it by hand (Actions > Release > Run workflow) for a
-# dry run: everything is built and smoke-tested as version 0.0.0 and kept as
-# workflow artifacts, but nothing is published.
+# Tag a commit and the installers appear on a GitHub release:
+#
+#     make test && git tag v0.1.0 && git push origin v0.1.0
+#
+# The tag must match config/version in project.godot: the workflow refuses to
+# build otherwise, so a release can't ship with a stale version in the macOS
+# bundle, the MSI and the file names. (Laid out like fringeworlds' release.)
+#
+# workflow_dispatch runs everything except publishing, which is how you check a
+# change to this file without burning a version number.
+
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
   contents: read
 
-env:
-  # Keep in step with ci.yml and the Godot the project is made with.
-  GODOT_VERSION: "4.7.2"
-
 jobs:
-  check:
-    name: Import, test and run
+  test:
+    name: Tests
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install Godot
-        run: .github/scripts/install-godot.sh
-
-      - name: Import, test, headless run
-        run: .github/scripts/check.sh
-
-  export:
-    name: Export the game
-    runs-on: ubuntu-latest
-    needs: [check]
+    timeout-minutes: 20
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
 
-      - name: Version from the tag
+      - name: Read config/version (and check the tag matches it)
         id: version
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
-          else
-            echo "version=0.0.0" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          version=$(sed -n 's/^config\/version="\(.*\)"/\1/p' project.godot)
+          if [[ "$GITHUB_REF" == refs/tags/* && "${GITHUB_REF_NAME#v}" != "$version" ]]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match config/version=\"$version\" in project.godot"
+            exit 1
           fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Version $version"
 
-      - name: Cache the export templates
-        uses: actions/cache@v6
-        with:
-          path: ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
-          key: godot-templates-${{ env.GODOT_VERSION }}
+      - uses: ./.github/actions/setup-godot
 
-      - name: Install Godot and the export templates
-        run: .github/scripts/install-godot.sh --templates
+      - name: Import, test, headless run
+        run: .github/scripts/check.sh
 
-      # The exports read their version (Windows file version, macOS bundle
-      # version) from the project setting.
-      - name: Stamp the version
-        run: |
-          sed -i 's/^config\/version=.*/config\/version="${{ steps.version.outputs.version }}"/' project.godot
-          grep '^config/version=' project.godot
-
-      # First import of a fresh checkout logs font errors (see check.sh).
-      - name: Warm up the import cache
-        run: make import > /dev/null 2>&1 || true
-
-      - name: Export
-        run: |
-          make export-windows 2>&1 | tee export.log
-          make export-mac 2>&1 | tee -a export.log
-          if grep -E "ERROR|SCRIPT" export.log; then exit 1; fi
-          ls -la build/windows build/macos
-          test -s build/windows/Constellar.exe
-          test -s build/macos/Constellar.zip
-
-      - name: Upload the exports
-        uses: actions/upload-artifact@v7
-        with:
-          name: exports
-          path: |
-            build/windows/Constellar.exe
-            build/macos/Constellar.zip
-          if-no-files-found: error
-
-  windows:
-    name: Windows installer
-    runs-on: windows-latest
-    needs: [export]
+  build:
+    name: Build ${{ matrix.target }}
+    needs: test
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows cross-exports fine from Linux.
+          - { os: ubuntu-latest, target: windows }
+          # macOS is built on a Mac so the ad-hoc signature is made by the real
+          # codesign and can be verified here: an unsigned arm64 app will not
+          # launch at all on Apple silicon.
+          - { os: macos-latest, target: mac }
+    env:
+      VERSION: ${{ needs.test.outputs.version }}
     steps:
       - uses: actions/checkout@v7
 
-      - name: Fetch the exports
-        uses: actions/download-artifact@v8
+      - uses: ./.github/actions/setup-godot
+
+      # First import of a fresh checkout logs font errors (see check.sh).
+      - name: Warm up the import cache
+        run: make import GODOT="$GODOT_BIN" > /dev/null 2>&1 || true
+
+      - name: Export ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          make export-${{ matrix.target }} GODOT="$GODOT_BIN" 2>&1 | tee export.log
+          if grep -E "ERROR|SCRIPT" export.log; then exit 1; fi
+
+      - name: Build and check the disk image
+        if: matrix.target == 'mac'
+        run: |
+          set -euo pipefail
+          packaging/macos/build-dmg.sh build/macos/Constellar.zip "$VERSION" dist
+          hdiutil attach -nobrowse -readonly -mountpoint /tmp/constellar dist/*.dmg
+          app=/tmp/constellar/Constellar.app
+          codesign --verify --deep --strict "$app"
+          codesign -dvv "$app" 2>&1 | grep -q "Signature=adhoc"
+          exe=$(defaults read "$app/Contents/Info" CFBundleExecutable)
+          "$app/Contents/MacOS/$exe" --headless --quit-after 40
+          hdiutil detach /tmp/constellar
+          echo "Disk image built; the app is signed and starts cleanly."
+
+      - name: Upload the Windows game
+        if: matrix.target == 'windows'
+        uses: actions/upload-artifact@v7
         with:
-          name: exports
-          path: build
+          name: build-windows
+          path: build/windows/Constellar.exe
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload the disk image
+        if: matrix.target == 'mac'
+        uses: actions/upload-artifact@v7
+        with:
+          name: installer-mac
+          path: dist/*.dmg
+          if-no-files-found: error
+          retention-days: 7
+
+  # WiX only runs on Windows. This job only packages and installs: the game
+  # itself is not started here (a headless run on the Windows runner hung).
+  msi:
+    name: Windows installer
+    needs: [test, build]
+    runs-on: windows-latest
+    timeout-minutes: 10
+    env:
+      VERSION: ${{ needs.test.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: build-windows
+          path: build/windows
 
       - name: Install WiX
         run: dotnet tool install --global wix --version 6.0.2
 
       - name: Build the installer
         shell: pwsh
-        run: ./packaging/windows/build-msi.ps1 -Version ${{ needs.export.outputs.version }} -ExePath build/windows/Constellar.exe -OutDir dist
+        run: ./packaging/windows/build-msi.ps1 -Version $env:VERSION -ExePath build/windows/Constellar.exe -OutDir dist
 
-      - name: Install, run and uninstall
+      - name: Install and uninstall
         shell: pwsh
         run: |
+          function Invoke-Msiexec($arguments) {
+            $p = Start-Process msiexec -PassThru -NoNewWindow -ArgumentList $arguments
+            if (-not $p.WaitForExit(180000)) { $p.Kill(); throw "msiexec $($arguments[0]) timed out" }
+            return $p.ExitCode
+          }
           $msi = (Get-ChildItem dist\*.msi)[0].FullName
-          $p = Start-Process msiexec -PassThru -Wait -NoNewWindow -ArgumentList @(
-            '/i', "`"$msi`"", '/quiet', '/norestart', '/l*v', 'install.log')
-          if ($p.ExitCode -ne 0) { Get-Content install.log -Tail 60; throw "install failed: $($p.ExitCode)" }
+          $code = Invoke-Msiexec @('/i', "`"$msi`"", '/quiet', '/norestart', '/l*v', 'install.log')
+          if ($code -ne 0) { Get-Content install.log -Tail 60; throw "install failed: $code" }
 
           $exe = Join-Path $env:LOCALAPPDATA 'Programs\Constellar\Constellar.exe'
           if (-not (Test-Path $exe)) { Get-Content install.log -Tail 60; throw "nothing landed at $exe" }
@@ -121,120 +153,88 @@ jobs:
           if (-not (Test-Path $lnk)) { throw "no Start menu shortcut at $lnk" }
           if (Test-Path (Join-Path $env:ProgramFiles 'Constellar')) { throw "a per-user install wrote to Program Files" }
 
-          $run = Start-Process $exe -PassThru -Wait -ArgumentList @('--headless', '--quit-after', '20')
-          if ($run.ExitCode -ne 0) { throw "the game exited with $($run.ExitCode)" }
-
-          $p = Start-Process msiexec -PassThru -Wait -NoNewWindow -ArgumentList @(
-            '/x', "`"$msi`"", '/quiet', '/norestart')
-          if ($p.ExitCode -ne 0) { throw "uninstall failed: $($p.ExitCode)" }
+          $code = Invoke-Msiexec @('/x', "`"$msi`"", '/quiet', '/norestart')
+          if ($code -ne 0) { throw "uninstall failed: $code" }
           if (Test-Path $exe) { throw "uninstall left $exe behind" }
+          Write-Host "Installed and uninstalled cleanly."
 
-      - name: Upload the installer
-        uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v7
         with:
           name: installer-windows
           path: dist/*.msi
           if-no-files-found: error
-
-  macos:
-    name: macOS disk image
-    runs-on: macos-latest
-    needs: [export]
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Fetch the exports
-        uses: actions/download-artifact@v8
-        with:
-          name: exports
-          path: build
-
-      - name: Build the disk image
-        run: packaging/macos/build-dmg.sh build/macos/Constellar.zip ${{ needs.export.outputs.version }} dist
-
-      - name: Mount and run
-        run: |
-          dmg=$(ls dist/*.dmg)
-          hdiutil attach -nobrowse -readonly -mountpoint /tmp/constellar "$dmg"
-          app=/tmp/constellar/Constellar.app
-          codesign --verify --deep --strict "$app"
-          exe=$(defaults read "$app/Contents/Info" CFBundleExecutable)
-          "$app/Contents/MacOS/$exe" --headless --quit-after 20
-          hdiutil detach /tmp/constellar
-
-      - name: Upload the disk image
-        uses: actions/upload-artifact@v7
-        with:
-          name: installer-macos
-          path: dist/*.dmg
-          if-no-files-found: error
+          retention-days: 7
 
   release:
-    name: Publish the GitHub release
-    if: startsWith(github.ref, 'refs/tags/v')
+    name: Publish release
+    needs: [test, build, msi]
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-    needs: [export, windows, macos]
+    timeout-minutes: 10
     permissions:
-      contents: write
+      contents: write # required to create the release
     steps:
       - uses: actions/checkout@v7
 
-      - name: Fetch the installers
-        uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@v8
         with:
           pattern: installer-*
           path: dist
           merge-multiple: true
 
-      - name: Compute sha256 checksums
-        working-directory: dist
+      - name: Checksums
         run: |
+          set -euo pipefail
+          cd dist
           sha256sum constellar_* > checksums.txt
+          ls -lh
           cat checksums.txt
 
       - name: Extract the changelog section for this release
+        env:
+          VERSION: ${{ needs.test.outputs.version }}
         run: |
-          VERSION_NO_V="${GITHUB_REF#refs/tags/v}"
+          set -euo pipefail
           # Everything between this version's heading and the next one.
-          awk -v v="$VERSION_NO_V" '
+          awk -v v="$VERSION" '
             $0 ~ "^## \\[" v "\\]" { found = 1; next }
             found && /^## \[/       { exit }
             found                   { print }
           ' CHANGELOG.md > notes-body.md
           if [ ! -s notes-body.md ]; then
-            echo "No CHANGELOG section for ${VERSION_NO_V}" >&2
+            echo "::error::no CHANGELOG section for $VERSION"
             exit 1
           fi
-          cat notes-body.md
 
-      - name: Create the release
+      - name: Create the GitHub release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${GITHUB_REF#refs/tags/}"
+          set -euo pipefail
           {
-            cat notes-body.md
             cat <<'NOTES'
-
           ## Install
 
-          **Windows:** run the `.msi`. It installs for your user only (no
-          administrator rights) into `%LocalAppData%\Programs\Constellar` and
-          adds Constellar to the Start menu. The installer is not signed, so
-          SmartScreen may say "Windows protected your PC": choose **More info**,
-          then **Run anyway**.
+          **The first launch shows a security warning on Windows and macOS.**
+          These builds aren't signed with a paid developer certificate, so the
+          OS can't identify the publisher. Nothing is wrong with the game.
 
-          **macOS** (Intel: macOS 11 or later; Apple silicon: 13 or later): open
-          the `.dmg` and drag Constellar onto Applications. The app is not notarized, so the
-          first start is blocked: open **System Settings > Privacy & Security**
-          and choose **Open Anyway** (or run
-          `xattr -dr com.apple.quarantine /Applications/Constellar.app`).
+          - **Windows:** run the `.msi`. It installs for your user only (no
+            administrator rights) into `%LocalAppData%\Programs\Constellar` and
+            adds Constellar to the Start menu. SmartScreen shows "Windows
+            protected your PC": click **More info**, then **Run anyway**.
+          - **macOS** (Intel: 11 or later; Apple silicon: 13 or later): open the
+            `.dmg` and drag Constellar onto Applications. The first start is
+            blocked: open **System Settings > Privacy & Security** and choose
+            **Open Anyway**, or clear the download flag with
+            `xattr -dr com.apple.quarantine /Applications/Constellar.app`.
 
           Check a download with `sha256sum -c checksums.txt` (attached below).
+
           NOTES
+            cat notes-body.md
           } > notes.md
 
-          gh release create "$VERSION" \
-            --title "Constellar $VERSION" \
-            --notes-file notes.md \
-            dist/constellar_* dist/checksums.txt
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "Constellar $GITHUB_REF_NAME" \
+            --notes-file notes.md

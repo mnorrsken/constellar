@@ -11,19 +11,15 @@ on:
 permissions:
   contents: read
 
-env:
-  # Keep in step with release.yml and the Godot the project is made with.
-  GODOT_VERSION: "4.7.2"
-
 jobs:
   check:
     name: Import, test and run
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
-      - name: Install Godot
-        run: .github/scripts/install-godot.sh
+      - uses: ./.github/actions/setup-godot
 
       - name: Import, test, headless run
         run: .github/scripts/check.sh

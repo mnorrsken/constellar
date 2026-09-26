@@ -946,13 +946,16 @@ Godot's "Constellar- Merchant Empire.app" to `Constellar.app` (the ad-hoc
 signature survives), adds an `/Applications` link and makes a compressed
 DMG.
 
-`.github/workflows/ci.yml` runs `.github/scripts/check.sh` (import with the
-log grepped, tests, a 20-frame headless run) on pushes to main and PRs,
-with Godot installed by `.github/scripts/install-godot.sh`
-(`GODOT_VERSION` in the workflows). `release.yml` runs on `v*` tags, or by
-hand as a dry run that builds version 0.0.0 and publishes nothing: check →
-export on Linux (templates cached, `config/version` stamped from the tag) →
-Windows: MSI built, installed, run headless, uninstalled → macOS: DMG
-built, mounted, app run headless → a GitHub release with both installers,
-`checksums.txt`, and notes from the tag's `## [X.Y.Z]` CHANGELOG section
-plus install steps. Nothing is signed or notarized.
+`.github/workflows/ci.yml` runs `.github/scripts/check.sh` (a warm-up
+import, since a fresh checkout's first import logs font errors, then the
+import with its log grepped, tests, a 20-frame headless run) on pushes to
+main and PRs. Godot and its export templates come from the composite
+action `.github/actions/setup-godot` (pinned version, cached per runner OS;
+the same action as fringeworlds). `release.yml` runs on `v*` tags, or by
+hand as a dry run that publishes nothing: tests (and the tag must equal
+`config/version`) → Windows export on Linux, macOS export on a Mac with the
+DMG built, mounted, its signature checked and the app run headless → MSI
+built on Windows, installed and uninstalled (not run: a headless start on
+the Windows runner hung) → a GitHub release with both installers,
+`checksums.txt`, install steps and the version's `## [X.Y.Z]` CHANGELOG
+section. Every job has a timeout. Nothing is signed or notarized.
