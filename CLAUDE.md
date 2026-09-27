@@ -121,7 +121,8 @@ Follows the wiki "GitHub Release Process"; what differs here:
   export on Linux, the macOS export plus DMG
   (`packaging/macos/build-dmg.sh`) on a Mac, a per-user MSI (WiX 6,
   `packaging/windows/`) built on Windows, then the GitHub release with
-  checksums. `ci.yml` runs the checks on every push.
+  checksums. `ci.yml` runs the checks on the same tag (nothing runs on
+  pushes to main); run `make test` locally before pushing.
 - Before tagging a change to the process, dry-run it: `gh workflow run
   release.yml` builds everything and publishes nothing.
 - Nothing is signed: SmartScreen warns on Windows, and Gatekeeper blocks the

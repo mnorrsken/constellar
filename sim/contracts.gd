@@ -13,7 +13,9 @@ class_name Contracts
 ## (and adds to the company's influence there); passing the deadline (or
 ## abandoning the job) costs the penalty and the load is taken off the ship.
 ## New offers at a market where a company holds the trade concession are
-## reserved for concession holders for the first days (first pick).
+## reserved for concession holders for the first days (first pick). Every
+## open board always has at least one plain (not express) container job to
+## a neighbouring port, which any ship docked there has charted.
 
 static func cfg(w: World) -> Dictionary:
 	return w.content.balance.get("contracts", {})
@@ -94,15 +96,33 @@ static func post_offers(w: World) -> void:
 			if c:
 				c.reserved_until = reserved
 				w.contracts.append(c)
+		ensure_plain(w, m)
 
-static func _new_offer(w: World, m: Market) -> Contract:
+## Posts a plain container job to a neighbouring port if the board has
+## none left (weekly, and when one is taken).
+static func ensure_plain(w: World, m: Market) -> void:
+	if m.closed:
+		return
+	for c in offers_at(w, m.system):
+		if c.kind == "freight" and not c.express and w.content.commodities[c.commodity].cargo_class == "container" \
+				and w.galaxy.lanes_of(m.system).any(func(l): return l.other(m.system) == c.destination):
+			return
+	for attempt in 10:
+		var c := _new_offer(w, m, true)
+		if c:
+			w.contracts.append(c)
+			return
+
+## A new offer at a market; `plain`: a container job, not express, to a
+## neighbouring port.
+static func _new_offer(w: World, m: Market, plain := false) -> Contract:
 	var k := cfg(w)
 	var st := w.galaxy.systems[m.system].settlement
 	var weights: Dictionary = k.get("kinds", {"freight": 1.0}).duplicate()
 	if st.population < 1000:
 		weights.erase("passengers")  # robot worlds: nobody to travel
-	var kind: String = _weighted(w, weights)
-	var dest := _destination(w, m, kind)
+	var kind: String = "freight" if plain else _weighted(w, weights)
+	var dest := _neighbour_port(w, m) if plain else _destination(w, m, kind)
 	if dest < 0:
 		return null
 	var route := Vector2i(m.system, dest)
@@ -120,7 +140,7 @@ static func _new_offer(w: World, m: Market) -> Contract:
 	c.destination = dest
 	match kind:
 		"freight":
-			c.commodity = _export_of(w, m)
+			c.commodity = _export_of(w, m, plain)
 			var ci := w.economy.index_of(c.commodity)
 			if Trading.is_banned(w, m.system, ci) or Trading.is_banned(w, dest, ci):
 				return null
@@ -185,19 +205,32 @@ static func _destination_weights(w: World, m: Market, people: bool) -> Dictionar
 		weights[v] = weight
 	return weights
 
+## A random market one lane away (-1 = none).
+static func _neighbour_port(w: World, m: Market) -> int:
+	var ports := []
+	for lane in w.galaxy.lanes_of(m.system):
+		if w.economy.market_at(lane.other(m.system)):
+			ports.append(lane.other(m.system))
+	return -1 if ports.is_empty() else ports[w.rng.randi_range(0, ports.size() - 1)]
+
 ## The client's cargo: a cargo class by freight_classes, then a good of that
-## class the market has (its exports first).
-static func _export_of(w: World, m: Market) -> String:
-	var cls: String = _weighted(w, cfg(w).get("freight_classes", {"container": 1.0}))
+## class the market has (its exports first). `plain`: a container good that
+## isn't express.
+static func _export_of(w: World, m: Market, plain := false) -> String:
+	var cls: String = "container" if plain else _weighted(w, cfg(w).get("freight_classes", {"container": 1.0}))
 	var weights := {}
 	for c in m.price.size():
 		if Trading.commodity_class(w, c) != cls:
+			continue
+		if plain and w.content.commodities[w.economy.commodity_ids[c]].get("express", false):
 			continue
 		if m.supply_rate[c] > m.demand_rate[c]:
 			weights[c] = 3.0
 		elif m.stock[c] > 0.0:
 			weights[c] = 1.0
 	if weights.is_empty():
+		if plain:
+			return w.economy.commodity_ids[w.economy.index_of("machinery")]
 		weights[w.rng.randi_range(0, m.price.size() - 1)] = 1.0
 	return w.economy.commodity_ids[_weighted(w, weights)]
 
@@ -237,6 +270,7 @@ static func accept(w: World, company_id: int, c: Contract, ship: Ship) -> Dictio
 	c.company = company_id
 	c.ship = ship.id
 	w.jobs.get_or_add(ship.id, []).append(c)
+	ensure_plain(w, w.economy.market_at(c.origin))
 	w.events.append({"type": "contract_accepted", "company": company_id, "ship": ship.id, "contract": c.id})
 	return {"ok": true}
 

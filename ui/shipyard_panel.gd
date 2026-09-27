@@ -49,6 +49,10 @@ var _new_title: Label
 var _no_yard := Label.new()
 ## Ship id -> the fit being edited (module per slot), until refitted.
 var _pending: Dictionary = {}
+## What the lists were built for (see _refresh), and per ship the controls
+## updated in place: name, service, sell, refit, and the fit shown.
+var _key: Variant = null
+var _refs: Dictionary = {}
 
 ## A module on the rack: drag it onto a slot.
 class ModuleChip extends PanelContainer:
@@ -140,6 +144,7 @@ func open(system_index: int) -> void:
 	_new_ships.visible = yard
 	_no_yard.visible = not yard
 	_pending.clear()
+	_key = null
 	visible = true
 	Motion.pop_in(self)
 	_refresh()
@@ -153,31 +158,61 @@ func _refresh() -> void:
 		return
 	var world: World = Sim.world
 	_cash.text = "%s cr   " % Format.thousands(roundi(Sim.player().cash))
-	_clear(_hulls)
 	var for_sale := world.fleet.hulls_for_sale(system, world.year())
 	if not for_sale.is_empty() and not (_selected_hull in for_sale):
 		_selected_hull = for_sale[0]
+	var here := world.ships_of(Sim.PLAYER).filter(
+		func(s): return s.system == system and s.status != Ship.Status.TRAVELING)
+	# Rows, slots and buttons are rebuilt only when what they show changes
+	# (any ship moving or money changing refreshes this panel; a drag or a
+	# click must survive that). The rest is updated in place.
+	var key := [system, for_sale, here.map(func(s): return [s.id, s.status, var_to_str(s.modules),
+		var_to_str(_pending.get(s.id, [])), s.busy_until])]
+	_show_detail(world)
+	if key == _key:
+		for s in here:
+			_update_fitting(world, s)
+		Fit.fit_screen.call_deferred(self, _refit_scroll, _refits, MARGIN)
+		return
+	_key = key
+	_clear(_hulls)
 	var group := ButtonGroup.new()
 	for id in for_sale:
 		_hulls.add_child(_hull_row(world, id, group))
-	_show_detail(world)
 	_clear(_refits)
-	var here := world.ships_of(Sim.PLAYER).filter(
-		func(s): return s.system == system and s.status != Ship.Status.TRAVELING)
+	_refs.clear()
 	if here.is_empty():
 		_refits.add_child(_cell("None of your ships is docked here.", MUTED, 14))
 	for s in here:
 		_refits.add_child(_fitting(s))
-	_fit_height.call_deferred()
+		_update_fitting(world, s)
+	Fit.fit_screen.call_deferred(self, _refit_scroll, _refits, MARGIN)
 
-## Sizes the ships list so the whole panel fits the screen (longer lists
-## scroll), then re-centres the panel.
-func _fit_height() -> void:
-	var others := get_combined_minimum_size().y - _refit_scroll.custom_minimum_size.y
-	var room := get_viewport_rect().size.y - 2.0 * MARGIN - others
-	_refit_scroll.custom_minimum_size.y = maxf(minf(_refits.get_combined_minimum_size().y, room), Fit.LEAST)
-	reset_size()
-	position = ((get_viewport_rect().size - size) * 0.5).round()
+## The parts of a ship's fitting view that change without a rebuild: its
+## condition, the service price, what it sells for, whether a refit is
+## affordable.
+func _update_fitting(world: World, s: Ship) -> void:
+	var r: Dictionary = _refs.get(s.id, {})
+	if r.is_empty():
+		return
+	var fleet := world.fleet
+	var busy := s.status == Ship.Status.REFITTING
+	var yard := fleet.is_shipyard(system)
+	r.name.text = "%s  ·  %s  ·  %d years  ·  condition %d%%" % [s.name, fleet.hull_def(s).name,
+		floori(Aging.age_years(world, s)), roundi(s.condition * 100.0)]
+	var q := Aging.service_quote(world, s)
+	r.service.text = "Service  %s cr" % Format.thousands(roundi(q.cost)) if q.cost >= 1.0 else "Service"
+	r.service.disabled = busy or q.cost < 1.0 or not yard
+	r.service.tooltip_text = "%d days in the yard, back to %d%% (the best its age allows)" % [q.days,
+		roundi(q.condition * 100.0)] if q.cost >= 1.0 else "In as good a state as its age allows"
+	if not yard:
+		r.service.tooltip_text = "Servicing needs a shipyard"
+	r.sell.text = "Sell  %s cr" % Format.thousands(roundi(fleet.sale_value(s)))
+	r.sell.disabled = busy or not yard
+	r.sell.tooltip_text = "Ships are sold at a shipyard" if not yard else ""
+	if r.has("refit"):
+		var quote := fleet.refit_quote(s, r.fit)
+		r.refit.disabled = quote.changed == 0 or Sim.player().cash < quote.cost
 
 ## One ship's fitting view: header with service and sale, the slot
 ## diagram, the module rack, and the refit quote.
@@ -191,22 +226,12 @@ func _fitting(s: Ship) -> Control:
 	row.add_theme_constant_override("separation", 6)
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 14)
-	var name_label := _cell("%s  ·  %s  ·  %d years  ·  condition %d%%" % [s.name, fleet.hull_def(s).name,
-		floori(Aging.age_years(world, s)), roundi(s.condition * 100.0)], TEXT, 15)
+	var name_label := _cell("", TEXT, 15)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(name_label)
-	var q := Aging.service_quote(world, s)
-	var service := _button("Service  %s cr" % Format.thousands(roundi(q.cost)) if q.cost >= 1.0 else "Service",
-		func(): Sim.service_ship(s.id))
-	service.disabled = busy or q.cost < 1.0 or not yard
-	service.tooltip_text = "%d days in the yard, back to %d%% (the best its age allows)" % [q.days,
-		roundi(q.condition * 100.0)] if q.cost >= 1.0 else "In as good a state as its age allows"
-	if not yard:
-		service.tooltip_text = "Servicing needs a shipyard"
-	var sell := _button("Sell  %s cr" % Format.thousands(roundi(fleet.sale_value(s))), func(): Sim.sell_ship(s.id))
-	sell.disabled = busy or not yard
-	if not yard:
-		sell.tooltip_text = "Ships are sold at a shipyard"
+	var service := _button("Service", func(): Sim.service_ship(s.id))
+	var sell := _button("Sell", func(): Sim.sell_ship(s.id))
+	_refs[s.id] = {"name": name_label, "service": service, "sell": sell, "fit": fit}
 	head.add_child(service)
 	head.add_child(sell)
 	row.add_child(head)
@@ -256,7 +281,7 @@ func _fitting(s: Ship) -> Control:
 	var refit := _button("Refit", func():
 		if Sim.refit_ship(s.id, fit).ok:
 			_pending.erase(s.id))
-	refit.disabled = quote.changed == 0 or Sim.player().cash < quote.cost
+	_refs[s.id].refit = refit
 	actions.add_child(reset)
 	actions.add_child(refit)
 	row.add_child(actions)

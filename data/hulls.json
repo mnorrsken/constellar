@@ -2,7 +2,7 @@
 	{
 		"id": "courier", "name": "Swift courier", "class": "Courier",
 		"slots": 2, "slot_tonnes": 60, "speed": 0.5, "jump_range": 12.0, "fuel_per_ly": 2,
-		"price": 180000, "crew_cost": 3000, "maintenance": 2000, "reliability": 0.97,
+		"price": 180000, "crew_cost": 3000, "maintenance": 1000, "reliability": 0.97,
 		"year_from": 3380, "year_to": 3430, "tech": 5,
 		"allowed": ["container", "cold", "secure", "mail", "cabins", "suites", "drive_tune", "jump_extender", "armour", "auto_trader"],
 		"look": { "length": 5.0, "beam": 1.2, "nose": "wedge", "engines": 2, "fins": true, "paint": "b9c6d3" },
@@ -11,7 +11,7 @@
 	{
 		"id": "packet", "name": "Packet light freighter", "class": "Light freighter",
 		"slots": 3, "slot_tonnes": 250, "speed": 0.3, "jump_range": 12.0, "fuel_per_ly": 4,
-		"price": 450000, "crew_cost": 4000, "maintenance": 3000, "reliability": 0.95,
+		"price": 450000, "crew_cost": 4000, "maintenance": 1500, "reliability": 0.95,
 		"year_from": 3370, "year_to": 3425, "tech": 4,
 		"allowed": ["*"],
 		"look": { "length": 7.0, "beam": 1.8, "nose": "block", "engines": 2, "fins": false, "paint": "8e9aa8" },
@@ -20,7 +20,7 @@
 	{
 		"id": "hauler", "name": "Hauler medium freighter", "class": "Medium freighter",
 		"slots": 5, "slot_tonnes": 400, "speed": 0.25, "jump_range": 12.0, "fuel_per_ly": 8,
-		"price": 1200000, "crew_cost": 7000, "maintenance": 6000, "reliability": 0.94,
+		"price": 1200000, "crew_cost": 7000, "maintenance": 3000, "reliability": 0.94,
 		"year_from": 3385, "year_to": 3440, "tech": 6,
 		"allowed": ["*"],
 		"look": { "length": 10.0, "beam": 2.4, "nose": "block", "engines": 3, "fins": false, "paint": "7f8b96" },
@@ -29,7 +29,7 @@
 	{
 		"id": "leviathan", "name": "Leviathan heavy freighter", "class": "Heavy freighter",
 		"slots": 8, "slot_tonnes": 600, "speed": 0.2, "jump_range": 10.0, "fuel_per_ly": 16,
-		"price": 3000000, "crew_cost": 12000, "maintenance": 11000, "reliability": 0.93,
+		"price": 3000000, "crew_cost": 12000, "maintenance": 5500, "reliability": 0.93,
 		"year_from": 3390, "year_to": 3450, "tech": 8,
 		"allowed": ["*"],
 		"look": { "length": 16.0, "beam": 3.2, "nose": "block", "engines": 4, "fins": false, "paint": "6f7780" },
@@ -38,7 +38,7 @@
 	{
 		"id": "ore_barge", "name": "Ore barge bulk carrier", "class": "Bulk carrier",
 		"slots": 6, "slot_tonnes": 900, "speed": 0.2, "jump_range": 11.0, "fuel_per_ly": 12,
-		"price": 2200000, "crew_cost": 8000, "maintenance": 7000, "reliability": 0.95,
+		"price": 2200000, "crew_cost": 8000, "maintenance": 3500, "reliability": 0.95,
 		"year_from": 3380, "year_to": 3450, "tech": 6,
 		"allowed": ["bulk", "armour", "drive_tune", "jump_extender", "auto_trader"],
 		"look": { "length": 13.0, "beam": 3.6, "nose": "block", "engines": 3, "fins": false, "paint": "8a7f6e" },
@@ -47,7 +47,7 @@
 	{
 		"id": "tanker", "name": "Deuteron tanker", "class": "Tanker",
 		"slots": 6, "slot_tonnes": 800, "speed": 0.22, "jump_range": 12.0, "fuel_per_ly": 12,
-		"price": 2400000, "crew_cost": 8000, "maintenance": 7500, "reliability": 0.94,
+		"price": 2400000, "crew_cost": 8000, "maintenance": 3800, "reliability": 0.94,
 		"year_from": 3385, "year_to": 3450, "tech": 7,
 		"allowed": ["tank", "armour", "drive_tune", "jump_extender", "auto_trader"],
 		"look": { "length": 13.0, "beam": 3.0, "nose": "round", "engines": 3, "fins": false, "paint": "9aa2a8" },
@@ -56,7 +56,7 @@
 	{
 		"id": "liner", "name": "Starliner", "class": "Liner",
 		"slots": 6, "slot_tonnes": 300, "speed": 0.35, "jump_range": 12.0, "fuel_per_ly": 9,
-		"price": 2600000, "crew_cost": 14000, "maintenance": 8000, "reliability": 0.96,
+		"price": 2600000, "crew_cost": 14000, "maintenance": 4000, "reliability": 0.96,
 		"year_from": 3395, "year_to": 3450, "tech": 7,
 		"allowed": ["cabins", "suites", "mail", "cold", "container", "armour", "drive_tune", "jump_extender", "auto_trader"],
 		"look": { "length": 12.0, "beam": 2.2, "nose": "round", "engines": 2, "fins": true, "paint": "d8dde3" },
@@ -65,7 +65,7 @@
 	{
 		"id": "pathfinder", "name": "Pathfinder long-range trader", "class": "Long-range trader",
 		"slots": 4, "slot_tonnes": 300, "speed": 0.35, "jump_range": 16.0, "fuel_per_ly": 6,
-		"price": 1900000, "crew_cost": 7000, "maintenance": 6500, "reliability": 0.93,
+		"price": 1900000, "crew_cost": 7000, "maintenance": 3200, "reliability": 0.93,
 		"year_from": 3405, "year_to": 3460, "tech": 8,
 		"allowed": ["*"],
 		"look": { "length": 10.0, "beam": 2.0, "nose": "wedge", "engines": 2, "fins": true, "paint": "5f7a8c" },
@@ -74,7 +74,7 @@
 	{
 		"id": "hauler_ii", "name": "Hauler II medium freighter", "class": "Medium freighter",
 		"slots": 6, "slot_tonnes": 450, "speed": 0.32, "jump_range": 13.0, "fuel_per_ly": 8,
-		"price": 1700000, "crew_cost": 7500, "maintenance": 5500, "reliability": 0.97,
+		"price": 1700000, "crew_cost": 7500, "maintenance": 2800, "reliability": 0.97,
 		"year_from": 3412, "year_to": 3470, "tech": 7,
 		"allowed": ["*"],
 		"look": { "length": 11.0, "beam": 2.4, "nose": "round", "engines": 3, "fins": false, "paint": "a3aeb8" },
@@ -83,7 +83,7 @@
 	{
 		"id": "courier_ii", "name": "Swift II courier", "class": "Courier",
 		"slots": 2, "slot_tonnes": 80, "speed": 0.6, "jump_range": 13.0, "fuel_per_ly": 2,
-		"price": 240000, "crew_cost": 3000, "maintenance": 1800, "reliability": 0.98,
+		"price": 240000, "crew_cost": 3000, "maintenance": 900, "reliability": 0.98,
 		"year_from": 3418, "year_to": 3480, "tech": 6,
 		"allowed": ["container", "cold", "secure", "mail", "cabins", "suites", "drive_tune", "jump_extender", "armour", "auto_trader"],
 		"look": { "length": 5.5, "beam": 1.2, "nose": "wedge", "engines": 2, "fins": true, "paint": "dfe6ee" },
@@ -92,7 +92,7 @@
 	{
 		"id": "starliner_ii", "name": "Starliner II", "class": "Liner",
 		"slots": 7, "slot_tonnes": 320, "speed": 0.4, "jump_range": 13.0, "fuel_per_ly": 9,
-		"price": 3100000, "crew_cost": 14000, "maintenance": 7000, "reliability": 0.97,
+		"price": 3100000, "crew_cost": 14000, "maintenance": 3500, "reliability": 0.97,
 		"year_from": 3421, "year_to": 3480, "tech": 8,
 		"allowed": ["cabins", "suites", "mail", "cold", "container", "armour", "drive_tune", "jump_extender", "auto_trader"],
 		"look": { "length": 13.0, "beam": 2.2, "nose": "round", "engines": 3, "fins": true, "paint": "eef1f4" },
@@ -101,7 +101,7 @@
 	{
 		"id": "leviathan_ii", "name": "Leviathan II heavy freighter", "class": "Heavy freighter",
 		"slots": 9, "slot_tonnes": 650, "speed": 0.24, "jump_range": 12.0, "fuel_per_ly": 16,
-		"price": 3600000, "crew_cost": 12000, "maintenance": 9500, "reliability": 0.96,
+		"price": 3600000, "crew_cost": 12000, "maintenance": 4800, "reliability": 0.96,
 		"year_from": 3426, "year_to": 3490, "tech": 8,
 		"allowed": ["*"],
 		"look": { "length": 17.0, "beam": 3.2, "nose": "round", "engines": 4, "fins": false, "paint": "7d8894" },

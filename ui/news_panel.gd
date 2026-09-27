@@ -90,7 +90,7 @@ func _refresh() -> void:
 			break
 	if shown == 0:
 		_log.add_child(_line("No news yet.", MUTED, -1))
-	(func(): reset_size()).call_deferred()
+	Fit.center.call_deferred(self)
 
 func _line(text: String, color: Color, system_index: int) -> Button:
 	var b := Button.new()

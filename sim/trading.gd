@@ -227,11 +227,14 @@ static func loss_reason(company: Company, ship_id: int, month: int) -> String:
 ## wait_full_max_days), then head for the next stop. A ship that cannot go
 ## on (cash, fuel, no charted route) stops its orders, and so does one whose
 ## cargo would sell at a loss (it keeps the cargo; restarting the route
-## there sells anyway). Banned goods are neither bought nor sold; at a
+## there sells anyway). A badly worn ship first goes for a service
+## (Aging.auto_service), then carries on. Banned goods are neither bought nor sold; at a
 ## closed port the ship waits until it reopens.
 static func process_orders(w: World) -> void:
 	for s in w.fleet.ships:
 		if not s.orders_active or s.status != Ship.Status.DOCKED or s.orders.size() < 2:
+			continue
+		if Aging.wants_auto_service(w, s) and Aging.auto_service(w, s):
 			continue
 		var stop: Dictionary = s.orders[s.order_index]
 		if s.system != int(stop.system):

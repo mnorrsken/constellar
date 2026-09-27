@@ -19,6 +19,8 @@ var selected := -1
 
 var _list_button := Button.new()
 var _list_scroll := ScrollContainer.new()
+## Ship ids the list buttons were built for.
+var _list_key: Variant = null
 var _list := VBoxContainer.new()
 var _name := Label.new()
 var _doing := Label.new()
@@ -119,23 +121,33 @@ func refresh() -> void:
 ## The list: one row per ship (name, what it's doing), a mark on ships
 ## whose note wants a look; the selected one highlighted.
 func _fill_list(world: World, ships: Array[Ship]) -> void:
-	for child in _list.get_children():
-		_list.remove_child(child)
-		child.queue_free()
-	for s in ships:
-		var b := Button.new()
+	# The buttons are rebuilt only when the fleet changes (so one isn't
+	# replaced under the mouse every game day); their text is updated.
+	var key := ships.map(func(s): return s.id)
+	if key != _list_key:
+		_list_key = key
+		for child in _list.get_children():
+			_list.remove_child(child)
+			child.queue_free()
+		for s in ships:
+			var b := Button.new()
+			b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			b.focus_mode = Control.FOCUS_NONE
+			b.clip_text = true
+			b.add_theme_font_size_override("font_size", 14)
+			b.pressed.connect(func(): ship_selected.emit(s.id))
+			_list.add_child(b)
+	for k in ships.size():
+		var s := ships[k]
+		var b: Button = _list.get_child(k)
 		b.flat = s.id != selected
-		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.focus_mode = Control.FOCUS_NONE
-		b.clip_text = true
-		b.add_theme_font_size_override("font_size", 14)
 		var why := note_text(world, s)
 		b.text = "%s%s   ·   %s" % ["⚠ " if why != "" else "", s.name, status_text(world, s)]
 		b.tooltip_text = why if why != "" else world.fleet.hull_def(s).name
 		if why != "":
 			b.add_theme_color_override("font_color", AMBER)
-		b.pressed.connect(func(): ship_selected.emit(s.id))
-		_list.add_child(b)
+		else:
+			b.remove_theme_color_override("font_color")
 	# Grow with the fleet up to LIST_HEIGHT, then scroll.
 	_list_scroll.custom_minimum_size.y = minf(ships.size() * 30.0 + 4.0, LIST_HEIGHT)
 

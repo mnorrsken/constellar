@@ -12,6 +12,9 @@ var cash := 0.0
 var loan := 0.0
 var loan_max := 0.0
 var interest_per_year := 0.0
+## Running costs (fuel, servicing, and the monthly bills) may take the cash
+## this far below zero; buying goods, ships and refits needs real cash.
+var overdraft := 0.0
 ## Fog of war: one byte per system, 1 = charted (name, lanes, settlement and
 ## market known). Charted systems stay charted.
 var known := PackedByteArray()
@@ -53,6 +56,7 @@ static func from_dict(company_id: int, d: Dictionary) -> Company:
 	c.loan = float(d.get("loan", 0))
 	c.loan_max = float(d.get("loan_max", 0))
 	c.interest_per_year = float(d.get("interest_per_year", 0))
+	c.overdraft = float(d.get("overdraft", 0))
 	return c
 
 ## Records money in or out (negative) in the books and the cash.
@@ -103,6 +107,15 @@ func profit(month: int, ship_id := -1) -> float:
 		if k != "purchases" and k != "ships":
 			total += cats[k]
 	return total
+
+## A running cost (fuel, servicing) fits within cash plus the overdraft.
+func can_run(cost: float) -> bool:
+	return cash - cost >= -overdraft
+
+## Why a running cost can't be paid (for refusals).
+func run_error(what: String, cost: float) -> String:
+	return "Not enough money for %s (%s cr): running costs may take the cash down to -%s at most" % [
+		what, Format.thousands(roundi(cost)), Format.thousands(roundi(overdraft))]
 
 func is_known(system_index: int) -> bool:
 	return system_index < known.size() and known[system_index] != 0

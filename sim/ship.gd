@@ -31,6 +31,9 @@ var built_day := 0
 ## Aging). A breakdown stops the ship until `broken_until`.
 var condition := 1.0
 var broken_until := 0
+## No automatic servicing trip before this day (after one failed, e.g. for
+## money); see Aging.wants_auto_service.
+var auto_service_after := 0
 ## Why the ship is idle, waiting or losing money, for the player (empty
 ## while all is well). Set by the sim.
 var note := ""

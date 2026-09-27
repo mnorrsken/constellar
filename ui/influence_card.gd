@@ -17,6 +17,10 @@ var _head := Label.new()
 var _bar := Bar.new()
 var _holds := Label.new()
 var _actions := VBoxContainer.new()
+## The action buttons wanted ([text, tooltip, disabled, callable]) and what
+## the current ones were built for.
+var _specs: Array = []
+var _actions_key: Variant = null
 
 ## The score as a bar, with a tick at every tier.
 class Bar extends Control:
@@ -65,9 +69,7 @@ func show_system(i: int) -> void:
 	visible = w.economy.market_at(i) != null
 	if not visible:
 		return
-	for c in _actions.get_children():
-		_actions.remove_child(c)
-		c.queue_free()
+	_specs.clear()
 	var p := Sim.PLAYER
 	var score := Influence.of(w, p, i)
 	var tier := Influence.tier(w, p, i)
@@ -108,12 +110,29 @@ func show_system(i: int) -> void:
 			_action("Broker peace with %s  ·  −%d influence each" % [WorldEvents.place_name(w, other), roundi(float(k.get("peace_cost", 20)))],
 				"Both sides depend on you: the war ends." if both else "You must be patron of both sides.",
 				not both, func(): Sim.broker_peace(ev.id))
+	_build_actions(i)
 
+## Collects an action button; _build_actions makes them.
 func _action(text: String, tip: String, disabled: bool, action: Callable) -> void:
-	var b := Button.new()
-	b.text = text
-	b.tooltip_text = tip
-	b.disabled = disabled
-	b.focus_mode = Control.FOCUS_NONE
-	b.pressed.connect(action)
-	_actions.add_child(b)
+	_specs.append([text, tip, disabled, action])
+
+## Rebuilds the buttons only when they change, so one isn't replaced under
+## the mouse whenever money moves.
+func _build_actions(i: int) -> void:
+	# The running events too: a veto or peace button is bound to one.
+	var key := [i, _specs.map(func(a): return [a[0], a[1], a[2]]),
+		WorldEvents.active_at(Sim.world, i).map(func(ev): return ev.id)]
+	if key == _actions_key:
+		return
+	_actions_key = key
+	for c in _actions.get_children():
+		_actions.remove_child(c)
+		c.queue_free()
+	for a in _specs:
+		var b := Button.new()
+		b.text = a[0]
+		b.tooltip_text = a[1]
+		b.disabled = a[2]
+		b.focus_mode = Control.FOCUS_NONE
+		b.pressed.connect(a[3])
+		_actions.add_child(b)

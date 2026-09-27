@@ -71,8 +71,11 @@ func _ready() -> void:
 	for p in _overlays():
 		p.closed.connect(_overlay_closed)
 	news_ticker.system_requested.connect(_show_news_system)
+	market_panel.ship_left.connect(func(): _market_open = false)
 	news_ticker.log_requested.connect(open_news)
 	news_panel.system_requested.connect(_show_news_system)
+	for p in [orders_panel, contracts_panel, ship_panel]:
+		p.system_requested.connect(_show_news_system)
 	fleet_panel.screen_requested.connect(open_fleet)
 	ship_panel.orders_requested.connect(open_orders)
 	ship_panel.port_requested.connect(_open_port)
@@ -114,6 +117,7 @@ func _process(_delta: float) -> void:
 		i = pick(_mouse)
 	if i != map.hovered:
 		map.set_hovered(i)
+		market_panel.set_compare(i)
 	if i >= 0:
 		tooltip.show_system(map.galaxy, i, _mouse)
 	else:
@@ -310,7 +314,8 @@ func open_news() -> void:
 	_overlay_opened()
 	news_panel.open()
 
-## A headline was clicked: select its system (if charted) and fly there.
+## A headline or a place name was clicked: select its system (if charted)
+## and fly there.
 func _show_news_system(i: int) -> void:
 	if i >= 0 and Sim.player().is_known(i):
 		select(i)

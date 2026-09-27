@@ -8,7 +8,7 @@ run-name: Release ${{ github.ref_name }}
 # The tag must match config/version in project.godot: the workflow refuses to
 # build otherwise, so a release can't ship with a stale version in the macOS
 # bundle, the MSI and the file names. (Laid out like fringeworlds' release.)
-# It only builds and publishes; the checks run in ci.yml on every push.
+# It only builds and publishes; ci.yml runs the checks on the same tag.
 #
 # workflow_dispatch runs everything except publishing, which is how you check a
 # change to this file without burning a version number.

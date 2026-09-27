@@ -108,7 +108,7 @@ func test_monthly_costs(t: Object) -> void:
 	var feb: Dictionary = w.companies[0].ledger.get(w.month(), {})
 	t.eq(feb.get("crew", 0.0), -4000.0, "Packet crew")
 	var s := w.ships_of(0)[0]
-	var aged := 3000.0 * (1.0 + 0.03 * Aging.age_years(w, s))
+	var aged := 1500.0 * (1.0 + 0.03 * Aging.age_years(w, s))
 	t.ok(is_equal_approx(feb.get("maintenance", 0.0), -aged), "Packet maintenance, more for an older ship")
 	t.ok(is_equal_approx(feb.get("interest", 0.0), -500000.0 * 0.06 / 12.0), "a month of 6% interest")
 
@@ -247,3 +247,21 @@ func test_route_stops_before_selling_at_a_loss(t: Object) -> void:
 	t.ok(stopped.size() == 1 and "loss" in stopped[0].reason, "told why: %s" % [stopped])
 	t.ok(w.start_orders(0, s.id).ok, "restarted by the owner")
 	t.ok(s.cargo.is_empty() or s.status == Ship.Status.TRAVELING, "sells anyway and moves on")
+
+## Running costs (fuel, servicing) may take the cash down to -overdraft;
+## goods may not be bought on credit.
+func test_running_costs_may_go_into_the_overdraft(t: Object) -> void:
+	var w := _world()
+	w.reveal_all(0)
+	var c := w.companies[0]
+	var s := w.ships_of(0)[0]
+	var next: int = w.galaxy.lanes_of(w.start_system)[0].other(w.start_system)
+	t.ok(c.overdraft > 0.0, "there is an overdraft")
+	c.cash = -c.overdraft + 50000.0
+	t.ok(not w.buy_cargo(0, s.id, "machinery", 10.0).ok, "no goods on credit")
+	t.ok(w.send_ship(0, s.id, next).ok, "fuel on credit")
+	t.ok(c.cash < -c.overdraft + 50000.0, "and paid for")
+	var s2 := w.fleet.add_ship(0, "packet", w.start_system, w.day)
+	c.cash = -c.overdraft + 1.0
+	var r := w.send_ship(0, s2.id, next)
+	t.ok(not r.ok and "running costs" in r.error, "but not past the overdraft: %s" % r.get("error", ""))

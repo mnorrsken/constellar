@@ -156,3 +156,47 @@ func test_new_hull_models_by_year(t: Object) -> void:
 	var later := w.fleet.hulls_for_sale(yard, 3427)
 	t.ok(not ("leviathan_ii" in now) and "leviathan_ii" in later, "new models come out over the years")
 	t.ok("packet" in now and not ("packet" in later), "and old ones go out of production")
+
+## A badly worn ship on route orders goes to the nearest charted shipyard,
+## is serviced there, and carries on with its route.
+func test_worn_ship_on_a_route_goes_for_a_service(t: Object) -> void:
+	var w := _world()
+	_with_aging(w, {"breakdown_per_day": 0.0})
+	w.reveal_all(0)
+	var s := w.ships_of(0)[0]
+	var home := w.start_system
+	var next := _next_market(w)
+	t.ok(not w.fleet.is_shipyard(home), "the start world has no shipyard")
+	var yard := Aging.nearest_yard(w, s)
+	t.ok(yard >= 0 and yard != home, "a shipyard in range: %s" % w.galaxy.systems[yard].name)
+	w.set_orders(0, s.id, [{"system": home, "sell_all": true}, {"system": next, "sell_all": true}])
+	s.condition = Aging.service_cap(w, s) - 0.3
+	t.ok(Aging.wants_auto_service(w, s), "worn enough")
+	w.start_orders(0, s.id)
+	t.eq(s.destination(), yard, "leaves for the yard instead of the next stop")
+	t.ok("servicing" in s.note, "and says why: %s" % s.note)
+	var serviced := false
+	var back_on_route := false
+	for d in 400:
+		w.advance_day()
+		for e in w.drain_events():
+			serviced = serviced or (e.type == "auto_service" and e.ship == s.id)
+		if serviced and s.status == Ship.Status.TRAVELING and s.destination() != yard:
+			back_on_route = true
+			break
+	t.ok(serviced, "serviced at the yard")
+	t.ok(s.condition > Aging.service_cap(w, s) - 0.25, "in good shape again (%.2f)" % s.condition)
+	t.ok(back_on_route and s.orders_active, "then back on its route")
+
+func test_auto_service_waits_when_it_cannot_pay(t: Object) -> void:
+	var w := _world()
+	w.reveal_all(0)
+	var s := w.ships_of(0)[0]
+	var yard := _at_yard(w, s)
+	w.set_orders(0, s.id, [{"system": yard, "sell_all": true}, {"system": _next_market(w), "sell_all": true}])
+	s.condition = Aging.service_cap(w, s) - 0.3
+	w.companies[0].cash = -w.companies[0].overdraft + 10.0
+	w.start_orders(0, s.id)
+	var failed: Array = w.drain_events().filter(func(e): return e.type == "auto_service_failed")
+	t.eq(failed.size(), 1, "told that it can't: %s" % [failed])
+	t.ok(s.auto_service_after > w.day, "and won't try again for a while")

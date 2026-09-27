@@ -8,6 +8,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Place names are links: in the route orders, the contracts panel and the
+  ship card (route and contracts), clicking a system's name closes the panel
+  and shows that system on the map.
+- Worn ships on route orders go for a service by themselves: when a ship's
+  condition falls well below what its age allows, it detours to the nearest
+  charted shipyard at its next stop, is serviced, and goes on with its
+  route (with a notice; if it can't pay it tries again a month later).
+- Every open contract board always has at least one plain container job
+  (not express) to a neighbouring port, so a docked ship can always take
+  work; a new one is posted as soon as it's taken.
+- Running costs on credit: fuel and servicing can be paid down to -200,000
+  cr cash (balance company "overdraft"); buying goods, ships and refits
+  still needs cash. The finance panel says so.
+- Market window: narrower (the 26-week graph column is gone, and the status
+  and hold lines wrap instead of widening the panel); hovering a
+  unit price shows that good's 26-week price graph with its low, high and
+  base price instead. The market closes when the ship you trade with leaves
+  the system (and no other ship of yours is at the port).
+- Market compare: with the market panel open, hovering a star turns the
+  "vs base" column into "vs <that system>": what a tonne bought here sells
+  for there after its tariff (known prices; "—" where none), green when it
+  pays.
+- Route orders: add a stop from a list of the charted ports nearest the last
+  stop (plus the one selected on the map), or type a name and pick from
+  suggestions across all charted ports (Enter takes the first).
+
 - Express contracts: mail, luxury passengers and freight of goods marked
   "express" (luxury foods, medicine, biologics, luxuries) pay a bonus for
   early delivery, up to half the reward, shrinking toward the deadline. The
@@ -40,6 +66,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Ship maintenance halved for every hull (the starting Packet: 1,500 cr a
+  month instead of 3,000; it still grows 3% a year with age), so a new
+  house can make a profit sooner.
+- CI (import, tests, headless run) now runs only on version tags, next to
+  the release build; pushes to main run nothing.
 - Economy rebalanced: consumption now tracks potential supply everywhere
   (was up to 10x demand for atomics, 7x weapons, 4.5x robots, 2x
   water/fuel/textiles/machinery), so surpluses sit at producers and prices
@@ -59,6 +90,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Contract rewards are higher across the board and now grow a little
   faster than distance, so long jobs pay noticeably more per light year
   (median reward at packet speed roughly doubled).
+
+### Fixed
+
+- The contracts panel could drift off the top-left of the screen during a
+  long game. The centred panels (contracts, orders, shipyard, finance,
+  news, fleet, outcome) now re-centre after every refresh, and the
+  contracts lists scroll when they would run off the screen.
+- Buttons and links in the ship card, contracts, fleet list, fleet screen,
+  influence card, route orders and shipyard no longer flicker or miss clicks
+  while the game runs: they are rebuilt only when what they show changes,
+  and their text is updated in place otherwise.
 
 ## [0.1.0] - 2026-09-26
 

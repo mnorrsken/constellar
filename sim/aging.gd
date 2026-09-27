@@ -6,7 +6,10 @@ class_name Aging
 ## follows its reliability (hull reliability x condition): a breakdown
 ## stops it for some days and costs a repair bill. Maintenance grows with
 ## age. Servicing at a shipyard brings the condition back up, but never
-## above a cap that falls with age, so old ships keep getting worse.
+## above a cap that falls with age, so old ships keep getting worse. A ship
+## on route orders that is badly worn ("auto_service_below" under its cap)
+## goes to the nearest charted shipyard for a service by itself, then goes
+## on with its route (Trading.process_orders).
 
 static func cfg(w: World) -> Dictionary:
 	return w.content.balance.get("aging", {})
@@ -40,6 +43,50 @@ static func service_quote(w: World, ship: Ship) -> Dictionary:
 static func needs_service(w: World, ship: Ship) -> bool:
 	return ship.condition < service_cap(w, ship) - float(cfg(w).get("service_below", 0.1))
 
+## Worn badly enough to break off its route for a service.
+static func wants_auto_service(w: World, ship: Ship) -> bool:
+	return w.day >= ship.auto_service_after \
+		and ship.condition < service_cap(w, ship) - float(cfg(w).get("auto_service_below", 0.25))
+
+## The charted shipyard the ship reaches soonest (-1 = none in range).
+static func nearest_yard(w: World, ship: Ship) -> int:
+	var known := w.companies[ship.company].known
+	var best := -1
+	var best_len := INF
+	for m in w.economy.markets:
+		if not w.fleet.is_shipyard(m.system) or known[m.system] == 0:
+			continue
+		if m.system == ship.system:
+			return m.system
+		var plan := w.fleet.plan_route(ship, m.system, known, w.route_penalty(ship))
+		if plan.ok and plan.length < best_len:
+			best_len = plan.length
+			best = m.system
+	return best
+
+## A worn ship on route orders, docked: serviced here if this is a yard,
+## else sent to the nearest one. True if it is handled (the route waits).
+## If that fails (money, no yard in range) it keeps to its route and tries
+## again after "auto_service_retry_days".
+static func auto_service(w: World, ship: Ship) -> bool:
+	var yard := nearest_yard(w, ship)
+	var r := {"ok": false, "error": "no charted shipyard in range"}
+	if yard == ship.system:
+		r = service(w, ship)
+		if r.ok:
+			ship.note = "worn: in the yard for servicing"
+			w.events.append({"type": "auto_service", "ship": ship.id, "company": ship.company, "system": yard})
+			return true
+	elif yard >= 0:
+		r = w.depart(ship, yard)
+		if r.ok:
+			ship.note = "worn: going to %s for servicing" % w.galaxy.systems[yard].name
+			w.events.append({"type": "auto_service_trip", "ship": ship.id, "company": ship.company, "system": yard})
+			return true
+	ship.auto_service_after = w.day + int(cfg(w).get("auto_service_retry_days", 30))
+	w.events.append({"type": "auto_service_failed", "ship": ship.id, "company": ship.company, "reason": r.error})
+	return false
+
 ## Services a ship docked at a shipyard: pays, restores the condition, and
 ## keeps the ship in the yard for a few days.
 static func service(w: World, ship: Ship) -> Dictionary:
@@ -51,8 +98,8 @@ static func service(w: World, ship: Ship) -> Dictionary:
 	if q.cost < 1.0:
 		return {"ok": false, "error": "%s is in as good a state as its age allows" % ship.name}
 	var company := w.companies[ship.company]
-	if company.cash < q.cost:
-		return {"ok": false, "error": "Not enough cash (%s needed)" % Format.thousands(roundi(q.cost))}
+	if not company.can_run(q.cost):
+		return {"ok": false, "error": company.run_error("servicing", q.cost)}
 	company.book("repairs", -q.cost, w.month(), ship.id)
 	ship.condition = q.condition
 	ship.status = Ship.Status.REFITTING

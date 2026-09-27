@@ -127,9 +127,9 @@ func _refresh() -> void:
 	var w: World = Sim.world
 	var p: Company = Sim.player()
 	_title.text = "Finances  ·  %s" % p.name
-	_money.text = "Cash %s cr     Loan %s of %s cr at %d%% a year" % [
+	_money.text = "Cash %s cr     Loan %s of %s cr at %d%% a year     Fuel and servicing on credit down to -%s cr" % [
 		Format.thousands(roundi(p.cash)), Format.thousands(roundi(p.loan)),
-		Format.thousands(roundi(p.loan_max)), roundi(p.interest_per_year * 100.0)]
+		Format.thousands(roundi(p.loan_max)), roundi(p.interest_per_year * 100.0), Format.thousands(roundi(p.overdraft))]
 	_value.text = "Company value %s cr" % Format.thousands(roundi(Goals.company_value(w, Sim.PLAYER)))
 	_value.tooltip_text = "Cash minus the loan, plus what your ships would sell for and what their cargo cost"
 	_goal_pick.select(maxi(_goal_ids.find(p.goal), 0))
@@ -176,7 +176,7 @@ func _refresh() -> void:
 		_legend.add_child(_cell("●  %s" % s.name, color))
 	_ship_chart.set_lines(lines, labels)
 	_fill_ships(w, p, now)
-	(func(): reset_size()).call_deferred()
+	Fit.center.call_deferred(self)
 
 func _fill_ledger(w: World, p: Company, months: Array) -> void:
 	_clear(_grid)

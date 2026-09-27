@@ -84,9 +84,19 @@ use charted systems. F2 (cheat) charts everything and adds 10,000,000 cr.
 
 Trading: with a ship docked, the market panel (M) shows live prices with
 Buy/Sell buttons (lot size at the top); elsewhere it shows the last prices
-your ships saw and how old they are. O opens the selected ship's route
-orders (add the selected system as a stop; sell, buy, wait for a full load,
-auto-trade, service when worn at a shipyard; Start route). L shows the
+your ships saw and how old they are. Hover a price to see its last 26 weeks
+as a graph; the market closes when your docked ship leaves. With the market
+open, hover another
+star: the "vs base" column compares with it instead (what a tonne bought here
+sells for there after its tariff, from the prices you know there). O opens the selected ship's route
+orders (add a stop from the ports nearest the last stop or the one selected
+on the map, or type a name and pick a suggestion; sell, buy, wait for a full
+load, auto-trade, service when worn at a shipyard; Start route). A ship on
+route orders that gets badly worn goes to the nearest shipyard for a
+service by itself, then carries on. Fuel and servicing can be paid on credit
+down to -200,000 cr. Place names
+in the route orders, the contracts and the ship card are links: click one to
+show that system on the map. L shows the
 finances: cash, loan (borrow/repay), company value, your goal's progress (or
 a bankruptcy warning), a ledger table, profit charts and a ship table with
 age, condition and loss reasons.

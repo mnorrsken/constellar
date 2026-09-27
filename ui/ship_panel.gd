@@ -5,10 +5,12 @@ extends PanelContainer
 ## it is going, why it is idle or losing money, the cargo aboard (what it
 ## cost and what it is worth now), its contracts, condition, route orders
 ## and results, with buttons for the ship's orders, the market, contracts
-## and the yard where it is docked. Scrolls when longer than the room
-## above the news ticker (bottom_limit).
+## and the yard where it is docked. Place names in the route and the
+## contracts are links to the system on the map. Scrolls when longer than
+## the room above the news ticker (bottom_limit).
 
 signal closed
+signal system_requested(system_index: int)
 signal orders_requested(ship_id: int)
 ## The player wants a screen for the port the ship is docked at:
 ## "market", "contracts" or "yard".
@@ -42,7 +44,9 @@ var _cargo_title: Label
 var _jobs := VBoxContainer.new()
 var _jobs_title: Label
 var _facts := Label.new()
-var _route := Label.new()
+var _route := RichTextLabel.new()
+## What the buttons were built for (rebuilt only when it changes).
+var _buttons_key: Variant = null
 var _buttons := HFlowContainer.new()
 
 func _ready() -> void:
@@ -76,14 +80,15 @@ func _ready() -> void:
 	head.add_child(titles)
 	head.add_child(close)
 	_viewer.custom_minimum_size = Vector2(WIDTH - 28, 150)
-	for l in [_doing, _why, _facts, _route]:
+	for l in [_doing, _why, _facts]:
 		l.add_theme_font_size_override("font_size", 14)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.custom_minimum_size = Vector2(WIDTH - 40, 0)
+	_setup_rich(_route, 14)
 	_doing.add_theme_color_override("font_color", TEXT)
 	_why.add_theme_color_override("font_color", AMBER)
 	_facts.add_theme_color_override("font_color", MUTED)
-	_route.add_theme_color_override("font_color", CYAN)
+	_route.add_theme_color_override("default_color", CYAN)
 	_cargo.columns = 4
 	_cargo.add_theme_constant_override("h_separation", 12)
 	_cargo.add_theme_constant_override("v_separation", 1)
@@ -154,11 +159,11 @@ func _refresh() -> void:
 	if s.orders.size() >= 2:
 		var stops := PackedStringArray()
 		for k in s.orders.size():
-			var name: String = w.galaxy.systems[int(s.orders[k].system)].name
+			var name := _link(int(s.orders[k].system))
 			stops.append(("▶ " + name) if s.orders_active and k == s.order_index else name)
-		_route.text = "Route (%s): %s" % ["running" if s.orders_active else "stopped", " ▸ ".join(stops)]
+		_set_rich(_route, "Route (%s): %s" % ["running" if s.orders_active else "stopped", " ▸ ".join(stops)])
 	else:
-		_route.text = "No route orders"
+		_set_rich(_route, "No route orders")
 	_fill_buttons(w, s)
 	_fit.call_deferred()
 
@@ -206,27 +211,58 @@ func _fill_cargo(w: World, s: Ship) -> void:
 			_cargo.add_child(_cell("%s  (%s%s)" % [Format.thousands(roundi(worth)), "+" if gain >= 0.0 else "",
 				Format.money_short(gain)], GREEN if gain >= 0.0 else RED, 13, true))
 
+## One line per job; the lines stay (their text is updated) while the jobs
+## are the same, so their links can be clicked.
 func _fill_jobs(w: World, s: Ship) -> void:
-	_clear(_jobs)
 	var jobs := Contracts.active_for(w, s)
 	_jobs_title.visible = not jobs.is_empty()
 	_jobs.visible = not jobs.is_empty()
-	for c in jobs:
+	if _jobs.get_child_count() != jobs.size():
+		_clear(_jobs)
+		for c in jobs:
+			var line := RichTextLabel.new()
+			_setup_rich(line, 13)
+			_jobs.add_child(line)
+	for k in jobs.size():
+		var c := jobs[k]
 		var left := c.deadline - w.day
 		var what := c.describe(Defs.commodities.get(c.commodity, {}).get("name", ""))
-		var line := _cell("%s to %s\n    by %s (%d days left)  ·  %s cr" % [what, w.galaxy.systems[c.destination].name,
-			Calendar.format(c.deadline, w.start_year), left, Format.thousands(roundi(c.reward))],
-			AMBER if left <= 10 else TEXT, 13)
-		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		line.custom_minimum_size = Vector2(WIDTH - 40, 0)
-		_jobs.add_child(line)
+		var line: RichTextLabel = _jobs.get_child(k)
+		line.add_theme_color_override("default_color", AMBER if left <= 10 else TEXT)
+		_set_rich(line, "%s to %s\n    by %s (%d days left)  ·  %s cr" % [what, _link(c.destination),
+			Calendar.format(c.deadline, w.start_year), left, Format.thousands(roundi(c.reward))])
 
+## Sets rich text only when it changed (setting it again resets the links).
+func _set_rich(l: RichTextLabel, text: String) -> void:
+	if l.text != text:
+		l.text = text
+
+## A rich-text line whose [url] place names ask for the system on the map.
+func _setup_rich(l: RichTextLabel, font_size: int) -> void:
+	l.bbcode_enabled = true
+	l.fit_content = true
+	l.scroll_active = false
+	l.custom_minimum_size = Vector2(WIDTH - 40, 0)
+	l.add_theme_font_size_override("normal_font_size", font_size)
+	l.meta_clicked.connect(func(meta): system_requested.emit(int(str(meta))))
+
+## A system's name as a [url] link (see _setup_rich).
+func _link(i: int) -> String:
+	return "[url=%d][color=#%s]%s[/color][/url]" % [i, SystemLink.COLOR.to_html(false), Sim.world.galaxy.systems[i].name]
+
+## Rebuilt only when they change, so a button isn't replaced under the
+## mouse every game day.
 func _fill_buttons(w: World, s: Ship) -> void:
+	var port := s.system
+	var docked := s.status == Ship.Status.DOCKED
+	var key := [s.id, s.orders_active, docked, port]
+	if key == _buttons_key:
+		return
+	_buttons_key = key
 	_clear(_buttons)
 	_buttons.add_child(_button("Route ▸" if s.orders_active else "Orders  O", func(): orders_requested.emit(s.id)))
-	if s.status != Ship.Status.DOCKED:
+	if not docked:
 		return
-	var port := s.system
 	if w.economy.market_at(port):
 		_buttons.add_child(_button("Market  M", func(): port_requested.emit("market", port)))
 		_buttons.add_child(_button("Contracts  C", func(): port_requested.emit("contracts", port)))

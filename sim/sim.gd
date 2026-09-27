@@ -286,6 +286,18 @@ func _flush_events() -> void:
 					# Bad news pauses the game, but the ship needs no new orders.
 					if auto_pause and speed != 0:
 						set_speed(0)
+			"auto_service", "auto_service_trip", "auto_service_failed":
+				fleet_moved = true
+				cash_changed[e.company] = true
+				var worn := world.fleet.get_ship(e.ship)
+				if worn and worn.company == PLAYER:
+					match e.type:
+						"auto_service":
+							Events.notice.emit("%s is worn: servicing at %s" % [worn.name, galaxy.systems[e.system].name])
+						"auto_service_trip":
+							Events.notice.emit("%s is worn: going to %s for servicing" % [worn.name, galaxy.systems[e.system].name])
+						_:
+							Events.notice.emit("%s is worn but can't get a service: %s" % [worn.name, e.reason])
 			"influence", "goal_set":
 				influence_moved = true
 			"influence_tier":

@@ -436,7 +436,16 @@ once condition falls `service_below` under that cap. `service_quote` prices
 a service off the ship's value, the cap-condition gap and
 `service_cost_share`, for `service_days` in the yard; `service` (docked at
 a shipyard) pays it, sets condition, puts the ship in `REFITTING`, books
-`"repairs"` (negative), and emits a `"servicing"` event. `World.service_ship`
+`"repairs"` (negative), and emits a `"servicing"` event; it pays with the
+company's overdraft (`Company.can_run`: cash may go down to
+`-company.overdraft` for running costs, also fuel in `World.depart`).
+`wants_auto_service` (condition `auto_service_below` under the cap, not
+before `Ship.auto_service_after`) makes `Trading.process_orders` call
+`auto_service` for a docked ship on route orders: serviced here at a yard,
+else sent to `nearest_yard` (shortest charted route), then the route goes
+on; if that fails it retries after `auto_service_retry_days`. Events
+`auto_service`, `auto_service_trip`, `auto_service_failed` become notices.
+`World.service_ship`
 / `Sim.service_ship` wrap it for the player and route orders
 (`Trading.process_orders`' `"service"` stop option).
 
@@ -453,7 +462,9 @@ or `luxury` (passengers), `amount` (tonnes, passengers or sacks), `reward`,
 `Trading`) runs the boards. `post_offers` (weekly, after the market tick)
 drops expired offers and posts new ones sized to each market's `size`
 (capped at `max_offers`, alive `offer_weeks`; none posted for a closed
-port, and freight never picks a good banned at the origin or destination):
+port, and freight never picks a good banned at the origin or destination;
+`ensure_plain` then makes sure the board has a plain container job, not
+express, to a neighbouring port, and runs again when a job is accepted):
 kind is a weighted draw
 (`contracts.kinds`, passengers excluded at robot worlds), destination is a
 weighted draw over every system within `max_hops` lanes (near places
@@ -760,12 +771,16 @@ for pause/1x/2x/4x/8x, each calling `Sim.set_speed`; refreshes on
 `Events.day_passed`/`speed_changed`. `ui/market_panel.gd` (`MarketPanel`)
 lists a system's market on the left: every commodity's price with a
 week-over-week ▲/▼ arrow next to its % change vs base, stock, an
-export/import tag (from `supply_rate`/`demand_rate`), and a
-`ui/sparkline.gd` (`Sparkline`) of its last 26 weekly prices (green below
-base, amber above, faint line at base; `high_is_good` flips which side
-reads as good, used elsewhere for profit sparklines); `show_system(s)`
-switches market and hides for an uninhabited system, and it refreshes on
-every `Events.day_passed`. The status line shows the general tariff (a
+export/import tag (from `supply_rate`/`demand_rate`). The price cell is a
+`PriceLabel` whose custom tooltip is a `ui/sparkline.gd` (`Sparkline`) of
+its last 26 weekly prices (green below base, amber above, faint line at
+base; `high_is_good` flips which side reads as good, used elsewhere for
+profit sparklines) with low/high/base; `show_system(s)` switches market and
+hides for an uninhabited system, and it refreshes on every
+`Events.day_passed`. When the player ship it traded with leaves (departs,
+sold, lost) and no player ship is left at the port (one in the yard
+counts), it hides and emits `ship_left`, which clears `main.gd`'s
+`_market_open`. The status line shows the general tariff (a
 government's `"*"` rate, plus any hike, less under the player's trade
 concession there, tagged "(your concession)"); rows only add a tariff tag
 where a commodity's duty differs from that general rate.
@@ -796,7 +811,12 @@ aboard (deadline, reward), condition/reliability/age/speed/jump, profit,
 route orders, and buttons for Orders and, when docked, the port's Market,
 Contracts and Shipyard/Refit (`port_requested`). The right column shows
 whichever was clicked last, a star (`SystemPanel`) or a ship; both have ✕,
-Esc closes the ship card first. `ui/fit.gd` (`Fit.cap`) sizes a panel's
+Esc closes the ship card first. The centred modal panels call
+`Fit.center` after every refresh (shrink to content, then back to the
+middle of the screen: `reset_size()` alone keeps the top-left corner, and a
+panel that grew past the screen would stay shifted), and the contracts and
+shipyard panels `Fit.fit_screen`, which also caps their scrolling part so
+the whole panel fits the screen. `ui/fit.gd` (`Fit.cap`) sizes a panel's
 ScrollContainer so the panel ends above a line: main.gd sets
 `bottom_limit` each frame — the market panel ends above the fleet card,
 the system and ship cards above the news ticker — and longer content
@@ -830,11 +850,23 @@ refreshed daily.
 into the wrong columns); it shows live prices (a player ship docked there) with Buy/Sell
 for that ship, a lot size and cargo aboard, else the prices the company
 last saw and their age, else nothing; a banned good is red-tagged "banned"
-with Buy/Sell disabled, and a closed port disables trading. `OrdersPanel`
+with Buy/Sell disabled, and a closed port disables trading. While the mouse is
+over another star (`main.gd` calls `MarketPanel.set_compare(i)` when the
+hovered star changes), the "vs base" column compares with that system:
+known price there after the player's tariff there, over the price here.
+`OrdersPanel`
 (O) edits a ship's route orders (sell, buy, wait for a full load,
 auto-trade, service when worn at a shipyard stop), and has Safest routing
 (adds `Danger.penalty` to route planning) and Insured (shows the monthly
-premium) toggles per ship. `ui/chart.gd` (`Chart`) draws bars or lines with
+premium) toggles per ship. Stops are added from an OptionButton of the
+charted ports nearest the last stop (by straight-line distance; the map
+selection first) or a LineEdit with an ItemList of name suggestions (star
+or settlement name, prefix matches first). `ui/system_link.gd`
+(`SystemLink`, a LinkButton) makes a system's name a link; `OrdersPanel`
+and `ContractsPanel` use it and `ShipPanel` uses rich-text `[url]` links in
+its route and contract lines. Each emits `system_requested(i)` (the modal
+panels close first), which `main.gd` handles like a news headline: select
+the system and fly there. `ui/chart.gd` (`Chart`) draws bars or lines with
 axis values (`Format.money_short`) and month labels, used by:
 `FinancePanel` (L), rewritten with a ledger table (three months by
 category, including `tariffs`, `insurance`, `repairs` and now `influence`),
@@ -1067,8 +1099,8 @@ DMG.
 
 `.github/workflows/ci.yml` runs `.github/scripts/check.sh` (a warm-up
 import, since a fresh checkout's first import logs font errors, then the
-import with its log grepped, tests, a 20-frame headless run) on pushes to
-main and PRs. Godot and its export templates come from the composite
+import with its log grepped, tests, a 20-frame headless run) on `v*` tags
+only, next to the release (nothing runs on pushes to main or PRs). Godot and its export templates come from the composite
 action `.github/actions/setup-godot` (pinned version, cached per runner OS;
 the same action as fringeworlds). `release.yml` runs on `v*` tags, or by
 hand as a dry run that publishes nothing. It only builds, no game tests:

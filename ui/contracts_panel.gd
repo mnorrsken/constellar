@@ -2,10 +2,13 @@ class_name ContractsPanel
 extends PanelContainer
 ## Contracts (C): the job board of one market, with Accept for a player ship
 ## docked there, and the player's running jobs with Abandon (express jobs
-## show their early-delivery bonus). Opened from the system card or with C;
-## Esc closes.
+## show their early-delivery bonus). It stays in the middle of the screen
+## and scrolls when the lists would run off it. Place names are links: they close the
+## panel and show the system on the map. Opened from the system card or
+## with C; Esc closes.
 
 signal closed
+signal system_requested(system_index: int)
 
 const MUTED := Color(0.55, 0.62, 0.74)
 const TEXT := Color(0.86, 0.9, 0.97)
@@ -24,6 +27,15 @@ var _offers := GridContainer.new()
 var _none := Label.new()
 var _jobs_title := Label.new()
 var _jobs := GridContainer.new()
+## What the grids were built for, and the cells that change without a
+## rebuild (the rows and their buttons stay put while the game runs, so
+## they can be clicked).
+var _offers_key: Variant = null
+var _offer_cells: Array = []  # per offer: [trip label, deliver-by label]
+var _jobs_key: Variant = null
+var _scroll := ScrollContainer.new()
+var _body: VBoxContainer
+var _job_cells: Array = []  # per job: [deliver-by label, reward label]
 
 func _ready() -> void:
 	visible = false
@@ -54,7 +66,16 @@ func _ready() -> void:
 		g.add_theme_constant_override("v_separation", 4)
 	_jobs_title.add_theme_font_override("font", Fonts.weight(Fonts.DISPLAY, 700))
 	_jobs_title.add_theme_font_size_override("font_size", 18)
-	for c in [head, _ship_line, _offers, _none, HSeparator.new(), _jobs_title, _jobs]:
+	# The offers and jobs scroll when they would run off the screen.
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 10)
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for c in [_offers, _none, HSeparator.new(), _jobs_title, _jobs]:
+		body.add_child(c)
+	_body = body
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.add_child(body)
+	for c in [head, _ship_line, _scroll]:
 		box.add_child(c)
 	add_child(box)
 	Events.contracts_changed.connect(_refresh)
@@ -62,6 +83,8 @@ func _ready() -> void:
 	Events.day_passed.connect(func(_d): _refresh())
 
 func open(system_index: int, selected_ship: int) -> void:
+	_offers_key = null  # a fresh build on opening
+	_jobs_key = null
 	system = system_index
 	ship_id = selected_ship
 	visible = true
@@ -87,28 +110,21 @@ func _refresh() -> void:
 		_ship_line.add_theme_color_override("font_color", MUTED)
 	_fill_offers(w, ship)
 	_fill_jobs(w)
-	(func(): reset_size()).call_deferred()
+	Fit.fit_screen.call_deferred(self, _scroll, _body)
 
 func _fill_offers(w: World, ship: Ship) -> void:
-	for c in _offers.get_children():
-		_offers.remove_child(c)  # now, so the panel can shrink this frame
-		c.queue_free()
 	var offers := Contracts.offers_at(w, system)
 	offers.sort_custom(func(a, b): return a.reward > b.reward)
 	_none.visible = offers.is_empty()
 	_none.text = "The board is empty. New jobs are posted every week."
-	if offers.is_empty():
-		return
-	for h in ["Job", "Load", "To", "Trip", "Deliver by", "Reward", "Penalty", ""]:
-		_offers.add_child(_cell(h, MUTED, 12))
 	var known := Sim.player().known
+	# Per offer: [contract, trip text, trip colour, note (what the button says)].
+	var rows := []
 	for c in offers:
-		var to: StarSystem = w.galaxy.systems[c.destination]
-		var charted: bool = known[c.destination] == 1
 		var trip := "—"
 		var trip_color := MUTED
 		var note := ""
-		if not charted:
+		if known[c.destination] != 1:
 			note = "uncharted"
 		elif ship:
 			var plan := Sim.plan_route(ship.id, c.destination)
@@ -122,11 +138,34 @@ func _fill_offers(w: World, ship: Ship) -> void:
 				note = "out of range"
 			if note == "" and not Contracts.fits(w, ship, c):
 				note = "no room"
+		rows.append([c, trip, trip_color, note])
+	var key := [ship.id if ship else -1, rows.map(func(r): return [r[0].id, r[3]])]
+	if key == _offers_key:
+		for k in rows.size():
+			_offer_cells[k][0].text = rows[k][1]
+			_offer_cells[k][0].add_theme_color_override("font_color", rows[k][2])
+			_offer_cells[k][1].text = _date_left(w, rows[k][0].deadline)
+		return
+	_offers_key = key
+	_offer_cells.clear()
+	for c in _offers.get_children():
+		_offers.remove_child(c)  # now, so the panel can shrink this frame
+		c.queue_free()
+	if offers.is_empty():
+		return
+	for h in ["Job", "Load", "To", "Trip", "Deliver by", "Reward", "Penalty", ""]:
+		_offers.add_child(_cell(h, MUTED, 12))
+	for r in rows:
+		var c: Contract = r[0]
+		var note: String = r[3]
+		var trip := _cell(r[1], r[2], 14, true)
+		var deliver := _cell(_date_left(w, c.deadline), TEXT, 14, true)
+		_offer_cells.append([trip, deliver])
 		_offers.add_child(_kind_cell(w, c))
 		_offers.add_child(_cell(_load(c), TEXT, 14))
-		_offers.add_child(_cell(to.name if charted else "uncharted system", TEXT if charted else MUTED, 14))
-		_offers.add_child(_cell(trip, trip_color, 14, true))
-		_offers.add_child(_cell(_date_left(w, c.deadline), TEXT, 14, true))
+		_offers.add_child(_link(c.destination) if note != "uncharted" else _cell("uncharted system", MUTED, 14))
+		_offers.add_child(trip)
+		_offers.add_child(deliver)
 		_offers.add_child(_money(c.reward, GREEN))
 		_offers.add_child(_money(c.penalty, RED))
 		var accept := _button("Accept" if note == "" or note == "too slow" else note,
@@ -140,35 +179,58 @@ func _fill_offers(w: World, ship: Ship) -> void:
 		_offers.add_child(accept)
 
 func _fill_jobs(w: World) -> void:
-	for c in _jobs.get_children():
-		_jobs.remove_child(c)  # now, so the panel can shrink this frame
-		c.queue_free()
 	var jobs := w.contracts_of(Sim.PLAYER)
 	_jobs_title.text = "Your contracts  ·  %d" % jobs.size()
 	_jobs.visible = not jobs.is_empty()
+	var key := jobs.map(func(c): return c.id)
+	if key == _jobs_key:
+		for k in jobs.size():
+			_update_job(w, jobs[k], _job_cells[k][0], _job_cells[k][1])
+		return
+	_jobs_key = key
+	_job_cells.clear()
+	for c in _jobs.get_children():
+		_jobs.remove_child(c)  # now, so the panel can shrink this frame
+		c.queue_free()
 	if jobs.is_empty():
 		return
 	for h in ["Ship", "Load", "From", "To", "Deliver by", "Reward", ""]:
 		_jobs.add_child(_cell(h, MUTED, 12))
 	for c in jobs:
 		var ship := w.fleet.get_ship(c.ship)
-		var left := c.deadline - w.day
 		_jobs.add_child(_cell(ship.name if ship else "—", TEXT, 14))
 		_jobs.add_child(_cell(_load(c), TEXT, 14))
-		_jobs.add_child(_cell(w.galaxy.systems[c.origin].name, MUTED, 14))
-		_jobs.add_child(_cell(w.galaxy.systems[c.destination].name, TEXT, 14))
-		_jobs.add_child(_cell(_date_left(w, c.deadline), AMBER if left <= 10 else TEXT, 14, true))
+		_jobs.add_child(_link(c.origin))
+		_jobs.add_child(_link(c.destination))
+		var deliver := _cell("", TEXT, 14, true)
 		var pay := _money(c.reward, GREEN)
-		if c.express:
-			var bonus := Contracts.early_bonus(Sim.world, c, w.day)
-			pay.text += "  +%s" % Format.money_short(bonus)
-			pay.tooltip_text = "Express: %s cr bonus if delivered today; it shrinks toward the deadline" % Format.thousands(roundi(bonus))
-			pay.mouse_filter = Control.MOUSE_FILTER_PASS
+		_update_job(w, c, deliver, pay)
+		_job_cells.append([deliver, pay])
+		_jobs.add_child(deliver)
 		_jobs.add_child(pay)
 		var abandon := _button("Abandon  −%s" % Format.thousands(roundi(c.penalty)),
 			func(): Sim.abandon_contract(c.id))
 		abandon.tooltip_text = "Give the job up and pay the penalty"
 		_jobs.add_child(abandon)
+
+## The cells of a running job that change by the day.
+func _update_job(w: World, c: Contract, deliver: Label, pay: Label) -> void:
+	deliver.text = _date_left(w, c.deadline)
+	deliver.add_theme_color_override("font_color", AMBER if c.deadline - w.day <= 10 else TEXT)
+	pay.text = Format.thousands(roundi(c.reward))
+	if c.express:
+		var bonus := Contracts.early_bonus(w, c, w.day)
+		pay.text += "  +%s" % Format.money_short(bonus)
+		pay.tooltip_text = "Express: %s cr bonus if delivered today; it shrinks toward the deadline" % Format.thousands(roundi(bonus))
+		pay.mouse_filter = Control.MOUSE_FILTER_PASS
+
+## A system's name as a link to it on the map.
+func _link(i: int) -> SystemLink:
+	var l := SystemLink.make(i, Sim.world.galaxy.systems[i].name)
+	l.pressed.connect(func():
+		close_panel()
+		system_requested.emit(i))
+	return l
 
 ## "Mail · express" for express jobs (with the bonus in the tooltip).
 func _kind_cell(w: World, c: Contract) -> Label:

@@ -225,8 +225,8 @@ func depart(s: Ship, target_system: int) -> Dictionary:
 	if not plan.ok:
 		return plan
 	var fuel := Trading.fuel_quote(self, s, plan.length)
-	if companies[s.company].cash < fuel.cost:
-		return {"ok": false, "error": "Not enough cash for fuel (%s cr)" % Format.thousands(roundi(fuel.cost))}
+	if not companies[s.company].can_run(fuel.cost):
+		return {"ok": false, "error": companies[s.company].run_error("fuel", fuel.cost)}
 	Trading.pay_fuel(self, s, fuel)
 	var r := fleet.send(s, target_system, day, known, penalty)
 	if r.ok:

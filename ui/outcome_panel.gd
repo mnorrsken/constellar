@@ -75,7 +75,7 @@ func close_panel() -> void:
 func _open() -> void:
 	visible = true
 	Motion.pop_in(self)
-	(func(): reset_size()).call_deferred()
+	Fit.center.call_deferred(self)
 
 func _set_buttons(list: Array) -> void:
 	for c in _buttons.get_children():

@@ -1,12 +1,10 @@
 name: CI
 
+# Only on version tags (alongside release.yml, which only builds and
+# publishes): pushes to main and pull requests run nothing.
 on:
   push:
-    branches: [main]
-  pull_request:
-
-# Tags are covered by release.yml, which runs the same checks before it
-# builds anything.
+    tags: ["v*"]
 
 permissions:
   contents: read

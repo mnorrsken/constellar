@@ -232,3 +232,26 @@ func test_long_jobs_pay_more_per_light_year(t: Object) -> void:
 			sum += k
 		return sum / d.size()
 	t.ok(avg.call(long) > avg.call(short) * 1.2, "a long job's light year pays more (%.0f vs %.0f per sack and ly)" % [avg.call(long), avg.call(short)])
+
+## Every open board keeps a plain (not express) container job to a
+## neighbouring port, even right after one is taken.
+func test_every_board_has_a_plain_job_next_door(t: Object) -> void:
+	var w := _world()
+	w.reveal_all(0)
+	var plain := func(i: int) -> Contract:
+		for c in Contracts.offers_at(w, i):
+			if c.kind == "freight" and not c.express and _content.commodities[c.commodity].cargo_class == "container" \
+					and w.galaxy.lanes_of(i).any(func(l): return l.other(i) == c.destination):
+				return c
+		return null
+	var missing := []
+	for m in w.economy.markets:
+		var has_neighbour := w.galaxy.lanes_of(m.system).any(func(l): return w.economy.market_at(l.other(m.system)) != null)
+		if not m.closed and has_neighbour and plain.call(m.system) == null:
+			missing.append(w.galaxy.systems[m.system].name)
+	t.eq(missing, [], "every open board has one")
+	var s := w.ships_of(0)[0]
+	var job: Contract = plain.call(s.system)
+	t.ok(Contracts.fits(w, s, job), "the start ship can take it")
+	t.ok(w.accept_contract(0, job.id, s.id).ok, "taken")
+	t.ok(plain.call(s.system) != null, "and another one is up at once")
