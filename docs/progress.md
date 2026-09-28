@@ -9,7 +9,7 @@ Current test count: **132 tests, 3675 assertions, 0 failures** (`make test`).
   (`Events`/`Defs`/`Sim`), `data/commodities.json`, Makefile, headless test
   harness.
 - **M1 — Star catalogue and lanes — done.** `make stars` builds
-  `data/stars.json` (140 systems, 315 lanes, fully connected at a 12 ly jump
+  `data/stars.json` (140 systems, 221 lanes, fully connected at a 12 ly jump
   range) from the HYG v4.4 catalogue; `Galaxy`/`StarSystem`/`Lane`/
   `GalaxyCoords` load it and provide pathfinding and coordinate conversion.
 - **M2 — 3D galaxy map — done.** `GalaxyMap` draws the polar grid, starlanes,

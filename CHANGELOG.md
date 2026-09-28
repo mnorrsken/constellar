@@ -66,6 +66,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Ships in port cost nothing: crew and maintenance are paid only for the
+  days a ship spends under way (its share of the month). Docked, loading
+  or in the yard is free. The shipyard shows them as "cr/month under way".
+- Fewer starlanes, and fewer in the crowded middle: 221 instead of 315
+  (each star links its 3 nearest neighbours, not 4, and a lane is dropped
+  when a stop at another star is at most 25% longer, not 10%). Near Sol a
+  system has about 3.5 lanes instead of 5.2; everything is still reachable
+  with a 12 ly jump drive. The economy was retuned for the sparser map
+  (background traders reach two lanes but carry less, more fuel is made)
+  and warms up for two years before the game starts.
 - Ship maintenance halved for every hull (the starting Packet: 1,500 cr a
   month instead of 3,000; it still grows 3% a year with age), so a new
   house can make a profit sooner.

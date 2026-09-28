@@ -7,13 +7,13 @@
 		"size_log_offset": 2.0, "size_min": 0.5, "size_max": 8.0,
 		"volume_scale": 20.0, "update_days": 7, "cover_days": 30.0, "transit_rate": 4.0, "elasticity": 0.8, "price_min": 0.25, "price_max": 4.0,
 		"overstock_start": 1.0, "overstock_stop": 2.0, "decay_per_day": 0.001,
-		"warmup_days": 360, "history_weeks": 104,
+		"warmup_days": 720, "history_weeks": 104,
 		"population_needs": {
 			"grain": 8, "water_ice": 4, "consumer_goods": 1.8, "textiles": 0.9, "medicine": 0.6,
 			"luxury_foods": 0.7, "fuel": 1.0, "electronics": 0.4, "luxuries": 0.03, "weapons": 0.02
 		},
 		"robot_needs": { "machinery": 1.5, "electronics": 0.5, "fuel": 0.5 },
-		"traffic": { "max_hops": 1, "friction": 0.04, "per_ly": 0.02, "capacity": 200.0, "fill": 1.5, "max_share": 0.15 },
+		"traffic": { "max_hops": 2, "friction": 0.05, "per_ly": 0.04, "capacity": 80.0, "fill": 1.5, "max_share": 0.12 },
 		"soak": { "years": 20, "max_clamp_share": 0.1, "max_stock_ratio": 4.0 }
 	},
 	"settlements": {

@@ -5,9 +5,9 @@
 	"bridge_max_lane_ly": 10.0,
 	"max_systems": 140,
 	"lanes": {
-		"k_nearest": 4,
+		"k_nearest": 3,
 		"max_lane_ly": 16.0,
-		"detour_factor": 1.1
+		"detour_factor": 1.25
 	},
 
 	"notable": [

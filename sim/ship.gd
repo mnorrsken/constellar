@@ -34,6 +34,10 @@ var broken_until := 0
 ## No automatic servicing trip before this day (after one failed, e.g. for
 ## money); see Aging.wants_auto_service.
 var auto_service_after := 0
+## This month so far: days owned, and of those days under way. Crew and
+## maintenance are paid for the days under way only (Trading.monthly_costs).
+var month_days := 0
+var month_days_under_way := 0
 ## Why the ship is idle, waiting or losing money, for the player (empty
 ## while all is well). Set by the sim.
 var note := ""

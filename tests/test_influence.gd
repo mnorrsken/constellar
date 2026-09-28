@@ -89,7 +89,8 @@ func test_long_term_trade_raises_the_tier_and_unlocks_a_trading_post(t: Object) 
 	for m in w.economy.markets:
 		Trading.observe(w, 0, m.system)
 	var s := w.ships_of(0)[0]
-	# The best container run between two neighbouring markets.
+	# The best container run between two neighbouring markets, judged on a
+	# full load (prices move as it is bought and sold).
 	var best := [-1, -1, -1, 0.0]
 	for a in w.economy.markets:
 		for lane in w.galaxy.lanes_of(a.system):
@@ -97,8 +98,11 @@ func test_long_term_trade_raises_the_tier_and_unlocks_a_trading_post(t: Object) 
 			if b == null or lane.length > w.fleet.jump_range(s):
 				continue
 			for c in a.price.size():
-				if Trading.commodity_class(w, c) == "container" and a.stock[c] >= 800.0 and b.price[c] - a.price[c] > best[3]:
-					best = [a.system, b.system, c, b.price[c] - a.price[c]]
+				if Trading.commodity_class(w, c) != "container" or a.stock[c] < 800.0:
+					continue
+				var margin := b.quote_sell(c, 750.0) * (1.0 - Trading.tariff(w, b.system, c)) - a.quote_buy(c, 750.0)
+				if margin > best[3]:
+					best = [a.system, b.system, c, margin]
 	var there: int = best[1]
 	t.eq(w.open_trading_post(0, there).error, "Needs influence 25 here (you have 0)", "no post without influence")
 	s.system = best[0]

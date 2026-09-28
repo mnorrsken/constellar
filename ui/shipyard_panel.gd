@@ -366,8 +366,8 @@ func _show_detail(world: World) -> void:
 		["Jump", "%.0f ly" % float(h.jump_range)],
 		["Reliability", "%d%%" % roundi(float(h.reliability) * 100.0)],
 		["Fuel", "%d t per ly" % int(h.get("fuel_per_ly", 0))],
-		["Crew", "%s cr/month" % Format.thousands(int(h.crew_cost))],
-		["Maintenance", "%s cr/month" % Format.thousands(int(h.maintenance))],
+		["Crew", "%s cr/month under way" % Format.thousands(int(h.crew_cost))],
+		["Maintenance", "%s cr/month under way" % Format.thousands(int(h.maintenance))],
 	]
 	for r in rows:
 		_stats.add_child(_cell(r[0], MUTED, 13))

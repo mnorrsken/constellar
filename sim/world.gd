@@ -115,6 +115,11 @@ func advance_day() -> void:
 		events.append({"type": "contracts"})
 	WorldEvents.daily(self)
 	Aging.daily(self)
+	# Running costs follow the days a ship spends under way.
+	for s in fleet.ships:
+		s.month_days += 1
+		if s.status == Ship.Status.TRAVELING:
+			s.month_days_under_way += 1
 	for e in fleet.advance_day(day):
 		var s := fleet.get_ship(e.ship)
 		if s == null:

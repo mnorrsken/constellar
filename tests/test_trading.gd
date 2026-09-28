@@ -19,7 +19,9 @@ func _all_known(w: World) -> void:
 		Trading.observe(w, 0, m.system)
 
 ## The most profitable container good between two neighbouring markets for
-## a ship: [from, to, commodity index, margin per tonne].
+## a ship: [from, to, commodity index, margin per tonne], judged on a full
+## 750 t load (what buying it costs as the price climbs, what selling it
+## fetches as the price falls, after the tariff).
 func _best_pair(w: World, s: Ship) -> Array:
 	var best := [-1, -1, -1, 0.0]
 	for a in w.economy.markets:
@@ -30,7 +32,7 @@ func _best_pair(w: World, s: Ship) -> Array:
 			for c in a.price.size():
 				if Trading.commodity_class(w, c) != "container" or a.stock[c] < 800.0:
 					continue
-				var margin: float = b.price[c] - a.price[c]
+				var margin: float = (b.quote_sell(c, 750.0) * (1.0 - Trading.tariff(w, b.system, c)) - a.quote_buy(c, 750.0)) / 750.0
 				if margin > best[3]:
 					best = [a.system, b.system, c, margin]
 	return best
@@ -101,16 +103,37 @@ func test_fuel_and_docking_fees(t: Object) -> void:
 	t.ok(w.companies[0].cash < before, "fees came out of cash")
 	t.ok(month >= 0, "ledger month")
 
+## Crew and maintenance are paid for the days under way only: nothing for a
+## ship in port all month, all of it for one under way all month.
 func test_monthly_costs(t: Object) -> void:
 	var w := _world()
 	while w.day < 31:
 		w.advance_day()
 	var feb: Dictionary = w.companies[0].ledger.get(w.month(), {})
-	t.eq(feb.get("crew", 0.0), -4000.0, "Packet crew")
-	var s := w.ships_of(0)[0]
-	var aged := 1500.0 * (1.0 + 0.03 * Aging.age_years(w, s))
-	t.ok(is_equal_approx(feb.get("maintenance", 0.0), -aged), "Packet maintenance, more for an older ship")
+	t.eq(feb.get("crew", 0.0), 0.0, "no crew bill for a month in port")
+	t.eq(feb.get("maintenance", 0.0), 0.0, "no maintenance either")
 	t.ok(is_equal_approx(feb.get("interest", 0.0), -500000.0 * 0.06 / 12.0), "a month of 6% interest")
+	# Under way the whole of February: the full month.
+	w.reveal_all(0)
+	var s := w.ships_of(0)[0]
+	var far := -1
+	for m in w.economy.markets:
+		var plan := w.plan_route(0, s.id, m.system)
+		if plan.ok and plan.days > 40:
+			far = m.system
+			break
+	t.ok(w.send_ship(0, s.id, far).ok, "sent on a long trip")
+	while w.day < 59:  # to 1 March
+		w.advance_day()
+	var mar: Dictionary = w.companies[0].ledger.get(w.month(), {})
+	t.ok(is_equal_approx(mar.get("crew", 0.0), -4000.0), "Packet crew for a month under way (%.0f)" % mar.get("crew", 0.0))
+	var aged := 1500.0 * (1.0 + 0.03 * Aging.age_years(w, s))
+	t.ok(is_equal_approx(mar.get("maintenance", 0.0), -aged), "Packet maintenance, more for an older ship")
+	# Part of a month: that share.
+	s.month_days = 30
+	s.month_days_under_way = 10
+	Trading.monthly_costs(w)
+	t.ok(is_equal_approx(w.companies[0].ledger[w.month()].get("crew", 0.0), -4000.0 - 4000.0 / 3.0), "a third of the month, a third of the crew")
 
 func test_manual_trade_loop_makes_money(t: Object) -> void:
 	var w := _world()

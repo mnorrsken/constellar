@@ -52,7 +52,7 @@
 		"population_factor": 0.3,
 		"tech_bonus": 0,
 		"industries": [
-			{"in": {}, "out": {"fuel": 85, "chemicals": 30}}
+			{"in": {}, "out": {"fuel": 110, "chemicals": 30}}
 		],
 		"needs": {"machinery": 1, "robots": 0.3}
 	},
@@ -65,7 +65,7 @@
 		"population_factor": 0.4,
 		"tech_bonus": 0,
 		"industries": [
-			{"in": {}, "out": {"water_ice": 75, "chemicals": 20, "fuel": 12}}
+			{"in": {}, "out": {"water_ice": 75, "chemicals": 20, "fuel": 20}}
 		],
 		"needs": {"machinery": 1, "fuel": 1, "robots": 0.3}
 	},

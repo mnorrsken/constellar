@@ -134,8 +134,10 @@ extra systems not in HYG (TRAPPIST-1), and the notable-star list.
 Selection is every system within 20 ly plus notable/bridge stars out to
 55 ly, capped at 140. Luminosity is a bolometric estimate from absolute
 magnitude; mass comes from a mass–luminosity relation. Lanes connect each
-system to its 4 nearest neighbours within 16 ly, drop lanes with a
-≤1.1× detour through another star, add the minimum spanning tree so the
+system to its 3 nearest neighbours within 16 ly, drop lanes with a
+≤1.25× detour through another star (this thins the dense core most: 221
+lanes, about 3.5 per system near Sol and 2.6 on the rim), add the minimum
+spanning tree so the
 graph stays connected, then apply manual add/remove pairs from
 `data/lanes_overrides.json`. The script prints system/lane counts, a jump
 range → reachable-systems table, and choke points (systems whose removal
@@ -381,7 +383,10 @@ erroring. `fuel_quote` / `pay_fuel`: `hull.fuel_per_ly` x route length,
 bought from the local market (the rest at base x `fuel_without_market`).
 `docking_fee` on arrival at a settlement, halved at the company's own
 trading post there. `monthly_costs` on the 1st: crew
-and maintenance per ship (`Aging.maintenance`, grows with age), interest on
+and maintenance per ship (`Aging.maintenance`, grows with age) for the
+share of last month it spent under way (`World.advance_day` counts
+`Ship.month_days` and `month_days_under_way`; days docked, loading or in
+the yard cost nothing), interest on
 loans, ledger trimmed to `ledger_months`. `observe(company, system)` stores
 the market's prices in `Company.prices` (with the day); `observe_docked`
 refreshes them weekly where ships are docked. `process_orders` runs route

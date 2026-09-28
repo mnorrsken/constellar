@@ -186,14 +186,21 @@ static func _name(w: World, c: int) -> String:
 
 # --- the books ----------------------------------------------------------------------
 
-## First day of a month: crew and maintenance per ship, interest on loans.
+## First day of a month: crew and maintenance per ship for the share of
+## last month it spent under way (a ship in port costs nothing), interest
+## on loans.
 static func monthly_costs(w: World) -> void:
 	var month := w.month()
 	for s in w.fleet.ships:
 		var h := w.fleet.hull_def(s)
 		var c := w.companies[s.company]
-		c.book("crew", -float(h.get("crew_cost", 0)), month, s.id)
-		c.book("maintenance", -Aging.maintenance(w, s), month, s.id)
+		var share := float(s.month_days_under_way) / float(s.month_days) if s.month_days > 0 else 0.0
+		s.month_days = 0
+		s.month_days_under_way = 0
+		if share <= 0.0:
+			continue
+		c.book("crew", -float(h.get("crew_cost", 0)) * share, month, s.id)
+		c.book("maintenance", -Aging.maintenance(w, s) * share, month, s.id)
 	for c in w.companies:
 		if c.loan > 0.0:
 			c.book("interest", -c.loan * c.interest_per_year / 12.0, month)
