@@ -41,8 +41,10 @@ func _ready() -> void:
 ## Plays a sound (volume offset in dB) on the next free voice.
 func play(sound: String, volume_db := 0.0) -> void:
 	# No sound card (headless runs): the dummy driver never lets go of a
-	# playing stream, so don't start one (as MusicPlayer).
-	if not _streams.has(sound) or AudioServer.get_driver_name() == "Dummy":
+	# playing stream, so don't start one (as MusicPlayer). Nor while out of
+	# the tree: a new game or a load reloads the scene, and the old one still
+	# hears Events until it is freed.
+	if not _streams.has(sound) or AudioServer.get_driver_name() == "Dummy" or not is_inside_tree():
 		return
 	var p := _players[_next]
 	_next = (_next + 1) % VOICES

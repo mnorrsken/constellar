@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- "Playback can only happen when a node is inside the scene tree" (and a
+  similar panel-centring error) after New game or Load: the old game scene
+  still heard game signals for a moment after leaving the tree. UI sounds
+  and panel centring now skip nodes outside the tree.
+
 ## [0.3.0] - 2026-09-29
 
 ### Added

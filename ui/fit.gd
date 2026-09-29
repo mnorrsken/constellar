@@ -16,6 +16,8 @@ static func cap(panel: Control, scroll: ScrollContainer, content: Control, botto
 ## screen (with `margin` above and below; longer content scrolls), then
 ## centres it (see center).
 static func fit_screen(panel: Control, scroll: ScrollContainer, content: Control, margin := 24.0) -> void:
+	if not panel.is_inside_tree():
+		return  # a panel of a scene being replaced (new game, load)
 	var others := panel.get_combined_minimum_size().y - scroll.custom_minimum_size.y
 	var room := panel.get_viewport_rect().size.y - 2.0 * margin - others
 	scroll.custom_minimum_size.y = maxf(minf(content.get_combined_minimum_size().y, room), LEAST)
@@ -27,6 +29,8 @@ static func fit_screen(panel: Control, scroll: ScrollContainer, content: Control
 ## the next growth goes both ways, so a panel that refreshes while the game
 ## runs would creep up and to the left off the screen.
 static func center(panel: Control) -> void:
+	if not panel.is_inside_tree():
+		return  # a panel of a scene being replaced (new game, load)
 	panel.reset_size()
 	var screen := panel.get_viewport_rect().size
 	panel.position = ((screen - panel.size) * 0.5).max(Vector2.ZERO).round()
