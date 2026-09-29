@@ -40,7 +40,9 @@ func _ready() -> void:
 
 ## Plays a sound (volume offset in dB) on the next free voice.
 func play(sound: String, volume_db := 0.0) -> void:
-	if not _streams.has(sound):
+	# No sound card (headless runs): the dummy driver never lets go of a
+	# playing stream, so don't start one (as MusicPlayer).
+	if not _streams.has(sound) or AudioServer.get_driver_name() == "Dummy":
 		return
 	var p := _players[_next]
 	_next = (_next + 1) % VOICES

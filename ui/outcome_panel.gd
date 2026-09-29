@@ -5,6 +5,8 @@ extends PanelContainer
 ## game is over: quit).
 
 signal closed
+## The bankrupt player wants the main menu (a new game or a load).
+signal menu_requested
 
 const MUTED := Color(0.55, 0.62, 0.74)
 const GREEN := Color(0.45, 0.85, 0.55)
@@ -63,7 +65,9 @@ func show_bankrupt() -> void:
 	_title.add_theme_color_override("font_color", RED)
 	_body.text = "%d months with no cash and the bank lending no more: %s's creditors seize the books on %s.\n\nThe house of trade is closed." % [
 		int(w.content.balance.get("bankruptcy_months", 3)), p.name, w.date_string()]
-	_set_buttons([["Quit", func(): get_tree().quit()]])
+	_set_buttons([["Main menu", func():
+		visible = false
+		menu_requested.emit()], ["Quit", func(): get_tree().quit()]])
 	_open()
 
 func close_panel() -> void:

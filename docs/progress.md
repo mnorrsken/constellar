@@ -3,7 +3,7 @@
 Milestone-by-milestone status. See [`constellar-plan.md`](../constellar-plan.md)
 for the plan and acceptance criteria this tracks.
 
-Current test count: **132 tests, 3675 assertions, 0 failures** (`make test`).
+Current test count: **139 tests, 3999 assertions, 0 failures** (`make test`).
 
 - **M0 — Project skeleton — done.** Godot 4.7 project setup, autoloads
   (`Events`/`Defs`/`Sim`), `data/commodities.json`, Makefile, headless test
@@ -71,5 +71,11 @@ Current test count: **132 tests, 3675 assertions, 0 failures** (`make test`).
   systems) goal, checked monthly, plus bankruptcy after months in the red.
   Influence card on the system panel, an influence map mode, an outcome
   screen for reaching a goal or going bankrupt.
-- **M11 — Save/load and main menu — pending.**
+- **M11 — Save/load and main menu — done.** `sim/save_game.gd` writes/reads
+  the whole world (day, RNGs, settlements, markets, companies, ships,
+  contracts, events, news) as JSON under `user://saves/`; everything fixed
+  is rebuilt from the world seed. `ui/main_menu.gd` (Esc): Continue, New
+  game (seed and goal), Load game, Save game, Quit; the game autosaves
+  every 1 January. `Sim.new_game`/`save_game`/`load_game` replace the old
+  `set_goal` (the goal is now picked at New game).
 - **M12 — Rim Crises, art/audio pass, balance — pending.**

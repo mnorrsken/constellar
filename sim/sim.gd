@@ -27,18 +27,56 @@ var waiting: Array[int] = []
 var _resume_speed := 1
 ## Money the F2 cheat adds.
 const CHEAT_CASH := 10000000.0
+## The save written on every 1 January.
+const AUTOSAVE := "autosave"
+## Show the main menu when the main scene starts (the first start; not
+## after a new game or a load, which reload the scene).
+var show_menu := true
 
 var _accumulator := 0.0
 
+## A world to show behind the main menu (the default seed); a new game or
+## a load replaces it.
 func _ready() -> void:
-	var seed_value := int(Defs.world_content.balance.get("world_seed", 1))
+	new_game(int(Defs.world_content.balance.get("world_seed", 1)), "")
+
+## A new world from a seed, with the player's goal ("" = sandbox). The
+## main scene reloads to show it (see main.gd).
+func new_game(seed_value: int, goal: String) -> void:
 	world = World.create(seed_value, Defs.stars, Defs.world_content)
 	world.warm_up()
-	galaxy = world.galaxy
+	if goal != "":
+		world.set_goal(PLAYER, goal)
+	_use_world()
 	print("[Sim] world seed %d: %d inhabited systems, start at %s, %s" % [
 		seed_value, world.settlements().size(),
 		galaxy.systems[world.start_system].name if world.start_system >= 0 else "?",
 		world.date_string()])
+
+## Saves the game as user://saves/<name>.json.
+func save_game(save_name: String) -> Dictionary:
+	var path := SaveGame.DIR + SaveGame.file_name(save_name) + ".json"
+	var r := SaveGame.write(world, path, {
+		"name": save_name, "company": player().name, "date": world.date_string(), "seed": world.world_seed,
+		"value": roundi(Goals.company_value(world, PLAYER)), "saved": Time.get_datetime_string_from_system(false, true),
+	})
+	if r.ok:
+		Events.notice.emit("Saved: %s" % save_name)
+	return _run(r)
+
+## Loads a save; the main scene reloads to show it.
+func load_game(path: String) -> Dictionary:
+	var r := SaveGame.read(path, Defs.stars, Defs.world_content)
+	if r.ok:
+		world = r.world
+		_use_world()
+	return _run(r)
+
+func _use_world() -> void:
+	galaxy = world.galaxy
+	waiting.clear()
+	world.drain_events()
+	set_speed(0)
 
 func set_speed(index: int) -> void:
 	speed = clampi(index, 0, SPEEDS.size() - 1)
@@ -62,6 +100,9 @@ func _process(delta: float) -> void:
 		world.advance_day()
 		Events.day_passed.emit(world.day)
 		_flush_events()
+		var date := Calendar.date(world.day, 0)
+		if date.day == 1 and date.month == 1:
+			save_game(AUTOSAVE)
 
 ## How far into the current day the clock is (0..1), for smooth drawing.
 func day_fraction() -> float:
@@ -159,9 +200,6 @@ func veto_event(event_id: int) -> Dictionary:
 
 func broker_peace(event_id: int) -> Dictionary:
 	return _run(world.broker_peace(PLAYER, event_id))
-
-func set_goal(goal_id: String) -> Dictionary:
-	return _run(world.set_goal(PLAYER, goal_id))
 
 func take_loan(amount: float) -> Dictionary:
 	return _run(world.take_loan(PLAYER, amount))

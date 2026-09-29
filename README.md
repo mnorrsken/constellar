@@ -42,6 +42,13 @@ Override the binary if needed: `make test GODOT=/path/to/godot`.
 
 ## Map controls
 
+At first start (and Esc from the game once nothing else is open) the main
+menu offers Continue (your newest save), New game (pick a seed and a
+goal), Load game (name, in-game date, company value and when it was
+saved, newest first) or Quit; in play it also offers Resume and Save
+game. The game autosaves every 1 January; saves live in your user data
+directory under `saves/`.
+
 Drag to orbit, right/middle-drag to pan, scroll or trackpad swipe/pinch to
 zoom, click a star to select and fly to it, Esc to deselect, Home to return
 to Sol, Z to hide/show the drop lines from stars to the galactic plane. Keyboard: WASD/arrows pan, Q/E orbit, R/F tilt, -/= zoom, F1 toggles
@@ -134,10 +141,12 @@ as patron (75) you can veto a running tariff hike or broker peace in a war
 between two systems that both depend on you, and wars and coups are rarer
 wherever you're patron.
 
-Goals: pick a victory goal in the finance panel (company value, or Merchant
-Prince — patron of five systems) or stay in the sandbox; reaching it shows
-an outcome screen but you can keep playing. Three months running with no
-cash and the loan maxed out bankrupts the house instead, ending the game.
+Goals: pick a victory goal at New game (company value, or Merchant Prince —
+patron of five systems) or stay in the sandbox; the finance panel shows its
+progress, and reaching it shows an outcome screen but you can keep
+playing. Three months running with no cash and the loan maxed out
+bankrupts the house instead, ending the game (with a Main menu button to
+start over).
 
 Sound: music follows the star you zoom in on (its world type's theme, or a
 calmer "space" theme when zoomed out); K cycles music/sound/off. All music

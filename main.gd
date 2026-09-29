@@ -21,6 +21,7 @@ const PICK_RADIUS_PX := 16.0
 @onready var fleet_screen: FleetScreen = $UI/FleetScreen
 @onready var ship_panel: ShipPanel = $UI/ShipPanel
 @onready var outcome: OutcomePanel = $UI/OutcomePanel
+@onready var menu: MainMenu = $UI/MainMenu
 @onready var music: MusicPlayer = $Music
 @onready var sounds: UiSounds = $UiSounds
 
@@ -99,6 +100,11 @@ func _ready() -> void:
 	Events.bankrupt.connect(func(_c):
 		_overlay_opened()
 		outcome.show_bankrupt())
+	outcome.menu_requested.connect(func(): open_menu(false))
+	# The first start opens on the main menu (a new game or a load reloads
+	# this scene without it).
+	if Sim.show_menu:
+		open_menu.call_deferred(false)
 	# Play in a maximized window. Automated runs keep the window as it is:
 	# headless ones, and test/capture scenes that load this scene as a child.
 	if DisplayServer.get_name() != "headless" and get_tree().current_scene == self:
@@ -344,6 +350,12 @@ func open_orders(ship_id: int) -> void:
 	_overlay_opened()
 	orders_panel.open(ship_id, map.selected)
 
+## The main menu over the dimmed map; `playing`: from the game (it can
+## resume), else the first start or after bankruptcy.
+func open_menu(playing: bool) -> void:
+	_overlay_opened()
+	menu.open(playing)
+
 func open_finance() -> void:
 	_overlay_opened()
 	finance_panel.open()
@@ -370,7 +382,7 @@ func _overlay_open() -> bool:
 
 ## The modal panels (one open at a time, over a dimmed map).
 func _overlays() -> Array:
-	return [shipyard, orders_panel, finance_panel, contracts_panel, news_panel, fleet_screen, outcome]
+	return [shipyard, orders_panel, finance_panel, contracts_panel, news_panel, fleet_screen, outcome, menu]
 
 ## Map modes: the danger map (lanes and stars by the chance of a hit), the
 ## influence map (charted markets by the player's influence tier, dim where
@@ -423,7 +435,14 @@ func _apply_price_map(c: int) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	var k := event as InputEventKey
-	if k == null or not k.pressed or k.echo or outcome.game_over:
+	if k == null or not k.pressed or k.echo:
+		return
+	# The menu takes only Esc (back / resume).
+	if menu.visible:
+		if k.physical_keycode == KEY_ESCAPE:
+			menu.back()
+		return
+	if outcome.game_over:
 		return
 	var overlay := _overlay_open()
 	match k.physical_keycode:
@@ -448,8 +467,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				select_ship(-1)
 			elif map.selected >= 0:
 				select(-1)
-			else:
+			elif selected_ship >= 0:
 				select_ship(-1)
+			else:
+				open_menu(true)
 		KEY_ENTER, KEY_KP_ENTER:
 			if not overlay:
 				open_system_view()

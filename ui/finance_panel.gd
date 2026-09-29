@@ -1,7 +1,7 @@
 class_name FinancePanel
 extends PanelContainer
 ## The finance screen (L): cash and loan with borrow/repay; company value,
-## the victory goal (picked here until a new-game menu exists) and a
+## the victory goal (picked at New game) with its progress, and a
 ## bankruptcy warning; the ledger by
 ## category for the last three months (cash); charts of the company's
 ## monthly profit and every ship's (up to two years; goods count when sold,
@@ -26,11 +26,9 @@ const SHIP_COLORS := [Color(0.35, 0.85, 1.0), Color(0.98, 0.72, 0.3), Color(0.75
 var _title := Label.new()
 var _money := Label.new()
 var _value := Label.new()
-var _goal_pick := OptionButton.new()
+var _goal := Label.new()
 var _goal_status := Label.new()
 var _warning := Label.new()
-## Goal ids in _goal_pick's order ("" = sandbox).
-var _goal_ids: Array[String] = [""]
 var _grid := GridContainer.new()
 var _net_chart := Chart.new()
 var _ship_chart := Chart.new()
@@ -61,30 +59,17 @@ func _ready() -> void:
 	_money.add_theme_font_override("font", Fonts.MONO)
 	_money.add_theme_font_size_override("font_size", 15)
 	_money.add_theme_color_override("font_color", AMBER)
-	for l in [_value, _goal_status]:
+	for l in [_value, _goal, _goal_status]:
 		l.add_theme_font_override("font", Fonts.MONO)
 		l.add_theme_font_size_override("font_size", 15)
 	_value.add_theme_color_override("font_color", TEXT)
 	_goal_status.add_theme_color_override("font_color", MUTED)
 	_warning.add_theme_font_size_override("font_size", 15)
 	_warning.add_theme_color_override("font_color", RED)
-	_goal_pick.focus_mode = Control.FOCUS_NONE
-	_goal_pick.add_item("Goal: none (sandbox)")
-	var goals: Dictionary = Defs.world_content.balance.get("goals", {})
-	for id in goals:
-		var g: Dictionary = goals[id]
-		_goal_ids.append(id)
-		match id:
-			"value":
-				_goal_pick.add_item("Goal: company value %s cr" % Format.money_short(float(g.target)))
-			"prince":
-				_goal_pick.add_item("Goal: %s (patron of %d systems)" % [g.name, int(g.patrons)])
-			_:
-				_goal_pick.add_item("Goal: %s" % g.get("name", id))
-	_goal_pick.item_selected.connect(func(k): Sim.set_goal(_goal_ids[k]))
+	_goal.add_theme_color_override("font_color", TEXT)
 	var standing := HBoxContainer.new()
 	standing.add_theme_constant_override("separation", 18)
-	for c in [_value, _goal_pick, _goal_status]:
+	for c in [_value, _goal, _goal_status]:
 		standing.add_child(c)
 	_grid.columns = 4
 	_grid.add_theme_constant_override("h_separation", 22)
@@ -132,8 +117,15 @@ func _refresh() -> void:
 		Format.thousands(roundi(p.loan_max)), roundi(p.interest_per_year * 100.0), Format.thousands(roundi(p.overdraft))]
 	_value.text = "Company value %s cr" % Format.thousands(roundi(Goals.company_value(w, Sim.PLAYER)))
 	_value.tooltip_text = "Cash minus the loan, plus what your ships would sell for and what their cargo cost"
-	_goal_pick.select(maxi(_goal_ids.find(p.goal), 0))
 	var g := Goals.progress(w, Sim.PLAYER)
+	var target: Dictionary = w.content.balance.get("goals", {}).get(g.goal, {})
+	match g.goal:
+		"value":
+			_goal.text = "Goal: company value %s cr" % Format.money_short(float(target.get("target", 0)))
+		"prince":
+			_goal.text = "Goal: %s (patron of %d systems)" % [g.name, int(target.get("patrons", 0))]
+		_:
+			_goal.text = "No goal: sandbox"
 	match g.goal:
 		"value":
 			_goal_status.text = "%s of %s cr" % [Format.money_short(g.current), Format.money_short(g.target)]

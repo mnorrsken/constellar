@@ -90,6 +90,7 @@ then delete both files:
 extends Node
 var _f := 0
 func _ready() -> void:
+	Sim.show_menu = false  # else the main menu covers the map
 	add_child(load("res://main.tscn").instantiate())
 func _process(_d: float) -> void:
 	_f += 1

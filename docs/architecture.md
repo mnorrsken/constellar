@@ -25,14 +25,20 @@ this order:
    `archetypes`, `governments`, `names`, `balance` — everything
    `World.create` needs). `archetype_name`/`government_name`/`planet_type`
    helpers look up a definition by id.
-3. **`Sim`** (`sim/sim.gd`) — owns the world. Builds
-   `Sim.world = World.create(seed, Defs.stars, Defs.world_content)`, runs
-   `world.warm_up()` and sets `Sim.galaxy = world.galaxy` in `_ready`, seed
-   from `balance.json` `world_seed`. Drives the day clock: `set_speed`/
-   `toggle_pause` pick an index into `SPEEDS` (days per second, `[0, 1, 2, 4,
-   8]`), `_process` accumulates delta time and calls `world.advance_day()`
-   for each day owed (capped at 8 a frame), emitting `Events.day_passed`;
-   `Events.speed_changed` fires on `set_speed`.
+3. **`Sim`** (`sim/sim.gd`) — owns the world. `_ready` calls `new_game`
+   with the seed from `balance.json` `world_seed` (a sandbox world shown
+   behind the main menu at first start); `new_game(seed_value, goal)`
+   builds `World.create(seed_value, Defs.stars, Defs.world_content)`, runs
+   `world.warm_up()`, sets the goal if any, and calls `_use_world` (sets
+   `galaxy`, clears `waiting`, drains stray events, pauses). `save_game`/
+   `load_game` wrap `SaveGame` (below); a new game or a load reloads
+   `main.tscn` around the new world (`Sim.show_menu` is true only at first
+   start). Drives the day clock: `set_speed`/`toggle_pause` pick an index
+   into `SPEEDS` (days per second, `[0, 1, 2, 4, 8]`), `_process`
+   accumulates delta time and calls `world.advance_day()` for each day owed
+   (capped at 8 a frame), emitting `Events.day_passed`, and autosaves
+   (save name "autosave") every 1 January; `Events.speed_changed` fires on
+   `set_speed`.
 
 The viewport is 1920×1080 with `canvas_items` stretch mode and a 1.25x UI
 scale (`window/stretch/scale`), so logical UI space is 1536×864.
@@ -627,6 +633,33 @@ player notices (a new tier, "you may veto this" when a vetoable event
 starts somewhere the player is patron, a concession lost, months left
 before bankruptcy).
 
+## Save and load
+
+`sim/save_game.gd` (`SaveGame`, static functions, like `Trading`) turns a
+`World` to and from JSON. `to_data`/`from_data` hold only what changes as
+the game runs: day, the four world RNGs (seed and state, written as
+strings since a 64-bit int doesn't survive a JSON number), settlements'
+government/stability/population, market stock and price history,
+companies (cash, loan, knowledge, prices, ledgers, influence, posts,
+concessions, goal, bankruptcy), ships (every field, including cargo,
+orders, wear, month days), contracts and the per-ship jobs order, running
+events, news, and the id counters. Everything fixed (star map, planets,
+settlement names and archetypes, market recipes) is remade from the world
+seed via `World.create`, as at a new game, and derived state (event
+effects on prices, tariffs, bans, lane danger) is rebuilt with
+`WorldEvents.apply_all` over the loaded state. Every value is written with
+an explicit type and in its original order, and floats exactly: a plain
+JSON number where it reads back unchanged, else `"x:" + ` the hex of its 8
+bytes (Godot's `JSON` rounds about one double in four), and long float
+arrays as base64 of their bytes — so a loaded world saves back to the same
+text and runs on exactly like the original. `to_json`/`write(world, path,
+meta)`/`read(path, stars, content)` add the `{"meta": {...}, "world":
+{...}}` envelope (`meta`: name, company, in-game date, seed, company
+value, when saved — for the load list only) and file I/O; `list(dir)`
+returns saves newest first; `file_name(name)` sanitises a save name for
+the filename. `FORMAT` is bumped when the layout changes; a save from an
+older format or a different star map (system/lane count) is refused.
+
 ## Render layer
 
 `render/star_look.gd` (`StarLook`) is pure functions from a star's spectral
@@ -875,9 +908,9 @@ the system and fly there. `ui/chart.gd` (`Chart`) draws bars or lines with
 axis values (`Format.money_short`) and month labels, used by:
 `FinancePanel` (L), rewritten with a ledger table (three months by
 category, including `tariffs`, `insurance`, `repairs` and now `influence`),
-borrow/repay, company value and a goal picker (`OptionButton`, sandbox or
-one `balance.json goals` entry, calling `Sim.set_goal`) with its progress
-or a "reached" date, a bankruptcy warning (months in the red, or
+borrow/repay, company value and a read-only goal label (the goal is now
+picked at New game, in `MainMenu`) with its progress or a "reached" date,
+a bankruptcy warning (months in the red, or
 "Bankrupt."), a company profit-per-month chart, a per-ship profit chart
 (3-month rolling average, since trips span months) and a ship table (age,
 condition, last month, 12 months, `Trading.loss_reason`). `MapModeBar` (top
@@ -895,9 +928,25 @@ text at the selling ship on `Events.profit`.
 `ui/outcome_panel.gd` (`OutcomePanel`) is the modal that ends a company's
 run: `show_goal()` ("Goal reached", green, what was reached and when, a
 "Keep playing" button that just closes it) or `show_bankrupt()`
-("Bankrupt", red, why and when, a "Quit" button; `game_over` is true so it
+("Bankrupt", red, why and when, a "Quit" button and now "Main menu", which
+hides the panel and emits `menu_requested`; `game_over` is true so it
 can't be closed and Esc/other input is ignored while it shows). `main.gd`
 opens it on `Events.goal_reached`/`bankrupt`.
+
+`ui/main_menu.gd` (`MainMenu`) sits over the paused, dimmed map.
+`open(playing)` shows the first page: at the first start (`playing` false) Continue (the
+newest save, greyed out without one), New game, Load game, Quit; in play
+it adds Resume and Save game. New game has a seed field (a random default,
+"New seed" to reroll) and a goal picker (`Defs.world_content.balance
+goals`, like the old finance-panel picker), then Start calls
+`Sim.new_game` and reloads the scene (`get_tree().reload_current_scene()`,
+so autoloads and the map rebuild around the new world); Load game lists
+saves (`SaveGame.list`) as name / in-game date / company value / when
+saved, picking one calls `Sim.load_game` and reloads the same way; Save
+game offers a name field or picking an existing save to overwrite, and
+calls `Sim.save_game`. While open, `main.gd`'s `_unhandled_input` routes
+only Esc to it (`back()`: previous page, or resume/close); it's one of
+`main.gd`'s `_overlays()`.
 
 `ui/news_ticker.gd` (`NewsTicker`, "The Rim Courier", bottom right) turns
 through the latest headlines about charted systems every few seconds, a
@@ -921,17 +970,24 @@ closes the view first, then deselects. `toggle_market()` shows/hides
 button); Space calls `Sim.toggle_pause()`; keys 1-4 call `Sim.set_speed()`.
 Clicking a ship chevron (or a fleet row) calls `select_ship()`; with a
 system selected, the route preview shows and S (or the card button) sends
-the ship. The Shipyard button opens `ShipyardPanel`. Esc closes the
-shipyard, then the system view, then the system selection, then the ship
-selection. On `Events.charted` it re-applies the map's fog; on
-`Events.attention` (if `auto_focus`) it selects the ship and its system and
-flies there. Uncharted systems: tooltip and card only say "Uncharted
-system"; market, system view and shipyard stay closed. F2 calls
-`Sim.cheat()`. On `Events.goal_reached`/`bankrupt` it opens `OutcomePanel`
-(a modal like the others, `_overlays()`); once it shows the bankruptcy
-(`OutcomePanel.game_over`) all keyboard input is ignored, so the game truly
-stops. The influence map mode (`Events.influence_changed`, if that mode is
-on) is refreshed the same way as the price maps.
+the ship. The Shipyard button opens `ShipyardPanel`. Esc closes each open
+modal in turn (shipyard, orders, finance, contracts, news, fleet screen,
+outcome), then the system view, then the ship card, then the system
+selection, then the ship selection, and finally, with nothing left open,
+calls `open_menu(true)`. `open_menu(playing)` opens `MainMenu`; while it's
+visible `_unhandled_input` routes only Esc to `menu.back()`. `Sim.
+show_menu` (true only at the first start) opens it at `_ready`, without
+pausing on anything else first. `OutcomePanel.menu_requested` (its
+bankruptcy screen's "Main menu" button) also calls `open_menu(false)`. On
+`Events.charted` it re-applies the map's fog; on `Events.attention` (if
+`auto_focus`) it selects the ship and its system and flies there.
+Uncharted systems: tooltip and card only say "Uncharted system"; market,
+system view and shipyard stay closed. F2 calls `Sim.cheat()`. On `Events.
+goal_reached`/`bankrupt` it opens `OutcomePanel` (a modal like the others,
+`_overlays()`); once it shows the bankruptcy (`OutcomePanel.game_over`)
+all keyboard input is ignored, so the game truly stops. The influence map
+mode (`Events.influence_changed`, if that mode is on) is refreshed the
+same way as the price maps.
 
 ## Audio
 
@@ -969,7 +1025,8 @@ driver, which never releases a playing stream. `audio/ui_sounds.gd`
 `SceneTree.node_added`) and reacts to `Events`: `refused` (error), `alert`
 (raid/loss), `confirmed` (bought/sold/refitting/servicing/contract_accepted),
 `attention` (hail), `profit` (coin or loss), `news_posted` for visible
-starting news (chime), and pause/resume on speed changes. `sim/events.gd`
+starting news (chime), and pause/resume on speed changes; also skipped on
+the Dummy driver, for the same reason as `MusicPlayer`. `sim/events.gd`
 gained `refused(text)` (emitted by `Sim._run` on a refused command),
 `alert(text)` (raids/losses, `Sim._hit_notice`) and `confirmed(kind)`
 (`Sim._flush_events`, player commands only) for these to listen to.
@@ -1082,6 +1139,13 @@ shortage, decay, tier thresholds and one-off tier-reached events, patron
 picking) and `Goals` (company value, patron count, goal progress for both
 goal kinds, bankruptcy after months in the red and its warnings, a goal
 being reached posting news once).
+
+`tests/test_save.gd` covers `SaveGame`: a busy game (route orders,
+contracts, a war, a tariff hike, a post and a concession, a loan, a goal,
+400 days) saved, loaded and saved again gives back identical text, and
+both copies run on identically a year later; writing, listing (newest
+first) and reading a save file; and refusing a save from another format or
+star map.
 
 ## Builds and releases
 

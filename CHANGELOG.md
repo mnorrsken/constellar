@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Main menu (Esc) and save/load: at first start, Continue (the newest
+  save), New game (seed and goal), Load game or Quit; in play, Esc also
+  offers Resume and Save game. A save holds everything that changes (day,
+  companies, ships, contracts, markets, running events, news); the star
+  map, planets and settlements are rebuilt from the world seed. The game
+  autosaves every 1 January. The bankruptcy screen gained a "Main menu"
+  button; the finance panel's goal picker is now a read-only label with
+  its progress (the goal is chosen at New game instead).
+
 ## [0.2.0] - 2026-09-28
 
 ### Added

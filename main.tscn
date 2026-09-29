@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3]
+[gd_scene load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://main.gd" id="1_main"]
 [ext_resource type="Script" path="res://render/galaxy_map.gd" id="2_map"]
@@ -28,6 +28,7 @@
 [ext_resource type="Script" path="res://audio/ui_sounds.gd" id="25_ui_sounds"]
 [ext_resource type="Script" path="res://ui/ship_panel.gd" id="26_ship_panel"]
 [ext_resource type="Script" path="res://ui/outcome_panel.gd" id="28_outcome"]
+[ext_resource type="Script" path="res://ui/main_menu.gd" id="29_menu"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("7_sky")
@@ -132,6 +133,9 @@ script = ExtResource("23_fleet_screen")
 
 [node name="OutcomePanel" type="PanelContainer" parent="UI"]
 script = ExtResource("28_outcome")
+
+[node name="MainMenu" type="PanelContainer" parent="UI"]
+script = ExtResource("29_menu")
 
 [node name="Tooltip" type="PanelContainer" parent="UI"]
 script = ExtResource("4_tooltip")
