@@ -3,12 +3,13 @@ extends RefCounted
 ## and as a route stop), the notes that say why a ship is idle or losing,
 ## the per-ship books by category, and new hull models by year.
 
+const WarmWorld := preload("res://tests/warm_world.gd")
+
 var _content := Content.load_world_content("res://data/")
 var _stars := Content.load_object("res://data/stars.json")
 
 func _world() -> World:
-	var w := World.create(1, _stars, _content)
-	w.warm_up()
+	var w := WarmWorld.make(_stars, _content)
 	w.companies[0].cash = 2000000.0
 	return w
 

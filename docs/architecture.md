@@ -688,7 +688,10 @@ each star is drawn this frame, which `main.gd` uses for picking.
 `set_lane_colors(colors)` recolours the starlane ribbon per lane (used for
 the danger map mode); `set_badges(systems)` draws a pulsing ring at each
 charted system with a running event (colour by badge kind — danger,
-politics, other).
+politics, other). `set_shipyards(systems)` draws a screen-sized
+hollow lime triangle up-right of each charted shipyard
+(`shaders/shipyard_symbol.gdshader`), fading out between 28 and 42 ly
+camera distance so the zoomed-out map stays clean.
 
 `render/map_camera.gd` (`MapCamera`) turns input into edits on a target
 `OrbitRig`, then eases the view toward it: left-drag orbit, right/
@@ -728,7 +731,9 @@ company colour, pointing along its heading): travelling ships interpolated
 with `Sim.day_fraction()`, docked ships parked around their star, and a
 broken-down ship held still at its stall point. It draws
 the selected ship's remaining route (amber) and a preview route to the
-selected system (cyan), and gives `screen_points` for picking ships.
+selected system (cyan), a spinning amber ring on the selected ship (like
+the one on the selected star), and gives `screen_points` for picking
+ships.
 
 `render/ship_model.gd` (`ShipModel`, static) builds a ship's 3D model from
 primitive meshes, no art assets: `build(hull, modules, module_defs, accent)`
@@ -779,15 +784,19 @@ tariff-hike event runs, or "none") and a Banned row
 when the government bans a good, then each running event there with its
 badge colour and end date, or "Uninhabited";
 shared by the map's system panel and the
-system view. `ui/influence_card.gd` (`InfluenceCard`) shows the player's
+system view. `compact` (set by `SystemPanel`) drops the summary paragraph
+and puts it on the name/where line's tooltip instead. `ui/influence_card.gd`
+(`InfluenceCard`) shows the player's
 standing at one system: a score bar (`Bar` inner class) ticked at the
 post/concession/patron thresholds and coloured by the tier reached, what
-the player holds there, and a button for the next tier's action (disabled
-with a tooltip explaining why not) plus, as patron, veto/broker-peace
+the player holds there (or, holding nothing yet, a tooltip on the header/bar
+explaining how to gain influence), and a button for the next tier's action
+(disabled with a tooltip explaining why not) plus, as patron, veto/broker-peace
 buttons for any running vetoable/brokerable event there; hidden where
 there's no market. `ui/system_panel.gd` (`SystemPanel`) is the card on the right
-of the map for the selected system (star types, distance, region, body
-count, a `SettlementCard`, an `InfluenceCard`, and "View system"/"Market"
+of the map for the selected system (star types, body count, distance, region
+on one facts line, a `SettlementCard` set to `compact`, an `InfluenceCard`,
+and "View system"/"Market"
 buttons, the latter disabled for uninhabited systems); `view_requested`/
 `market_requested` tell `main.gd` to open the system view or toggle the
 market panel.
@@ -1050,7 +1059,12 @@ modal panels play open/close. K cycles music/sound/off (mutes the `Music`/
 (`godot --headless --script res://tests/run_tests.gd`, wrapped by `make
 test`). It discovers every `tests/test_*.gd`, instantiates it, and calls
 each `test_*` method with a `Tester` (`t.ok(cond, msg)` / `t.eq(a, b,
-msg)`), exiting non-zero on any failure.
+msg)`), exiting non-zero on any failure. Names after `--` (`make test
+T="trading save"`) run only those files. `tests/warm_world.gd`
+(`WarmWorld.make(stars, content)`) warms one world per run and hands each
+test an exact copy from its save data (about 50 ms instead of a second of
+warm-up); `test_save.gd` keeps the real warm-up path, since it proves the
+copy is exact.
 
 **`make import` exits 0 even on script errors** — it only builds the
 `.godot` cache, it doesn't fail the process on a broken script. Grep its

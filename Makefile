@@ -39,8 +39,8 @@ $(AUDIO): tools/make_audio.py
 import: $(AUDIO) ## Headless import: build the .godot cache and catch script/asset errors
 	$(GODOT) --headless --editor --quit --path $(PROJECT)
 
-test: ## Run headless sim tests (non-zero exit on failure)
-	$(GODOT) --headless --path $(PROJECT) --script res://tests/run_tests.gd
+test: ## Run headless sim tests (non-zero exit on failure); T="trading save" runs only those files
+	$(GODOT) --headless --path $(PROJECT) --script res://tests/run_tests.gd $(if $(T),-- $(T))
 
 soak: ## Run the economy for 20 game years headless and check market health
 	$(GODOT) --headless --path $(PROJECT) --script res://tools/soak.gd

@@ -2,13 +2,14 @@ extends RefCounted
 ## Trading: price knowledge, buying and selling, fees, the ledger, route
 ## orders (Trading via World commands).
 
+const WarmWorld := preload("res://tests/warm_world.gd")
+
 var _content := Content.load_world_content("res://data/")
 var _stars := Content.load_object("res://data/stars.json")
 
 ## A world with settled markets (prices differ, as in the game).
 func _world() -> World:
-	var w := World.create(1, _stars, _content)
-	w.warm_up()
+	var w := WarmWorld.make(_stars, _content)
 	w.companies[0].cash = 2000000.0
 	return w
 

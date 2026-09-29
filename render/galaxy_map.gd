@@ -8,19 +8,23 @@ extends Node3D
 ## Fog of war: every star glows, but names, drop lines and lanes appear only
 ## for systems in `known` (set_known; lanes need both ends charted).
 ## Pulsing badge rings mark systems with running events (set_badges), and
-## the danger map mode colours lanes by danger (set_lane_colors).
+## the danger map mode colours lanes by danger (set_lane_colors). Charted
+## shipyards carry a small triangle when zoomed in (set_shipyards).
 
 const STAR_SHADER := preload("res://render/shaders/star.gdshader")
 const GRID_SHADER := preload("res://render/shaders/grid.gdshader")
 const RING_SHADER := preload("res://render/shaders/ring.gdshader")
+const YARD_SHADER := preload("res://render/shaders/shipyard_symbol.gdshader")
 
-const LANE_COLOR := Color(0.25, 0.77, 0.85, 0.32)
+const LANE_COLOR := Color(0.25, 0.77, 0.85, 0.2)
 ## Lanes longer than this are drawn as "deep lanes" (needs a long-range hull).
 @export var deep_lane_ly := 12.0
-const DEEP_LANE_COLOR := Color(0.62, 0.45, 0.95, 0.22)
+const DEEP_LANE_COLOR := Color(0.62, 0.45, 0.95, 0.14)
 const HOVER_COLOR := Color(0.35, 0.85, 1.0, 0.9)
 const LABEL_COLOR := Color(0.78, 0.86, 0.96)
 const SELECT_COLOR := Color(1.0, 0.72, 0.28, 1.0)
+## Shipyard triangles: a lime green nothing else on the map uses.
+const YARD_COLOR := Color(0.55, 1.0, 0.4, 0.95)
 ## Radius (ly) of the stylised circle multiple stars move on.
 const MULTI_RADIUS := 0.32
 ## Radians per second for that motion.
@@ -52,6 +56,9 @@ var _lane_colors: Dictionary = {}
 var _badges: Array[MeshInstance3D] = []
 var _badge_systems: Dictionary = {}
 var _drops_mi: MeshInstance3D
+## System indices of the shipyards.
+var _yards: Array = []
+var _yards_mi: MultiMeshInstance3D
 ## Drop lines ("z rods") from stars to the galactic plane; Z toggles them.
 var show_drop_lines := true:
 	set(value):
@@ -80,6 +87,12 @@ func set_known(known: PackedByteArray) -> void:
 	_build_lanes()
 	_build_drop_lines()
 	set_badges(_badge_systems)
+	_build_yards()
+
+## Shipyard symbols at these systems (indices); only charted ones show.
+func set_shipyards(systems: Array) -> void:
+	_yards = systems
+	_build_yards()
 
 ## Danger map mode: colours lanes (Vector2i(a, b), a < b -> Color); an empty
 ## dictionary restores the normal lane colours.
@@ -196,13 +209,13 @@ func _build_drop_lines() -> void:
 		var foot := Vector3(top.x, 0.0, top.z)
 		var c := StarLook.color(s.primary().get("class", ""), s.primary().get("subclass"))
 		# Stalks fade toward the plane; stars below it get fainter ones.
-		c.a = 0.28 if top.y >= 0.0 else 0.15
+		c.a = 0.11 if top.y >= 0.0 else 0.06
 		var foot_c := Color(c, c.a * 0.3)
 		st.set_color(c)
 		st.add_vertex(top)
 		st.set_color(foot_c)
 		st.add_vertex(foot)
-		c.a *= 0.7
+		c.a *= 0.5
 		var steps := 14
 		for k in steps:
 			var a0 := TAU * k / steps
@@ -223,6 +236,33 @@ func _build_drop_lines() -> void:
 	_drops_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_drops_mi.visible = show_drop_lines
 	add_child(_drops_mi)
+
+func _build_yards() -> void:
+	if _yards_mi:
+		_yards_mi.queue_free()
+		_yards_mi = null
+	var shown := _yards.filter(func(i): return is_known(i))
+	if shown.is_empty():
+		return
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	var quad := QuadMesh.new()
+	quad.size = Vector2(1, 1)
+	mm.mesh = quad
+	mm.instance_count = shown.size()
+	for k in shown.size():
+		mm.set_instance_transform(k, Transform3D(Basis.IDENTITY, system_position(shown[k])))
+		mm.set_instance_color(k, YARD_COLOR)
+	var mat := ShaderMaterial.new()
+	mat.shader = YARD_SHADER
+	_yards_mi = MultiMeshInstance3D.new()
+	_yards_mi.name = "Shipyards"
+	_yards_mi.multimesh = mm
+	_yards_mi.material_override = mat
+	_yards_mi.custom_aabb = AABB(Vector3(-80, -80, -80), Vector3(160, 160, 160))
+	_yards_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_yards_mi)
 
 func _line(st: SurfaceTool, a: Vector3, b: Vector3, c: Color) -> void:
 	st.set_color(c)
@@ -290,7 +330,7 @@ func _build_labels() -> void:
 		var label := Label3D.new()
 		label.text = s.name
 		label.font = font
-		label.font_size = 26
+		label.font_size = 23
 		label.outline_size = 8
 		label.outline_modulate = Color(0.02, 0.03, 0.07, 0.85)
 		label.modulate = LABEL_COLOR

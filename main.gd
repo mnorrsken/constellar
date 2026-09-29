@@ -88,6 +88,7 @@ func _ready() -> void:
 	Events.world_events_changed.connect(func(): _apply_price_map(map_mode.commodity))
 	Events.charted.connect(func(_c): _update_badges())
 	_update_badges()
+	_update_shipyards()
 	Events.fleet_changed.connect(_update_preview)
 	for sig in [Events.day_passed, Events.company_changed, Events.charted]:
 		sig.connect(func(_x = null): _apply_price_map(map_mode.commodity))
@@ -341,6 +342,14 @@ func _update_badges() -> void:
 	for i in best:
 		out[i] = colors[best[i]]
 	map.set_badges(out)
+
+## A triangle on the map beside every shipyard.
+func _update_shipyards() -> void:
+	var yards := []
+	for s in Sim.world.galaxy.systems:
+		if Sim.world.fleet.is_shipyard(s.index):
+			yards.append(s.index)
+	map.set_shipyards(yards)
 
 func open_orders(ship_id: int) -> void:
 	if ship_id < 0:

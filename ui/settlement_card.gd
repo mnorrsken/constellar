@@ -3,11 +3,14 @@ extends VBoxContainer
 ## Settlement facts for one star system: name, archetype and body, a short
 ## summary, then population, tech level, government, stability, tariffs
 ## and banned goods, and the events running there. Used by the map's system
-## panel and by the system view.
+## panel (compact: the summary is a tooltip on the name) and by the system
+## view.
 
 const AMBER := Color(0.98, 0.72, 0.3)
 const MUTED := Color(0.55, 0.62, 0.74)
 
+## Summary as a tooltip instead of a paragraph (set before show_system).
+var compact := false
 var _name := Label.new()
 var _where := Label.new()
 var _summary := Label.new()
@@ -15,7 +18,7 @@ var _grid := GridContainer.new()
 var _events := VBoxContainer.new()
 
 func _ready() -> void:
-	add_theme_constant_override("separation", 6)
+	add_theme_constant_override("separation", 4)
 	_name.add_theme_font_override("font", Fonts.weight(Fonts.DISPLAY, 600))
 	_name.add_theme_font_size_override("font_size", 21)
 	_name.add_theme_color_override("font_color", AMBER)
@@ -49,8 +52,12 @@ func show_system(s: StarSystem) -> void:
 	if st.planet >= 0 and st.is_station:
 		body = "orbit of " + body
 	_where.text = "%s on %s" % [Defs.archetype_name(st.archetype), body]
-	_summary.visible = true
-	_summary.text = Defs.world_content.archetypes.get(st.archetype, {}).get("summary", "")
+	var summary: String = Defs.world_content.archetypes.get(st.archetype, {}).get("summary", "")
+	_summary.visible = not compact
+	_summary.text = summary
+	for l in [_name, _where]:
+		l.tooltip_text = summary if compact else ""
+		l.mouse_filter = Control.MOUSE_FILTER_PASS if compact else Control.MOUSE_FILTER_IGNORE
 	_row("Population", Format.population(st.population) if st.population > 0 else "none")
 	if st.robots > 0:
 		_row("Robots", Format.population(st.robots))

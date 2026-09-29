@@ -17,7 +17,9 @@ Godot is installed via Homebrew (`brew install --cask godot`), on PATH as
 
 - `make run` — run the game
 - `make editor` — open the Godot editor
-- `make test` — headless test suite (exits non-zero on failure)
+- `make test` — headless test suite (exits non-zero on failure). The full
+  suite takes about 35 s; `make test T="trading save"` runs only
+  `tests/test_trading.gd` and `tests/test_save.gd`
 - `make import` / `make build` — headless import. **Exits 0 even on script
   errors**: grep its output for `ERROR`/`SCRIPT`/`WARNING`
 - `make soak` — 20 game years of the economy headless; fails if markets sit
@@ -70,14 +72,20 @@ folder when the first file for it lands.
 3. **Write headless tests** in `tests/test_*.gd`. The runner
    (`tests/run_tests.gd`) auto-discovers every `test_*` method and passes a
    tester `t` with `t.ok(cond, msg)` / `t.eq(a, b, msg)`. Construct sim
-   classes with hand-made defs; don't rely on autoloads in tests.
-4. **Verify before declaring done:**
+   classes with hand-made defs; don't rely on autoloads in tests. For a
+   warmed-up world use `WarmWorld.make(stars, content)`
+   (`tests/warm_world.gd`): it warms one world per run and hands out
+   exact copies from its save data.
+4. **Verify before declaring done** (after each edit, the quick checks):
    - `make import` — output has no `ERROR`/`SCRIPT`/`WARNING` lines (the exit
      code alone proves nothing)
-   - `make test` — all green
    - `godot --headless --quit-after 20 --path .` — no runtime errors
+   - Sim changes: `make test T="<files>"` for the test files of the area
+     you touched (UI/render-only changes need none)
    - **Visual check via a throwaway capture scene** (below) when a change is
      visual.
+   - The **full `make test` only before a commit or push**, and it must be
+     all green then.
 5. **After each logical feature/change, hand off to the docs agent**
    (`subagent_type: "docs"`) to update `CHANGELOG.md` (under `Unreleased`,
    Keep a Changelog headings), `README.md`, `docs/progress.md` (one status

@@ -13,6 +13,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   without the beat, an outro) to `build/soundtrack/`, titled, via `tools/make_soundtrack.py`
   (needs the `lame` encoder; `--wav`, `--only`, `--minutes` options). For
   listening, not shipped with the game.
+- Charted shipyards show a hollow green triangle beside their star on the map
+  when zoomed in (fades out past 28-42 ly camera distance).
+- The selected ship gets a spinning amber ring, like the selected star.
+
+### Changed
+
+- The UI is smaller overall (window scale 1.25 -> 1.1, map star names
+  26 -> 23).
+- The system card on the right is shorter: planet/belt count moved onto
+  the star facts line, and the settlement summary and the influence
+  "sell goods here" hint are now tooltips instead of standing text.
+- Starlanes and the drop lines from stars to the galactic plane are
+  dimmer.
+- The test suite runs in about 35 s instead of 95 (the warmed-up world is
+  made once per run and copied), and `make test T="trading save"` runs only
+  some test files.
 
 ### Fixed
 

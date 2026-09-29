@@ -4,9 +4,11 @@ extends Node3D
 ## Travelling ships move smoothly along their lanes (sim position + speed x
 ## the current day fraction); docked ships park around their star. Draws
 ## the selected ship's remaining route and a preview route (the path it
-## would fly to the selected system). Reads the World, never writes it.
+## would fly to the selected system), with a spinning ring on the selected
+## ship like the one on the selected star. Reads the World, never writes it.
 
 const CHEVRON_SHADER := preload("res://render/shaders/chevron.gdshader")
+const RING_SHADER := preload("res://render/shaders/ring.gdshader")
 const ROUTE_COLOR := Color(1.0, 0.72, 0.28, 0.85)
 const PREVIEW_COLOR := Color(0.45, 0.9, 1.0, 0.7)
 ## Radius (ly) of the parking circle around a star.
@@ -21,6 +23,7 @@ var preview_path := PackedInt32Array()
 var _chevrons: MultiMesh
 var _route: MeshInstance3D
 var _preview: MeshInstance3D
+var _ring: MeshInstance3D
 ## Per chevron: ship id and world position this frame (for picking).
 var _ids := PackedInt32Array()
 var _points := PackedVector3Array()
@@ -47,6 +50,21 @@ func setup(w: World, m: GalaxyMap) -> void:
 	_preview = Ribbon.make_instance(2.5, 0.8)
 	add_child(_route)
 	add_child(_preview)
+	var ring_quad := QuadMesh.new()
+	ring_quad.size = Vector2(1, 1)
+	var ring_mat := ShaderMaterial.new()
+	ring_mat.shader = RING_SHADER
+	ring_mat.set_shader_parameter("ring_color", GalaxyMap.SELECT_COLOR)
+	ring_mat.set_shader_parameter("diameter_px", 36.0)
+	ring_mat.set_shader_parameter("segments", 8.0)
+	ring_mat.set_shader_parameter("spin", -0.8)
+	_ring = MeshInstance3D.new()
+	_ring.mesh = ring_quad
+	_ring.material_override = ring_mat
+	_ring.visible = false
+	_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_ring.extra_cull_margin = 16.0
+	add_child(_ring)
 
 ## Ship ids and screen positions of every chevron, for picking.
 func screen_points(camera: Camera3D) -> Array:
@@ -93,6 +111,10 @@ func _process(_delta: float) -> void:
 		_chevrons.set_instance_transform(i, Transform3D(Basis.IDENTITY, pos))
 		_chevrons.set_instance_color(i, world.companies[s.company].color if s.company < world.companies.size() else Color.WHITE)
 		_chevrons.set_instance_custom_data(i, Color(heading.x, heading.y, heading.z, 1.0 if s.id == selected_ship else 0.0))
+	var sel := _ids.find(selected_ship) if selected_ship >= 0 else -1
+	_ring.visible = sel >= 0
+	if sel >= 0:
+		_ring.position = _points[sel]
 	_draw_route()
 	_draw_preview()
 

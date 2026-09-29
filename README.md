@@ -28,7 +28,7 @@ as `godot`. All work goes through the Makefile:
 ```
 make run       # run the game
 make editor    # open the Godot editor
-make test      # headless test suite
+make test      # headless test suite (T="trading save" runs only those files)
 make import    # headless import; catches script/asset errors
 make soak      # run the economy 20 game years headless and check market health
 make stars     # rebuild data/stars.json from the HYG star catalogue
@@ -53,7 +53,9 @@ directory under `saves/`.
 Drag to orbit, right/middle-drag to pan, scroll or trackpad swipe/pinch to
 zoom, click a star to select and fly to it, Esc to deselect, Home to return
 to Sol, Z to hide/show the drop lines from stars to the galactic plane. Keyboard: WASD/arrows pan, Q/E orbit, R/F tilt, -/= zoom, F1 toggles
-the debug overlay.
+the debug overlay. Zoomed in, a charted shipyard shows a hollow green triangle beside
+its star. The
+selected ship carries a spinning amber ring, like the selected star.
 
 Double-click a star, or select it and press Enter, to open its system view.
 Esc closes the system view first, then deselects.

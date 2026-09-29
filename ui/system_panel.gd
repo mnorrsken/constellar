@@ -19,7 +19,6 @@ const WIDTH := 380.0
 
 var _title := Label.new()
 var _facts := Label.new()
-var _bodies := Label.new()
 var _card := SettlementCard.new()
 var _influence := InfluenceCard.new()
 var _button := Button.new()
@@ -58,8 +57,7 @@ func _ready() -> void:
 	_facts.add_theme_color_override("font_color", Color(0.45, 0.78, 0.86))
 	_facts.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_facts.custom_minimum_size = Vector2(WIDTH - 28, 0)
-	_bodies.add_theme_font_size_override("font_size", 14)
-	_bodies.add_theme_color_override("font_color", SettlementCard.MUTED)
+	_card.compact = true
 	_button.text = "View system   ⏎"
 	_button.focus_mode = Control.FOCUS_NONE
 	_button.pressed.connect(func(): view_requested.emit())
@@ -86,7 +84,7 @@ func _ready() -> void:
 	_send_box.add_child(_send_info)
 	_send_box.add_child(_send_button)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 8)
+	box.add_theme_constant_override("separation", 6)
 	var head := HBoxContainer.new()
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var close := Button.new()
@@ -99,8 +97,8 @@ func _ready() -> void:
 		closed.emit())
 	head.add_child(_title)
 	head.add_child(close)
-	_details = [HSeparator.new(), _card, _influence, HSeparator.new(), _bodies, buttons, _contracts_button]
-	_detail_box.add_theme_constant_override("separation", 8)
+	_details = [HSeparator.new(), _card, _influence, HSeparator.new(), buttons, _contracts_button]
+	_detail_box.add_theme_constant_override("separation", 6)
 	_detail_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for c in _details:
 		_detail_box.add_child(c)
@@ -141,14 +139,14 @@ func show_system(s: StarSystem) -> void:
 	for star in s.stars:
 		types.append(Format.spectral(star))
 	var where := "home of the Concordance" if s.id == "sol" else "%.2f ly from Sol" % s.position.length()
-	_facts.text = "%s  ·  %s  ·  %s region" % [
-		", ".join(types), where, SettlementGen.region_of(s.position.length(), Defs.world_content.balance)]
-	_card.show_system(s)
-	_influence.show_system(s.index)
 	var planets := s.planets.filter(func(p): return p.type != "belt").size()
 	var belts := s.planets.size() - planets
-	_bodies.text = "%d planet%s%s" % [planets, "" if planets == 1 else "s",
-		"" if belts == 0 else "  ·  %d belt%s" % [belts, "" if belts == 1 else "s"]]
+	var bodies := "%d planet%s%s" % [planets, "" if planets == 1 else "s",
+		"" if belts == 0 else ", %d belt%s" % [belts, "" if belts == 1 else "s"]]
+	_facts.text = "%s  ·  %s  ·  %s  ·  %s region" % [", ".join(types), bodies, where,
+		SettlementGen.region_of(s.position.length(), Defs.world_content.balance)]
+	_card.show_system(s)
+	_influence.show_system(s.index)
 	_system = s
 	_market_button.disabled = s.settlement == null
 	# Every port refits; only the major yards build ships.

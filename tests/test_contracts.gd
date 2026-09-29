@@ -2,12 +2,13 @@ extends RefCounted
 ## Contract boards: offers, accepting, delivery, deadlines, penalties, and a
 ## contracts-only start that grows (Contracts via World commands).
 
+const WarmWorld := preload("res://tests/warm_world.gd")
+
 var _content := Content.load_world_content("res://data/")
 var _stars := Content.load_object("res://data/stars.json")
 
 func _world() -> World:
-	var w := World.create(1, _stars, _content)
-	w.warm_up()
+	var w := WarmWorld.make(_stars, _content)
 	return w
 
 ## A freight offer at the ship's system it can carry, to a charted place.
@@ -219,7 +220,7 @@ func test_long_jobs_pay_more_per_light_year(t: Object) -> void:
 	for c in w.contracts:
 		if c.kind != "mail":
 			continue
-		var ly: float = w.contract_cache[Vector2i(c.origin, c.destination)]
+		var ly := w.galaxy.path_length(w.galaxy.find_path(c.origin, c.destination))
 		var per := c.reward / (c.amount * ly)
 		if ly < 10.0:
 			short[per] = true

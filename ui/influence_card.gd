@@ -48,9 +48,10 @@ static func tier_color(value: float, marks: Array) -> Color:
 	return colors[t]
 
 func _ready() -> void:
-	add_theme_constant_override("separation", 5)
+	add_theme_constant_override("separation", 4)
 	_head.add_theme_font_size_override("font_size", 12)
 	_head.add_theme_color_override("font_color", MUTED)
+	_head.mouse_filter = Control.MOUSE_FILTER_PASS
 	_bar.custom_minimum_size = Vector2(WIDTH, 14)
 	_holds.add_theme_font_size_override("font_size", 13)
 	_holds.add_theme_color_override("font_color", TEXT)
@@ -86,8 +87,12 @@ func show_system(i: int) -> void:
 		holds.append("Concession: half tariffs, first pick of new contracts")
 	if tier == Influence.Tier.PATRON:
 		holds.append("Patron: wars and coups are rarer here")
-	_holds.text = "\n".join(holds) if not holds.is_empty() else "Sell goods here (best what it's short of) and deliver contracts to gain influence."
-	_holds.add_theme_color_override("font_color", TEXT if not holds.is_empty() else MUTED)
+	# Nothing held yet: the how-to is a tooltip, not two lines of text.
+	_holds.text = "\n".join(holds)
+	_holds.visible = not holds.is_empty()
+	var tip := "Sell goods here (best what it's short of) and deliver contracts to gain influence."
+	_head.tooltip_text = tip
+	_bar.tooltip_text = tip
 	var k := Influence.cfg(w)
 	if not Influence.has_post(w, p, i):
 		_action("Open trading post  ·  %s cr" % Format.money_short(float(k.get("post_cost", 0))),
