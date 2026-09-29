@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `make soundtrack`: renders a ~5-minute stereo MP3 of every music theme
+  (the game's loop played on with a new melody each time, one calm stretch
+  without the beat, an outro) to `build/soundtrack/`, titled, via `tools/make_soundtrack.py`
+  (needs the `lame` encoder; `--wav`, `--only`, `--minutes` options). For
+  listening, not shipped with the game.
+
 ### Fixed
 
 - "Playback can only happen when a node is inside the scene tree" (and a

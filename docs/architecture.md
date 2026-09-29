@@ -1017,6 +1017,11 @@ open, close, confirm, error, chime, coin, loss, hail, alert, pause, resume)
 are shorter synthesized cues. `default_bus_layout.tres` adds `Music`
 (-4 dB) and `UI` (-8 dB) buses.
 
+`tools/make_soundtrack.py` (`make soundtrack`) chains game-length loops of
+each theme from `make_audio.py` (a new melody in each, one calm loop
+without the beat, an outro) into a stereo listening track and encodes it to MP3 with `lame`,
+into `build/soundtrack/` (gitignored, not shipped with the game).
+
 `audio/music_player.gd` (`MusicPlayer`, node "Music" in `main.tscn`) has
 `play_theme(id)`, crossfading 5 s between two players; an unknown or
 missing theme falls back to "space"; skipped on the headless Dummy audio

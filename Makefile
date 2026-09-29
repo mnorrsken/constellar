@@ -13,7 +13,7 @@ HYG := build/hyg_v44.csv.gz
 # Music and UI sounds are generated from tools/make_audio.py (not in git).
 AUDIO := assets/audio/music/space.wav
 
-.PHONY: help run editor build import test soak stars audio export-windows export-mac clean
+.PHONY: help run editor build import test soak stars audio soundtrack export-windows export-mac clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -29,6 +29,9 @@ build: import ## Alias for `import`: compile + reimport, fail on errors
 
 audio: ## Regenerate the music loops and UI sounds (tools/make_audio.py)
 	python3 tools/make_audio.py
+
+soundtrack: ## Render ~5-minute MP3s of every music theme into build/soundtrack/ (needs lame)
+	python3 tools/make_soundtrack.py
 
 $(AUDIO): tools/make_audio.py
 	python3 tools/make_audio.py

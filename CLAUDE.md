@@ -26,6 +26,9 @@ Godot is installed via Homebrew (`brew install --cask godot`), on PATH as
 - `make audio` — regenerate the music loops and UI sounds
   (`tools/make_audio.py`, plain Python). The WAVs are not in git; `make
   run`/`editor`/`import` build them when the script changes
+- `make soundtrack` — render a ~5-minute MP3 of each music theme to
+  `build/soundtrack/` (`tools/make_soundtrack.py`; needs the `lame`
+  encoder). For listening, not shipped with the game
 - `make export-windows` / `make export-mac` — export the game to `build/`
   (needs Godot's export templates for this exact version)
 - `make clean` — remove the `.godot/` cache

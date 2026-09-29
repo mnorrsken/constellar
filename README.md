@@ -33,6 +33,7 @@ make import    # headless import; catches script/asset errors
 make soak      # run the economy 20 game years headless and check market health
 make stars     # rebuild data/stars.json from the HYG star catalogue
 make audio     # regenerate the music and UI sounds
+make soundtrack # render ~5-minute MP3s of the music themes to build/soundtrack/
 make export-windows  # export build/windows/Constellar.exe (needs export templates)
 make export-mac      # export build/macos/Constellar.zip (needs export templates)
 make clean     # remove the .godot/ cache
