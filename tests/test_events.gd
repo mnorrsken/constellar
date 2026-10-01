@@ -197,6 +197,12 @@ func test_armour_and_premium(t: Object) -> void:
 	var bare := Danger.ship_danger(w, s, w.start_system, next)
 	s.modules.assign(["container", "container", "armour"])
 	t.ok(is_equal_approx(Danger.ship_danger(w, s, w.start_system, next), bare * 0.5), "armour halves the risk")
+	s.modules.assign(["container", "container", "container"])
+	s.hull = "bastion"
+	t.ok(is_equal_approx(Danger.ship_danger(w, s, w.start_system, next), bare * 0.25), "two plates built into the hull")
+	s.hull = "shade"
+	t.ok(is_equal_approx(Danger.ship_danger(w, s, w.start_system, next), bare * 0.1), "a cloaked hull is hard to catch")
+	s.hull = "packet"
 	var calm := Danger.premium(w, s)
 	s.risk_last_month = 0.2
 	t.ok(Danger.premium(w, s) > calm * 5.0, "a risky month makes insurance dear")

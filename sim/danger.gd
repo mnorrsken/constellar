@@ -3,7 +3,9 @@ class_name Danger
 ## each time it flies a lane. Every lane has a base danger from the
 ## governments at its ends (lawless places are worse, an empty system counts
 ## as `unsettled`); wars and pirates add to it (WorldEvents.apply_all).
-## Each armour module multiplies a ship's risk by `armour_factor`.
+## Each armour module (and each built into the hull, trait "armour")
+## multiplies a ship's risk by `armour_factor`; a cloaked hull multiplies
+## it by its trait "raid_mult".
 ##
 ## A hit is a raid (cargo and freight charters lost, a repair bill) or, with
 ## `destroy_share`, the loss of the ship. Insured ships pay a monthly
@@ -32,14 +34,15 @@ static func base_map(w: World) -> Dictionary:
 static func lane_danger(w: World, a: int, b: int) -> float:
 	return w.danger.get(key(a, b), 0.0)
 
-## The chance this ship is hit crossing the lane (armour counted).
+## The chance this ship is hit crossing the lane (armour and cloak
+## counted).
 static func ship_danger(w: World, ship: Ship, a: int, b: int) -> float:
-	var d := lane_danger(w, a, b)
-	var factor := float(cfg(w).get("armour_factor", 0.5))
+	var d := lane_danger(w, a, b) * float(w.fleet.hull_trait(ship.hull, "raid_mult", 1.0))
+	var armour := int(w.fleet.hull_trait(ship.hull, "armour", 0))
 	for m in ship.modules:
 		if w.content.modules.get(m, {}).has("armour"):
-			d *= factor
-	return d
+			armour += 1
+	return d * pow(float(cfg(w).get("armour_factor", 0.5)), armour)
 
 ## Chance of at least one hit along a route of system indices.
 static func route_risk(w: World, ship: Ship, path: PackedInt32Array) -> float:

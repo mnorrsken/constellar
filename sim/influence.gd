@@ -5,7 +5,8 @@ class_name Influence
 ## is short of them: price against base price) and contract rewards
 ## (freight, passengers, mail) delivered there. Points are scaled down by
 ## the market's size, so a small colony is easier to win than a core
-## world, and every score decays a little each month.
+## world, and every score decays a little each month. What a prestige hull
+## (trait "influence_mult") brings counts for more.
 ##
 ## Tiers (balance.json "influence") unlock actions, all World commands:
 ## - post: open a trading post (live prices, lower docking fees there);

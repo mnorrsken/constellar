@@ -206,9 +206,11 @@ cabins and a mail bay.
 - **Price** = base × (target stock ÷ stock)^elasticity, clamped to about
   0.25×–4× base, then multiplied by event modifiers and tariffs.
   Target stock = N days of local demand.
-- **Your trades move the price.** Buying or selling a large lot is priced
-  along the curve (integrated), so dumping 500 t of grain on one market
-  crashes it. This stops "one route forever" and rewards spreading out.
+- **Company trades don't move the price** (changed after v0.3: they moved
+  it too much). A lot costs the listed price × tonnes, and a market sells
+  companies at most its stock each week. Instead, a sale at a profit
+  *pulls* more background traffic of that good to that market for a few
+  weeks, so a route used over and over slowly evens out.
 - **Background traffic:** an abstract flow along each lane moves goods from
   cheap to expensive neighbours at limited capacity. It stands in for the
   thousands of NPC traders, stops markets drifting to extremes, and later

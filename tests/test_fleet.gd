@@ -1,5 +1,6 @@
 extends RefCounted
-## Companies, ships, shipyards, refits and travel (Fleet via World commands).
+## Companies, ships, shipyards, refits and travel (Fleet via World commands);
+## hull families by government, module tags and built-in slots.
 
 var _content := Content.load_world_content("res://data/")
 var _stars := Content.load_object("res://data/stars.json")
@@ -7,10 +8,13 @@ var _stars := Content.load_object("res://data/stars.json")
 func _world() -> World:
 	return World.create(1, _stars, _content)
 
-func _shipyard(w: World, min_tech := 0, max_tech := 10) -> int:
+## A shipyard in the tech range whose government builds the standard line
+## (the Packet's builders) or, with `government`, that government's hulls.
+func _shipyard(w: World, min_tech := 0, max_tech := 10, government := "") -> int:
 	for s in w.galaxy.systems:
 		if w.fleet.is_shipyard(s.index) and s.settlement.tech_level >= min_tech \
-				and s.settlement.tech_level <= max_tech:
+				and s.settlement.tech_level <= max_tech \
+				and (s.settlement.government == government if government != "" else w.fleet.is_home_yard(s.index, "packet")):
 			return s.index
 	return -1
 
@@ -223,3 +227,48 @@ func test_routes_use_charted_systems_only(t: Object) -> void:
 	t.eq(f.plan_route(long, 2, known).path, PackedInt32Array([0, 2]), "charted route works")
 	known = PackedByteArray([1, 1, 0, 1])
 	t.ok(not f.plan_route(long, 3, known).ok, "no route through an uncharted system")
+
+func test_hulls_are_sold_at_their_governments_yards(t: Object) -> void:
+	var w := _world()
+	w.companies[0].cash = 1e9
+	for s in w.galaxy.systems:
+		for id in w.fleet.hulls_for_sale(s.index, w.year()):
+			t.ok(s.settlement.government in _content.hulls[id].builders, "%s is built under %s rule" % [id, s.settlement.government])
+	for g in ["concordance", "democracy", "corporate", "junta", "theocracy", "feudal", "anarchy", "custodians"]:
+		t.ok(_shipyard(w, 0, 10, g) >= 0, "%s worlds have a shipyard" % g)
+	var rim := _shipyard(w, 0, 10, "anarchy")
+	t.ok(w.galaxy.systems[rim].settlement.tech_level < 8, "a low-tech anarchy yard (its own threshold)")
+	t.ok(not w.buy_ship(0, "packet", rim).ok, "the standard line is not built there")
+	t.ok(w.buy_ship(0, "scrapper", rim).ok, "its own junk is")
+	t.ok(not w.buy_ship(0, "scrapper", _shipyard(w)).ok, "and only there")
+
+func test_module_tags_and_built_in_slots(t: Object) -> void:
+	var w := _world()
+	var f := w.fleet
+	t.ok(f.module_allowed("ore_barge", "bulk") and not f.module_allowed("ore_barge", "container"), "a bulk carrier takes bulk only")
+	t.ok(f.module_allowed("ore_barge", "armour"), "and utility modules")
+	t.ok(f.module_allowed("lancer", "cabins") and not f.module_allowed("lancer", "suites"), "junta hulls forbid luxury")
+	t.ok(not f.module_allowed("drone_freighter", "cabins"), "crewless drones carry no passengers")
+	var s := f.add_ship(0, "tallyman", w.start_system, w.day)
+	t.eq(f.fixed_slots("tallyman"), 1, "one built-in slot")
+	var r := w.refit_ship(0, s.id, ["bulk", "container", "container", "container"])
+	t.ok(not r.ok and "built-in" in r.error, "the built-in auto-trader stays: %s" % r.get("error", ""))
+	t.ok(w.refit_ship(0, s.id, ["auto_trader", "bulk", "container", "container"]).ok, "the other slots refit")
+
+func test_hull_data(t: Object) -> void:
+	for id in _content.hulls:
+		var h: Dictionary = _content.hulls[id]
+		t.ok(not h.builders.is_empty(), "%s has builders" % id)
+		for g in h.builders:
+			t.ok(_content.governments.has(g), "%s: %s is a government" % [id, g])
+		t.eq(h.default_modules.size(), int(h.slots), "%s: a default module per slot" % id)
+		var f := Fleet.new(Galaxy.new(), _content)
+		for m in h.default_modules:
+			t.ok(f.module_allowed(id, m), "%s takes its own %s" % [id, m])
+		t.ok(ShipModel.STYLES.has(h.look.get("style", "standard")), "%s has a known style" % id)
+	for g in _content.governments:
+		var built := 0
+		for h in _content.hulls.values():
+			if g in h.builders and int(h.year_from) <= 3400 and int(h.year_to) >= 3400:
+				built += 1
+		t.ok(built > 0, "%s yards build something in 3400" % g)

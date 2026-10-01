@@ -108,7 +108,7 @@ func _ready() -> void:
 	_grid.columns = 8
 	_grid.add_theme_constant_override("h_separation", 12)
 	_grid.add_theme_constant_override("v_separation", 1)
-	for h in ["Good", "Price", "vs base", "Stock", "", "Aboard", "", ""]:
+	for h in ["Good", "Price", "vs base", "For sale", "", "Aboard", "", ""]:
 		var head := _label(h, MUTED, 12)
 		if h == "vs base":
 			_vs_head = head
@@ -272,7 +272,7 @@ func _refresh() -> void:
 		row[2].add_theme_color_override("font_color", GREEN if ratio < 0.97 else (AMBER if ratio > 1.03 else MUTED))
 		if _compare >= 0:
 			_compare_cell(w, row[2], c, prices[c], there)
-		row[3].text = Format.thousands(roundi(m.stock[c])) if live else "—"
+		row[3].text = Format.thousands(roundi(m.available(c))) if live else "—"
 		if banned:
 			row[4].text = "banned"
 			row[4].add_theme_color_override("font_color", Color(1.0, 0.45, 0.4))
@@ -302,7 +302,7 @@ func _refresh() -> void:
 		for k in [6, 7]:
 			row[k].modulate.a = 1.0 if live else 0.0
 			row[k].mouse_filter = Control.MOUSE_FILTER_STOP if live else Control.MOUSE_FILTER_IGNORE
-		row[6].disabled = not live or banned or m.closed or Trading.free_space(w, _trade_ship, c) < 1.0 or m.stock[c] < 1.0
+		row[6].disabled = not live or banned or m.closed or Trading.free_space(w, _trade_ship, c) < 1.0 or m.available(c) < 1.0
 		row[7].disabled = not live or banned or m.closed or aboard < 0.5
 	_fit()
 

@@ -322,12 +322,17 @@ func service_ship(company_id: int, ship_id: int) -> Dictionary:
 		return {"ok": false, "error": "Not your ship"}
 	return Aging.service(self, s)
 
-## New year: the yards' new hull models make the news.
+## New year: the yards' new hull models make the news, with the
+## governments whose yards build them.
 func _new_hull_news() -> void:
 	for id in content.hulls:
 		var h: Dictionary = content.hulls[id]
 		if int(h.get("year_from", 0)) == year():
-			WorldEvents.post_news(self, "The yards launch the %s (%s)" % [h.name, h.get("class", "")], [], "hull", true)
+			var by := PackedStringArray()
+			for g in h.get("builders", []):
+				by.append(content.governments.get(g, {}).get("name", g))
+			WorldEvents.post_news(self, "The yards launch the %s (%s)%s" % [h.name, h.get("class", ""),
+				(", built under %s rule" % " and ".join(by).to_lower()) if not by.is_empty() else ""], [], "hull", true)
 
 ## Insures a ship (monthly premium) or cancels its insurance.
 func set_insurance(company_id: int, ship_id: int, on: bool) -> Dictionary:

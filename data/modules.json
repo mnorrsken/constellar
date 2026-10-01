@@ -1,14 +1,14 @@
 [
-	{ "id": "container", "name": "Container hold", "cargo_class": "container", "capacity": 1.0, "tech": 1, "price": 40000, "look": { "shape": "crates" } },
-	{ "id": "bulk", "name": "Bulk hold", "cargo_class": "bulk", "capacity": 1.2, "tech": 1, "price": 30000, "look": { "shape": "hopper", "color": "a8864f" } },
-	{ "id": "cold", "name": "Cold hold", "cargo_class": "cold", "capacity": 0.7, "tech": 4, "price": 70000, "look": { "shape": "reefer", "color": "e8eef2" } },
-	{ "id": "tank", "name": "Tank", "cargo_class": "liquid", "capacity": 1.0, "tech": 2, "price": 50000, "look": { "shape": "tanks", "color": "c9d0d6" } },
-	{ "id": "secure", "name": "Secure vault", "cargo_class": "secure", "capacity": 0.3, "tech": 5, "price": 120000, "look": { "shape": "vault", "color": "3c4148" } },
-	{ "id": "cabins", "name": "Economy cabins", "passengers": 40, "tech": 3, "price": 60000, "look": { "shape": "ring", "color": "b0bac4" } },
-	{ "id": "suites", "name": "Luxury suites", "passengers": 8, "luxury": true, "tech": 6, "price": 110000, "look": { "shape": "pods", "color": "e6dcc8" } },
-	{ "id": "mail", "name": "Mail bay", "mail": 1, "tech": 2, "price": 25000, "look": { "shape": "mailpod", "color": "c05050" } },
-	{ "id": "armour", "name": "Armour plating", "armour": 1, "tech": 5, "price": 80000, "look": { "shape": "plates", "color": "4a5058" } },
-	{ "id": "drive_tune", "name": "Drive tune", "speed_mult": 1.15, "tech": 7, "price": 150000, "look": { "shape": "boosters" } },
-	{ "id": "jump_extender", "name": "Jump extender", "range_add": 2.0, "tech": 8, "price": 200000, "look": { "shape": "jumpring" } },
-	{ "id": "auto_trader", "name": "Auto-trader computer", "auto_trade": true, "tech": 7, "price": 90000, "look": { "shape": "dish" } }
+	{ "id": "container", "name": "Container hold", "tags": ["cargo"], "cargo_class": "container", "capacity": 1.0, "tech": 1, "price": 40000, "look": { "shape": "crates" } },
+	{ "id": "bulk", "name": "Bulk hold", "tags": ["bulk"], "cargo_class": "bulk", "capacity": 1.2, "tech": 1, "price": 30000, "look": { "shape": "hopper", "color": "a8864f" } },
+	{ "id": "cold", "name": "Cold hold", "tags": ["cargo"], "cargo_class": "cold", "capacity": 0.7, "tech": 4, "price": 70000, "look": { "shape": "reefer", "color": "e8eef2" } },
+	{ "id": "tank", "name": "Tank", "tags": ["liquid"], "cargo_class": "liquid", "capacity": 1.0, "tech": 2, "price": 50000, "look": { "shape": "tanks", "color": "c9d0d6" } },
+	{ "id": "secure", "name": "Secure vault", "tags": ["secure"], "cargo_class": "secure", "capacity": 0.3, "tech": 5, "price": 120000, "look": { "shape": "vault", "color": "3c4148" } },
+	{ "id": "cabins", "name": "Economy cabins", "tags": ["passenger"], "passengers": 40, "tech": 3, "price": 60000, "look": { "shape": "ring", "color": "b0bac4" } },
+	{ "id": "suites", "name": "Luxury suites", "tags": ["passenger", "luxury"], "passengers": 8, "luxury": true, "tech": 6, "price": 110000, "look": { "shape": "pods", "color": "e6dcc8" } },
+	{ "id": "mail", "name": "Mail bay", "tags": ["mail"], "mail": 1, "tech": 2, "price": 25000, "look": { "shape": "mailpod", "color": "c05050" } },
+	{ "id": "armour", "name": "Armour plating", "tags": ["utility", "military"], "armour": 1, "tech": 5, "price": 80000, "look": { "shape": "plates", "color": "4a5058" } },
+	{ "id": "drive_tune", "name": "Drive tune", "tags": ["utility"], "speed_mult": 1.15, "tech": 7, "price": 150000, "look": { "shape": "boosters" } },
+	{ "id": "jump_extender", "name": "Jump extender", "tags": ["utility"], "range_add": 2.0, "tech": 8, "price": 200000, "look": { "shape": "jumpring" } },
+	{ "id": "auto_trader", "name": "Auto-trader computer", "tags": ["utility"], "auto_trade": true, "tech": 7, "price": 90000, "look": { "shape": "dish" } }
 ]

@@ -6,9 +6,10 @@ render_mode unshaded, blend_mix, depth_draw_never, depth_test_disabled, cull_dis
 
 uniform float size_px = 26.0;
 uniform vec2 offset_px = vec2(28.0, 21.0);
-// Camera distance (ly) where the symbols start to fade, and where they are gone.
-uniform float fade_near = 28.0;
-uniform float fade_far = 42.0;
+// Camera distance (ly) where the symbols start to fade, and where they are
+// gone (GalaxyMap sets them, the same as for the settlement names).
+uniform float fade_near = 26.0;
+uniform float fade_far = 36.0;
 
 varying vec4 v_color;
 varying float v_fade;
@@ -21,7 +22,8 @@ void vertex() {
 	float px = 2.0 * depth / (abs(PROJECTION_MATRIX[1][1]) * VIEWPORT_SIZE.y);
 	POSITION = PROJECTION_MATRIX * (center + vec4((VERTEX.xy * size_px + offset_px) * px, 0.0, 0.0));
 	v_color = COLOR;
-	v_fade = 1.0 - smoothstep(fade_near, fade_far, depth);
+	// Straight-line distance from the eye, as the map's labels use.
+	v_fade = 1.0 - smoothstep(fade_near, fade_far, length(center.xyz));
 }
 
 void fragment() {

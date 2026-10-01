@@ -1,6 +1,6 @@
 extends RefCounted
-## Influence and goals (Milestone 10): influence from trade and contracts,
-## decay, tiers and their actions (trading post, concession, the patron's
+## Influence and goals (Milestone 10): influence from trade and contracts
+## (more with a prestige hull), decay, tiers and their actions (trading post, concession, the patron's
 ## veto and peace), patrons making wars and coups rarer, the victory goals
 ## and bankruptcy.
 
@@ -71,6 +71,20 @@ func test_delivered_contracts_raise_influence(t: Object) -> void:
 	var before := Influence.of(w, 0, job.destination)
 	Contracts.deliver(w, s, job.destination)
 	t.ok(Influence.of(w, 0, job.destination) > before, "delivering it adds influence at the destination")
+
+func test_prestige_hulls_win_more_influence(t: Object) -> void:
+	var w := _world()
+	var s := w.ships_of(0)[0]
+	var here := w.start_system
+	w.buy_cargo(0, s.id, "machinery", 100.0)
+	w.sell_cargo(0, s.id, "machinery", 100.0)
+	var plain := Influence.of(w, 0, here)
+	var other := _world()
+	var herald := other.ships_of(0)[0]
+	herald.hull = "barque"
+	other.buy_cargo(0, herald.id, "machinery", 100.0)
+	other.sell_cargo(0, herald.id, "machinery", 100.0)
+	t.ok(is_equal_approx(Influence.of(other, 0, here), plain * 1.2), "a feudal Barque's sales count 20% more")
 
 func test_influence_decays_every_month(t: Object) -> void:
 	var w := _world()

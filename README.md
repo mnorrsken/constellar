@@ -54,7 +54,8 @@ Drag to orbit, right/middle-drag to pan, scroll or trackpad swipe/pinch to
 zoom, click a star to select and fly to it, Esc to deselect, Home to return
 to Sol, Z to hide/show the drop lines from stars to the galactic plane. Keyboard: WASD/arrows pan, Q/E orbit, R/F tilt, -/= zoom, F1 toggles
 the debug overlay. Zoomed in, a charted shipyard shows a hollow green triangle beside
-its star. The
+its star, and an inhabited system shows its settlement's name (the one
+the news uses) in small amber text under its own. The
 selected ship carries a spinning amber ring, like the selected star.
 
 Double-click a star, or select it and press Enter, to open its system view.
@@ -71,7 +72,9 @@ ship can't go. Every inhabited world can refit your ships (the card's
 Refit button): drag modules onto slots, or between slots to swap. Small
 colonies only make simple modules (each module needs a tech level; the
 ones a port can't make are greyed out). New ships are built, sold and
-serviced only at the major worlds' shipyards (the card's Shipyard button). The game pauses and
+serviced only at the major worlds' shipyards (the card's Shipyard button);
+which hulls a yard sells depends on its government (each hull lists who
+builds it), and servicing costs more away from them. The game pauses and
 flies to a ship when it arrives or leaves the yard; sending it on resumes
 the game, unless other ships are still awaiting orders.
 
@@ -79,6 +82,8 @@ The fleet list, market panel, route orders panel and fleet screen each show
 a small 3D model of the ship — drag it to turn it by hand. In the
 shipyard, click a hull in the list to see its model, numbers and standard
 fit before you buy; your own ships there show the fit you're editing.
+Each government has its own ship style and marker lights, and some hulls
+have special traits (cloaked, built-in armour, prestige) shown there.
 
 Ships wear with age and travel; a worn ship is less reliable and can break
 down under way, costing days and a repair bill. Servicing at a shipyard
@@ -93,7 +98,10 @@ one jump from it are charted once one of your ships gets there; routes only
 use charted systems. F2 (cheat) charts everything and adds 10,000,000 cr.
 
 Trading: with a ship docked, the market panel (M) shows live prices with
-Buy/Sell buttons (lot size at the top); elsewhere it shows the last prices
+Buy/Sell buttons (lot size at the top; your trades don't move the price,
+and a market sells at most its stock each week, shown as "For sale"; a
+sale at a profit draws more background traders with that good there for a
+few weeks, so a well-used route slowly evens out); elsewhere it shows the last prices
 your ships saw and how old they are. Hover a price to see its last 26 weeks
 as a graph; the market closes when your docked ship leaves. With the market
 open, hover another
@@ -131,7 +139,8 @@ buttons on the clock bar, top centre).
 
 Contracts: C, or the system card's Contracts button, shows a market's job
 board (freight, passengers, mail) for a docked ship, and your running jobs
-with Abandon. Deliver on time for the reward; miss the deadline or abandon
+with Abandon and a Go button that sends the job's ship to its destination
+at once (other ships' jobs are greyed). Deliver on time for the reward; miss the deadline or abandon
 and you pay the penalty. Express jobs (marked "· express": mail, luxury
 passengers, and some cargo) pay a bonus on top for delivering early.
 

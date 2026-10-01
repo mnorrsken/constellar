@@ -1,7 +1,8 @@
 extends RefCounted
 ## Ship aging: wear, age-based maintenance, breakdowns, servicing (by hand
 ## and as a route stop), the notes that say why a ship is idle or losing,
-## the per-ship books by category, and new hull models by year.
+## the per-ship books by category, new hull models by year, hulls that wear
+## slower or faster, and dearer servicing at another government's yards.
 
 const WarmWorld := preload("res://tests/warm_world.gd")
 
@@ -149,10 +150,12 @@ func test_new_hull_models_by_year(t: Object) -> void:
 	var w := _world()
 	var yard := -1
 	for m in w.economy.markets:
-		if w.fleet.is_shipyard(m.system) and w.galaxy.systems[m.system].settlement.tech_level >= 8:
+		if w.fleet.is_shipyard(m.system) and w.galaxy.systems[m.system].settlement.tech_level >= 8 \
+				and w.fleet.is_home_yard(m.system, "packet"):
 			yard = m.system
 			break
 	t.ok(yard >= 0, "a high-tech shipyard")
+	t.ok(w.fleet.is_home_yard(yard, "packet"), "one that builds the standard line")
 	var now := w.fleet.hulls_for_sale(yard, 3400)
 	var later := w.fleet.hulls_for_sale(yard, 3427)
 	t.ok(not ("leviathan_ii" in now) and "leviathan_ii" in later, "new models come out over the years")
@@ -201,3 +204,26 @@ func test_auto_service_waits_when_it_cannot_pay(t: Object) -> void:
 	var failed: Array = w.drain_events().filter(func(e): return e.type == "auto_service_failed")
 	t.eq(failed.size(), 1, "told that it can't: %s" % [failed])
 	t.ok(s.auto_service_after > w.day, "and won't try again for a while")
+
+func test_hulls_wear_at_their_own_rate(t: Object) -> void:
+	var w := _world()
+	var drone := w.fleet.add_ship(0, "drone_freighter", w.start_system, w.day)
+	var junk := w.fleet.add_ship(0, "scrapper", w.start_system, w.day)
+	var plain := w.fleet.add_ship(0, "packet", w.start_system, w.day)
+	for i in 100:
+		Aging.daily(w)
+	t.ok(is_equal_approx(1.0 - drone.condition, (1.0 - plain.condition) * 0.6), "custodian drones wear slowly")
+	t.ok(is_equal_approx(1.0 - junk.condition, (1.0 - plain.condition) * 1.5), "anarchy junk wears fast")
+
+func test_service_costs_more_at_foreign_yards(t: Object) -> void:
+	var w := _world()
+	var s := w.ships_of(0)[0]
+	var yard := _at_yard(w, s)
+	s.condition = 0.3
+	var st := w.galaxy.systems[yard].settlement
+	st.government = "democracy"
+	var home := Aging.service_quote(w, s)
+	st.government = "junta"
+	var away := Aging.service_quote(w, s)
+	t.ok(not home.foreign and away.foreign, "a Packet is at home in a democracy, not under a junta")
+	t.ok(is_equal_approx(away.cost, home.cost * 1.5), "and costs half again to service there")

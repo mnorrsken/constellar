@@ -3,7 +3,8 @@ extends Node3D
 ## The 3D star map view. Reads a Galaxy (never writes it) and draws:
 ## the polar grid on the galactic plane, starlanes, a drop line from every
 ## star to the plane (the Elite II depth cue), the stars themselves, name
-## labels, and hover/selection rings. Multiple stars circle their system's
+## labels (with the settlement's name under inhabited ones when zoomed
+## in), and hover/selection rings. Multiple stars circle their system's
 ## centre so pairs separate when zoomed in (cosmetic, not to scale).
 ## Fog of war: every star glows, but names, drop lines and lanes appear only
 ## for systems in `known` (set_known; lanes need both ends charted).
@@ -15,6 +16,7 @@ const STAR_SHADER := preload("res://render/shaders/star.gdshader")
 const GRID_SHADER := preload("res://render/shaders/grid.gdshader")
 const RING_SHADER := preload("res://render/shaders/ring.gdshader")
 const YARD_SHADER := preload("res://render/shaders/shipyard_symbol.gdshader")
+const BACKDROP_SHADER := preload("res://render/shaders/label_backdrop.gdshader")
 
 const LANE_COLOR := Color(0.25, 0.77, 0.85, 0.2)
 ## Lanes longer than this are drawn as "deep lanes" (needs a long-range hull).
@@ -22,6 +24,12 @@ const LANE_COLOR := Color(0.25, 0.77, 0.85, 0.2)
 const DEEP_LANE_COLOR := Color(0.62, 0.45, 0.95, 0.14)
 const HOVER_COLOR := Color(0.35, 0.85, 1.0, 0.9)
 const LABEL_COLOR := Color(0.78, 0.86, 0.96)
+const SUB_LABEL_COLOR := Color(0.82, 0.65, 0.4)
+## "Zoomed in" for port details, as camera distances (ly): shipyard marks,
+## settlement names and the names of ports round faint stars start to fade
+## at NEAR and are gone at FAR.
+const PORT_DETAIL_NEAR := 26.0
+const PORT_DETAIL_FAR := 36.0
 const SELECT_COLOR := Color(1.0, 0.72, 0.28, 1.0)
 ## Shipyard triangles: a lime green nothing else on the map uses.
 const YARD_COLOR := Color(0.55, 1.0, 0.4, 0.95)
@@ -44,7 +52,13 @@ var _instance_pos := PackedVector3Array()
 ## Each star's own colour, to restore after a map-mode tint.
 var _base_colors := PackedColorArray()
 var _labels: Array[Label3D] = []
+## Per system: its settlement's name in smaller text under the system name
+## (the news names settlements), or null where nobody lives.
+var _sub_labels: Array = []
 var _label_ranges := PackedFloat32Array()
+## Dark patches behind the name labels when zoomed in close (one instance
+## per system, in system order).
+var _backdrops: MultiMesh
 var _hover_ring: MeshInstance3D
 var _select_ring: MeshInstance3D
 var _time := 0.0
@@ -71,6 +85,7 @@ func build(g: Galaxy) -> void:
 	for child in get_children():
 		child.queue_free()
 	_labels.clear()
+	_sub_labels.clear()
 	_orbits.clear()
 	_build_grid()
 	_build_lanes()
@@ -256,6 +271,8 @@ func _build_yards() -> void:
 		mm.set_instance_color(k, YARD_COLOR)
 	var mat := ShaderMaterial.new()
 	mat.shader = YARD_SHADER
+	mat.set_shader_parameter("fade_near", PORT_DETAIL_NEAR)
+	mat.set_shader_parameter("fade_far", PORT_DETAIL_FAR)
 	_yards_mi = MultiMeshInstance3D.new()
 	_yards_mi.name = "Shipyards"
 	_yards_mi.multimesh = mm
@@ -322,7 +339,15 @@ func _build_stars() -> void:
 
 func _build_labels() -> void:
 	var font := Fonts.weight(Fonts.DISPLAY, 500)
+	var sub_font := Fonts.weight(Fonts.BODY, 500)
 	_label_ranges.resize(galaxy.size())
+	_backdrops = MultiMesh.new()
+	_backdrops.transform_format = MultiMesh.TRANSFORM_3D
+	_backdrops.use_custom_data = true
+	var quad := QuadMesh.new()
+	quad.size = Vector2(1, 1)
+	_backdrops.mesh = quad
+	_backdrops.instance_count = galaxy.size()
 	for s in galaxy.systems:
 		var lum := 0.0
 		for star in s.stars:
@@ -330,7 +355,7 @@ func _build_labels() -> void:
 		var label := Label3D.new()
 		label.text = s.name
 		label.font = font
-		label.font_size = 23
+		label.font_size = 22
 		label.outline_size = 8
 		label.outline_modulate = Color(0.02, 0.03, 0.07, 0.85)
 		label.modulate = LABEL_COLOR
@@ -341,9 +366,49 @@ func _build_labels() -> void:
 		label.double_sided = true
 		label.offset = Vector2(0, -24)
 		label.position = system_position(s.index)
+		# Drawn after the star glows (and the backdrops), never under them.
+		label.render_priority = 10
+		label.outline_render_priority = 9
 		add_child(label)
 		_labels.append(label)
 		_label_ranges[s.index] = StarLook.label_range(lum) * (2.0 if s.id == "sol" else 1.0)
+		if s.settlement:
+			# A port is named as far out as its settlement's name shows, even
+			# round a faint star (whose own name range is short).
+			_label_ranges[s.index] = maxf(_label_ranges[s.index], PORT_DETAIL_FAR)
+		var sub: Label3D = null
+		if s.settlement:
+			sub = label.duplicate()
+			sub.text = s.settlement.name
+			sub.font = sub_font
+			sub.font_size = 17
+			sub.outline_size = 6
+			sub.modulate = SUB_LABEL_COLOR
+			sub.offset = Vector2(0, -50)
+			add_child(sub)
+		_sub_labels.append(sub)
+		# The backdrop spans the name (centred 24 down) and the settlement's
+		# name under it (centred 50 down), in label units.
+		var width := font.get_string_size(s.name, HORIZONTAL_ALIGNMENT_LEFT, -1, label.font_size).x
+		var top := -24.0 + 15.0
+		var bottom := -24.0 - 15.0
+		if sub:
+			width = maxf(width, sub_font.get_string_size(sub.text, HORIZONTAL_ALIGNMENT_LEFT, -1, sub.font_size).x)
+			bottom = -50.0 - 13.0
+		_backdrops.set_instance_transform(s.index, Transform3D(Basis.IDENTITY, label.position))
+		_backdrops.set_instance_custom_data(s.index, Color(width + 44.0, top - bottom + 26.0, (top + bottom) / 2.0, 0.0))
+	var mat := ShaderMaterial.new()
+	mat.shader = BACKDROP_SHADER
+	mat.set_shader_parameter("pixel_size", 0.0007)
+	# After the star glows, before the labels.
+	mat.render_priority = 5
+	var mmi := MultiMeshInstance3D.new()
+	mmi.name = "LabelBackdrops"
+	mmi.multimesh = _backdrops
+	mmi.material_override = mat
+	mmi.custom_aabb = AABB(Vector3(-80, -80, -80), Vector3(160, 160, 160))
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mmi)
 
 func _make_ring(color: Color, diameter: float, segments: float, spin: float) -> MeshInstance3D:
 	var quad := QuadMesh.new()
@@ -397,3 +462,15 @@ func _update_labels() -> void:
 		label.visible = a > 0.01
 		label.modulate.a = a
 		label.outline_modulate.a = a * 0.85
+		var bd := _backdrops.get_instance_custom_data(i)
+		if bd.a != a:
+			bd.a = a
+			_backdrops.set_instance_custom_data(i, bd)
+		var sub: Label3D = _sub_labels[i]
+		if sub:
+			# Only zoomed in (like the shipyard marks), or on the hovered or
+			# selected star, so the zoomed-out map stays readable.
+			var sa := a if i == hovered or i == selected else a * (1.0 - smoothstep(PORT_DETAIL_NEAR, PORT_DETAIL_FAR, d))
+			sub.visible = sa > 0.01
+			sub.modulate.a = sa
+			sub.outline_modulate.a = sa * 0.85

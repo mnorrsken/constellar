@@ -13,7 +13,8 @@
 			"luxury_foods": 0.7, "fuel": 1.0, "electronics": 0.4, "luxuries": 0.03, "weapons": 0.02
 		},
 		"robot_needs": { "machinery": 1.5, "electronics": 0.5, "fuel": 0.5 },
-		"traffic": { "max_hops": 2, "friction": 0.05, "per_ly": 0.04, "capacity": 80.0, "fill": 1.5, "max_share": 0.12 },
+		"traffic": { "max_hops": 2, "friction": 0.05, "per_ly": 0.04, "capacity": 80.0, "fill": 1.5, "max_share": 0.12,
+			"sale_pull": 1.0, "pull_max": 1.0, "pull_decay_per_day": 0.015 },
 		"soak": { "years": 20, "max_clamp_share": 0.1, "max_stock_ratio": 4.0 }
 	},
 	"settlements": {
@@ -28,7 +29,8 @@
 		"cash": 250000, "loan": 500000, "loan_max": 1500000, "interest_per_year": 0.06, "overdraft": 200000,
 		"start_ship": { "hull": "packet", "name": "Wanderer", "age_years": 5, "condition": 0.9 }
 	},
-	"shipyards": { "archetypes": ["industrial", "core", "military", "robot"], "archetype_min_tech": 8, "any_min_tech": 10 },
+	"shipyards": { "archetypes": ["industrial", "core", "military", "robot"], "archetype_min_tech": 8, "any_min_tech": 10,
+		"foreign_service_mult": 1.5 },
 	"trade": {
 		"docking_fee": 400, "docking_fee_per_slot": 150,
 		"fuel_commodity": "fuel", "fuel_without_market": 1.5,

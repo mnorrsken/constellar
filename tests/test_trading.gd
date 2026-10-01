@@ -289,3 +289,22 @@ func test_running_costs_may_go_into_the_overdraft(t: Object) -> void:
 	c.cash = -c.overdraft + 1.0
 	var r := w.send_ship(0, s2.id, next)
 	t.ok(not r.ok and "running costs" in r.error, "but not past the overdraft: %s" % r.get("error", ""))
+
+## A sale at a profit pulls more background traffic of that good to the
+## market; a sale at a loss does not. Neither moves the price.
+func test_profitable_sale_pulls_traffic(t: Object) -> void:
+	var w := _world()
+	var s := w.ships_of(0)[0]
+	var m := w.economy.market_at(s.system)
+	var ore := w.economy.index_of("ore")
+	var grain := w.economy.index_of("grain")
+	var price := m.price[ore]
+	s.cargo[ore] = 100.0
+	s.cargo_cost[ore] = 1.0  # bought for next to nothing
+	s.cargo[grain] = 100.0
+	s.cargo_cost[grain] = 1e9  # a heavy loss
+	t.ok(w.sell_cargo(0, s.id, "ore", 100.0).ok, "sold the ore")
+	t.ok(m.pull[ore] > 0.0, "a profitable sale pulls traffic (%.3f)" % m.pull[ore])
+	t.ok(is_equal_approx(m.price[ore], price), "and leaves the price")
+	t.ok(w.sell_cargo(0, s.id, "grain", 100.0).ok, "sold the grain")
+	t.ok(is_zero_approx(m.pull[grain]), "a sale at a loss pulls nothing")

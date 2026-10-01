@@ -33,25 +33,56 @@ func test_price_rises_when_stock_falls(t: Object) -> void:
 	t.ok(is_equal_approx(m.price_at(0, tg * 1000.0), 25.0), "flooded market hits the 0.25x clamp")
 	t.eq(m.price_at(2, 0.0), 20.0, "untraded goods sit at base price")
 
-func test_big_lots_get_worse_prices(t: Object) -> void:
+func test_lots_cost_the_listed_price(t: Object) -> void:
 	var m := _market()
-	var small := m.quote_buy(0, 1.0)
-	var big := m.quote_buy(0, 50.0) / 50.0
-	t.ok(big > small, "buying 50 costs more per unit (%.1f) than buying 1 (%.1f)" % [big, small])
-	var sell_small := m.quote_sell(0, 1.0)
-	var sell_big := m.quote_sell(0, 50.0) / 50.0
-	t.ok(sell_big < sell_small, "selling 50 earns less per unit (%.1f) than selling 1 (%.1f)" % [sell_big, sell_small])
+	t.ok(is_equal_approx(m.quote_buy(0, 50.0), 50.0 * m.price[0]), "50 t cost 50 x the price")
+	t.ok(is_equal_approx(m.quote_sell(0, 50.0), 50.0 * m.price[0]), "and sell for 50 x the price")
 
-func test_buy_and_sell_move_stock_and_price(t: Object) -> void:
+func test_company_trades_leave_stock_and_price(t: Object) -> void:
 	var m := _market()
-	var before := m.price[0]
+	var stock := m.stock[0]
+	var price := m.price[0]
 	var got: Array = m.buy(0, 30.0)
 	t.eq(got[0], 30.0, "bought what was asked")
-	t.ok(m.price[0] > before, "buying raises the price")
-	var all: Array = m.buy(0, 1e9)
-	t.ok(is_equal_approx(m.stock[0], 0.0) and all[0] < 1e9, "cannot buy more than the stock")
+	t.ok(is_equal_approx(m.stock[0], stock) and is_equal_approx(m.price[0], price), "buying moves neither stock nor price")
+	var rest: Array = m.buy(0, 1e9)
+	t.ok(is_equal_approx(rest[0], stock - 30.0), "this week only the rest of the stock can be bought")
+	t.ok(is_zero_approx(m.available(0)), "nothing left to buy this week")
 	m.sell(0, 500.0)
-	t.ok(m.price[0] < 400.0, "selling brings the price down again")
+	t.ok(is_equal_approx(m.stock[0], stock) and is_equal_approx(m.price[0], price), "selling moves neither")
+	m.tick(7)
+	t.ok(m.available(0) > 0.0, "the weekly update puts the stock up for sale again")
+
+func test_profitable_sales_pull_traffic(t: Object) -> void:
+	var cfg := CFG.duplicate(true)
+	cfg.traffic["sale_pull"] = 1.0
+	cfg.traffic["pull_max"] = 1.0
+	cfg.traffic["pull_decay_per_day"] = 0.1
+	var flows := []
+	for pulled in [false, true]:
+		var e := Economy.new()
+		e._cfg = cfg
+		e.commodity_ids = PackedStringArray(["a", "b", "c"])
+		var cheap := _market(cfg)
+		var dear := _market(cfg)
+		dear.system = 1
+		dear.stock[0] = dear.target[0] * 0.2
+		dear.refresh_prices()
+		if pulled:
+			dear.add_pull(0, dear.target[0] * 0.5)
+			t.ok(is_equal_approx(dear.pull[0], 0.5), "a sale of half the target stock pulls 0.5")
+			dear.add_pull(0, dear.target[0] * 5.0)
+			t.ok(is_equal_approx(dear.pull[0], 1.0), "pull stops at pull_max")
+		e.markets.assign([cheap, dear])
+		e.links = [[cheap, dear, 5.0]]
+		var before := dear.stock[0]
+		e.run_traffic()
+		flows.append(dear.stock[0] - before)
+	t.ok(flows[1] > flows[0] * 1.5, "pulled traffic brings more (%.1f vs %.1f)" % [flows[1], flows[0]])
+	var m := _market(cfg)
+	m.add_pull(0, m.target[0])
+	m.tick(7)
+	t.ok(m.pull[0] < 1.0 * pow(0.9, 6), "the pull fades week by week (%.2f)" % m.pull[0])
 
 func test_recipe_runs_at_scarcest_input(t: Object) -> void:
 	var m := _market()

@@ -1,9 +1,10 @@
 class_name ShipyardPanel
 extends PanelContainer
 ## Shipyard (major worlds) or refit dock (any other port) at one system.
-## New ships, at shipyards only: a short list of the hulls built here this
-## year (name, class, price; new models marked); click one to see it
-## turning in 3D with all its numbers, its standard fit and Buy. Your ships
+## New ships, at shipyards only: a short list of the hulls this government's
+## yards build this year (name, class, price; new models marked); click one
+## to see it turning in 3D with all its numbers and traits, its standard
+## fit and Buy. Your ships
 ## here: a fitting view per ship — drag a module from the rack onto a slot
 ## (or drag between slots to swap), see the ship as refitted, the price and
 ## days, then Refit. The rack greys out modules this port doesn't make
@@ -72,12 +73,15 @@ class ModuleChip extends PanelContainer:
 ## with another slot.
 class SlotBox extends PanelContainer:
 	var index := 0
+	## "" for a built-in slot: it can't be dragged.
 	var module_id := ""
 	var label := ""
 	## Called with (slot index, module id, from slot or -1).
 	var on_drop: Callable
 
 	func _get_drag_data(_at: Vector2) -> Variant:
+		if module_id == "":
+			return null
 		var preview := Label.new()
 		preview.text = label
 		set_drag_preview(preview)
@@ -203,8 +207,9 @@ func _update_fitting(world: World, s: Ship) -> void:
 	var q := Aging.service_quote(world, s)
 	r.service.text = "Service  %s cr" % Format.thousands(roundi(q.cost)) if q.cost >= 1.0 else "Service"
 	r.service.disabled = busy or q.cost < 1.0 or not yard
-	r.service.tooltip_text = "%d days in the yard, back to %d%% (the best its age allows)" % [q.days,
-		roundi(q.condition * 100.0)] if q.cost >= 1.0 else "In as good a state as its age allows"
+	r.service.tooltip_text = "%d days in the yard, back to %d%% (the best its age allows)%s" % [q.days,
+		roundi(q.condition * 100.0), "\nDearer here: not one of the yards that build this hull" if q.foreign else ""] \
+		if q.cost >= 1.0 else "In as good a state as its age allows"
 	if not yard:
 		r.service.tooltip_text = "Servicing needs a shipyard"
 	r.sell.text = "Sell  %s cr" % Format.thousands(roundi(fleet.sale_value(s)))
@@ -366,9 +371,9 @@ func _show_detail(world: World) -> void:
 		["Jump", "%.0f ly" % float(h.jump_range)],
 		["Reliability", "%d%%" % roundi(float(h.reliability) * 100.0)],
 		["Fuel", "%d t per ly" % int(h.get("fuel_per_ly", 0))],
-		["Crew", "%s cr/month under way" % Format.thousands(int(h.crew_cost))],
+		["Crew", "%s cr/month under way" % Format.thousands(int(h.crew_cost)) if int(h.crew_cost) > 0 else "none (crewless)"],
 		["Maintenance", "%s cr/month under way" % Format.thousands(int(h.maintenance))],
-	]
+	] + _trait_rows(h)
 	for r in rows:
 		_stats.add_child(_cell(r[0], MUTED, 13))
 		_stats.add_child(_cell(r[1], Color.WHITE, 13, true))
@@ -387,14 +392,45 @@ func _show_detail(world: World) -> void:
 	_buy.text = "Buy  %s cr" % Format.thousands(roundi(price)) if cash >= price \
 		else "Buy  %s cr  ·  %s more needed" % [Format.thousands(roundi(price)), Format.thousands(roundi(price - cash))]
 
+## [label, value] rows for a hull's builders and traits (hulls.json).
+func _trait_rows(h: Dictionary) -> Array:
+	var by := PackedStringArray()
+	for g in h.get("builders", []):
+		by.append(Defs.government_name(g))
+	var rows := [["Built by", " / ".join(by) + " yards"]]
+	var tr: Dictionary = h.get("traits", {})
+	if tr.has("raid_mult"):
+		rows.append(["Cloaked", "raid risk × %s" % str(tr.raid_mult)])
+	if tr.has("armour"):
+		rows.append(["Armour", "%d built in (risk × %s)" % [int(tr.armour),
+			str(pow(float(Defs.world_content.balance.danger.get("armour_factor", 0.5)), int(tr.armour)))]])
+	if tr.has("aging_mult"):
+		rows.append(["Wear", "%s × normal" % str(tr.aging_mult)])
+	if tr.has("influence_mult"):
+		rows.append(["Prestige", "+%d%% influence from trade" % roundi((float(tr.influence_mult) - 1.0) * 100.0)])
+	if tr.has("fixed"):
+		var built_in := PackedStringArray()
+		for i in int(tr.fixed):
+			built_in.append(_module_name(h.default_modules[i]))
+		rows.append(["Built in", ", ".join(built_in)])
+	if not h.get("forbid", []).is_empty():
+		rows.append(["Cannot fit", ", ".join(h.forbid) + " modules"])
+	return rows
+
 func _slot(s: Ship, i: int, module_id: String) -> SlotBox:
+	var fixed := i < Sim.world.fleet.fixed_slots(s.hull)
 	var box := SlotBox.new()
 	box.index = i
-	box.module_id = module_id
+	box.module_id = "" if fixed else module_id
 	box.label = _module_name(module_id)
 	box.custom_minimum_size = Vector2(112, 58)
 	box.tooltip_text = "Slot %d: %s. Drop a module here, or drag this one to another slot to swap." % [i + 1, box.label]
+	if fixed:
+		box.tooltip_text = "Slot %d: %s, built into the hull." % [i + 1, box.label]
 	box.on_drop = func(index: int, m: String, from: int) -> void:
+		if index < Sim.world.fleet.fixed_slots(s.hull):
+			Events.notice.emit("Slot %d is built into the hull" % (index + 1))
+			return
 		if not Sim.world.fleet.module_allowed(s.hull, m):
 			Events.notice.emit("%s cannot be fitted to this hull" % _module_name(m))
 			return
@@ -428,6 +464,10 @@ func _slot(s: Ship, i: int, module_id: String) -> SlotBox:
 	stat.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(title)
 	v.add_child(stat)
+	if fixed:
+		var built := _cell("built in", MUTED, 11)
+		built.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		v.add_child(built)
 	if module_id != s.modules[i]:
 		var changed := _cell("changed", AMBER, 11)
 		changed.mouse_filter = Control.MOUSE_FILTER_IGNORE

@@ -5,7 +5,9 @@ class_name Aging
 ## more on every day under way. How often a travelling ship breaks down
 ## follows its reliability (hull reliability x condition): a breakdown
 ## stops it for some days and costs a repair bill. Maintenance grows with
-## age. Servicing at a shipyard brings the condition back up, but never
+## age. Hulls with the trait "aging_mult" wear slower or faster. Servicing
+## at a shipyard brings the condition back up (dearer away from the yards
+## of the hull's own builders: "foreign_service_mult"), but never
 ## above a cap that falls with age, so old ships keep getting worse. A ship
 ## on route orders that is badly worn ("auto_service_below" under its cap)
 ## goes to the nearest charted shipyard for a service by itself, then goes
@@ -32,12 +34,16 @@ static func service_cap(w: World, ship: Ship) -> float:
 	return maxf(float(k.get("service_cap_min", 0.55)),
 		1.0 - float(k.get("service_cap_loss_per_year", 0.02)) * maxf(age_years(w, ship), 0.0))
 
-## {cost, days, condition (after)}; cost 0 when there is nothing to do.
+## {cost, days, condition (after), foreign}; cost 0 when there is nothing
+## to do. `foreign`: docked where another government's yards work on it, at
+## foreign_service_mult.
 static func service_quote(w: World, ship: Ship) -> Dictionary:
 	var cap := service_cap(w, ship)
 	var gap := maxf(cap - ship.condition, 0.0)
-	return {"cost": Danger.ship_value(w, ship) * float(cfg(w).get("service_cost_share", 0.25)) * gap,
-		"days": int(cfg(w).get("service_days", 4)), "condition": maxf(cap, ship.condition)}
+	var foreign := ship.system >= 0 and not w.fleet.is_home_yard(ship.system, ship.hull)
+	var mult := float(w.content.balance.get("shipyards", {}).get("foreign_service_mult", 1.0)) if foreign else 1.0
+	return {"cost": Danger.ship_value(w, ship) * float(cfg(w).get("service_cost_share", 0.25)) * gap * mult,
+		"days": int(cfg(w).get("service_days", 4)), "condition": maxf(cap, ship.condition), "foreign": foreign}
 
 ## Worth a trip to the yard: condition well below what a service gives.
 static func needs_service(w: World, ship: Ship) -> bool:
@@ -118,7 +124,8 @@ static func daily(w: World) -> void:
 		if s.broken_until == w.day and s.note.begins_with("broken down"):
 			s.note = ""  # repaired
 		var moving := s.status == Ship.Status.TRAVELING and s.broken_until <= w.day
-		s.condition = maxf(s.condition - wear - (travel_wear if moving else 0.0), 0.05)
+		s.condition = maxf(s.condition - (wear + (travel_wear if moving else 0.0))
+			* float(w.fleet.hull_trait(s.hull, "aging_mult", 1.0)), 0.05)
 		if not moving:
 			continue
 		if w.wear_rng.randf() >= (1.0 - reliability(w, s)) * per_day:

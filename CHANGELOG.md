@@ -14,16 +14,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (needs the `lame` encoder; `--wav`, `--only`, `--minutes` options). For
   listening, not shipped with the game.
 - Charted shipyards show a hollow green triangle beside their star on the map
-  when zoomed in (fades out past 28-42 ly camera distance).
+  when zoomed in (fades out between 26 and 36 ly from the camera).
 - The selected ship gets a spinning amber ring, like the selected star.
+- Zoomed in, the map shows each inhabited system's settlement name (the
+  name the news uses) in smaller amber text under the system name. Ports
+  round faint stars are now named that far out too, instead of only up
+  close.
+- Contracts panel: a Go button beside each running job's destination sends
+  its ship there at once (the tooltip gives the days and arrival, or why it
+  can't go); jobs of other ships than the current one are greyed.
+- 42 hulls in eight design families: the standard line (12 hulls, built by
+  concordance and democracy yards) plus corporate, junta, theocracy,
+  feudal, anarchy, custodians and zealots families. Each hull lists its
+  `builders` (governments whose yards build and sell it), so the yards you
+  find depend on who runs the port. Hulls may carry `traits`: `raid_mult`
+  (cloaked, harder for raiders to catch), `armour` (built-in plates),
+  `aging_mult` (wear rate), `influence_mult` (prestige: more influence
+  from sales and contracts) and `fixed` (first slots hold built-in modules
+  a refit can't change).
+- `shipyard_min_tech` per government, so rim governments have yards
+  (corporate 8, junta 6, theocracy 6, feudal 5, anarchy 5, zealots 4).
+- Servicing costs 1.5x away from the hull's builders' yards
+  (`shipyards.foreign_service_mult`).
+- Shipyard panel shows "Built by" and the hull's traits, labels built-in
+  slots ("built in", not draggable) and notes the foreign surcharge in the
+  Service tooltip. New-hull news names the governments that build it.
+- Ship models are lofted hulls with plating and a glass canopy or bridge,
+  redone cargo modules, and a look per design family (`look.style`).
+  Factions have their own light schemes: side lights, beacons and blinking
+  marker lights, pulsing engines and flames.
 
 ### Changed
 
 - The UI is smaller overall (window scale 1.25 -> 1.1, map star names
-  26 -> 23).
+  26 -> 22).
 - The system card on the right is shorter: planet/belt count moved onto
   the star facts line, and the settlement summary and the influence
   "sell goods here" hint are now tooltips instead of standing text.
+- Star names draw over the star glow, and zoomed in close a soft dark
+  patch behind a star's names keeps them readable over a big glow.
+- Your trades no longer move prices or stock: a lot costs the listed price
+  x tonnes, and a market sells companies at most its stock each week (the
+  market's "For sale" column). Instead, every sale at a profit draws a bit
+  more background traffic of that good to that market for a few weeks
+  (`economy.traffic` `sale_pull`, `pull_max`, `pull_decay_per_day`), so a
+  route used over and over slowly evens out.
+- Events are rarer and the mild ones last longer: pirates, flares,
+  embargoes, trade agreements, tariff hikes, new ore deposits and zealot
+  takeovers happen half as often and run about twice as long; the big
+  swings (war, plague, festival, crop failure, dock strike) keep their
+  length and are 30% rarer. About 2.3 events start a year instead of 3.7,
+  with 2.2 running at a time instead of 1.6.
+- Module `allowed`/`forbid` lists on hulls now use module tags (cargo,
+  bulk, liquid, secure, passenger, luxury, mail, utility, military)
+  instead of module ids.
 - Starlanes and the drop lines from stars to the galactic plane are
   dimmer.
 - The test suite runs in about 35 s instead of 95 (the warmed-up world is

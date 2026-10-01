@@ -1,9 +1,13 @@
 class_name Fleet
 extends RefCounted
 ## Every ship in the game, what they can do (specs from hulls.json and
-## modules.json), where they can be bought (shipyards at major worlds) and
-## refitted (any inhabited world, with the modules its tech level makes),
-## and travel: routes limited by jump range, one day of movement per tick.
+## modules.json), where they can be bought (shipyards at major worlds; each
+## hull only at the yards of the governments in its "builders") and
+## refitted (any inhabited world, with the modules its tech level makes and
+## its hull takes: "allowed"/"forbid" module tags, built-in slots), and
+## travel: routes limited by jump range, one day of movement per tick.
+## Hull "traits" (raid_mult, armour, aging_mult, influence_mult, fixed) are
+## read where they apply (Danger, Aging, Trading, Contracts).
 ##
 ## Commands take the Company doing them and return {ok, error, ...}; World
 ## checks that the ship belongs to that company before calling in.
@@ -13,6 +17,7 @@ var ships: Array[Ship] = []
 var _galaxy: Galaxy
 var _hulls: Dictionary
 var _modules: Dictionary
+var _governments: Dictionary
 var _yards: Dictionary
 var _ship_cfg: Dictionary
 var _ship_names: Array
@@ -22,6 +27,7 @@ func _init(galaxy: Galaxy, content: Dictionary) -> void:
 	_galaxy = galaxy
 	_hulls = content.get("hulls", {})
 	_modules = content.get("modules", {})
+	_governments = content.get("governments", {})
 	var balance: Dictionary = content.get("balance", {})
 	_yards = balance.get("shipyards", {})
 	_ship_cfg = balance.get("ships", {})
@@ -62,9 +68,30 @@ func total_capacity(ship: Ship) -> float:
 		t += v
 	return t
 
+## A hull's trait (hulls.json "traits"), or `default`.
+func hull_trait(hull_id: String, key: String, default: Variant) -> Variant:
+	return _hulls[hull_id].get("traits", {}).get(key, default)
+
+## A hull takes a module when one of the module's tags is in its "allowed"
+## ("*" = any) and none is in its "forbid".
 func module_allowed(hull_id: String, module_id: String) -> bool:
-	var allowed: Array = _hulls[hull_id].get("allowed", ["*"])
-	return _modules.has(module_id) and ("*" in allowed or module_id in allowed)
+	if not _modules.has(module_id):
+		return false
+	var h: Dictionary = _hulls[hull_id]
+	var tags: Array = _modules[module_id].get("tags", [])
+	var forbid: Array = h.get("forbid", [])
+	var allowed: Array = h.get("allowed", ["*"])
+	var ok := "*" in allowed
+	for t in tags:
+		if t in forbid:
+			return false
+		ok = ok or t in allowed
+	return ok
+
+## How many slots at the front hold the hull's built-in modules (its first
+## default modules), which a refit can't change.
+func fixed_slots(hull_id: String) -> int:
+	return int(hull_trait(hull_id, "fixed", 0))
 
 ## What the ship would fetch if sold: a share of hull + module prices.
 func sale_value(ship: Ship) -> float:
@@ -76,12 +103,14 @@ func sale_value(ship: Ship) -> float:
 # --- shipyards ---------------------------------------------------------------------
 
 ## Industrial and high-tech worlds build ships: a shipyard archetype at
-## archetype_min_tech or better, or any settlement at any_min_tech.
+## archetype_min_tech or better, or any settlement at any_min_tech or at
+## its government's shipyard_min_tech (so rim governments have yards too).
 func is_shipyard(system_index: int) -> bool:
 	var st := _galaxy.systems[system_index].settlement
 	if st == null:
 		return false
-	if st.tech_level >= int(_yards.get("any_min_tech", 99)):
+	var gov_tech := int(_governments.get(st.government, {}).get("shipyard_min_tech", 99))
+	if st.tech_level >= mini(int(_yards.get("any_min_tech", 99)), gov_tech):
 		return true
 	return st.archetype in _yards.get("archetypes", []) and st.tech_level >= int(_yards.get("archetype_min_tech", 0))
 
@@ -94,8 +123,15 @@ func module_sold_at(system_index: int, module_id: String) -> bool:
 	var st := _galaxy.systems[system_index].settlement
 	return st != null and st.tech_level >= int(_modules.get(module_id, {}).get("tech", 1))
 
-## Hull ids a shipyard sells in a given year: in production and within the
-## settlement's tech level.
+## The hull is built by the government here (its "builders"; a hull
+## without builders counts as built everywhere).
+func is_home_yard(system_index: int, hull_id: String) -> bool:
+	var st := _galaxy.systems[system_index].settlement
+	var builders: Array = _hulls[hull_id].get("builders", [])
+	return st != null and (builders.is_empty() or st.government in builders)
+
+## Hull ids a shipyard sells in a given year: built by its government, in
+## production and within the settlement's tech level.
 func hulls_for_sale(system_index: int, year: int) -> Array[String]:
 	var out: Array[String] = []
 	if not is_shipyard(system_index):
@@ -103,7 +139,8 @@ func hulls_for_sale(system_index: int, year: int) -> Array[String]:
 	var tech := _galaxy.systems[system_index].settlement.tech_level
 	for id in _hulls:
 		var h: Dictionary = _hulls[id]
-		if year >= int(h.year_from) and year <= int(h.year_to) and tech >= int(h.tech):
+		if year >= int(h.year_from) and year <= int(h.year_to) and tech >= int(h.tech) \
+				and is_home_yard(system_index, id):
 			out.append(id)
 	return out
 
@@ -158,6 +195,11 @@ func refit(company: Company, ship: Ship, new_modules: Array, day: int) -> Dictio
 	var slots := int(hull_def(ship).slots)
 	if new_modules.size() != slots:
 		return {"ok": false, "error": "This hull has %d slots" % slots}
+	var built_in: Array = hull_def(ship).get("default_modules", [])
+	for i in fixed_slots(ship.hull):
+		if new_modules[i] != built_in[i]:
+			return {"ok": false, "error": "Slot %d holds the hull's built-in %s" % [i + 1,
+				_modules.get(built_in[i], {}).get("name", built_in[i])]}
 	for m in new_modules:
 		if not module_allowed(ship.hull, m):
 			return {"ok": false, "error": "%s cannot be fitted to this hull" % _modules.get(m, {}).get("name", m)}

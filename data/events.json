@@ -1,7 +1,7 @@
 [
 	{
 		"id": "war", "name": "War", "badge": "danger",
-		"scope": "pair", "chance_per_month": 0.04, "days": [120, 480], "weight": "war",
+		"scope": "pair", "chance_per_month": 0.028, "days": [120, 480], "weight": "war",
 		"patron_weight": 0.3, "brokerable": true,
 		"where": { "min_population": 10000, "not_governments": ["custodians"] },
 		"effects": {
@@ -13,7 +13,7 @@
 	},
 	{
 		"id": "zealots", "name": "Zealot takeover", "badge": "politics",
-		"scope": "system", "chance_per_month": 0.025, "days": [360, 360], "weight": "instability",
+		"scope": "system", "chance_per_month": 0.0125, "days": [360, 360], "weight": "instability",
 		"patron_weight": 0.3,
 		"where": { "min_population": 10000, "max_stability": 0.7,
 			"not_governments": ["zealots", "custodians", "concordance"] },
@@ -23,7 +23,7 @@
 	},
 	{
 		"id": "plague", "name": "Plague", "badge": "info",
-		"scope": "system", "chance_per_month": 0.03, "days": [60, 180], "weight": "size",
+		"scope": "system", "chance_per_month": 0.021, "days": [60, 180], "weight": "size",
 		"where": { "min_population": 10000 },
 		"effects": { "demand": { "medicine": 4.0, "biologics": 2.0 }, "population": 0.97, "stability": -0.05 },
 		"headline": "Plague at {a}: medicine wanted",
@@ -31,7 +31,7 @@
 	},
 	{
 		"id": "crop_failure", "name": "Crop failure", "badge": "info",
-		"scope": "system", "chance_per_month": 0.04, "days": [60, 150],
+		"scope": "system", "chance_per_month": 0.028, "days": [60, 150],
 		"where": { "archetypes": ["agricultural"] },
 		"effects": { "supply": { "grain": 0.3, "luxury_foods": 0.4, "textiles": 0.6 }, "stability": -0.05 },
 		"headline": "Crop failure at {a}: grain runs short",
@@ -39,7 +39,7 @@
 	},
 	{
 		"id": "mining_strike", "name": "Mining strike", "badge": "info",
-		"scope": "system", "chance_per_month": 0.03, "days": [180, 540],
+		"scope": "system", "chance_per_month": 0.015, "days": [360, 1080],
 		"where": { "archetypes": ["mining"] },
 		"effects": { "supply": { "ore": 2.0, "rare_elements": 2.5 } },
 		"headline": "Rich new deposit found at {a}: ore and rare elements flood the market",
@@ -47,7 +47,7 @@
 	},
 	{
 		"id": "labour_strike", "name": "Labour strike", "badge": "info",
-		"scope": "system", "chance_per_month": 0.05, "days": [10, 40], "weight": "size",
+		"scope": "system", "chance_per_month": 0.035, "days": [10, 40], "weight": "size",
 		"where": { "min_population": 10000 },
 		"effects": { "closed": true, "stability": -0.05 },
 		"headline": "Dock workers strike at {a}: the port is closed",
@@ -55,7 +55,7 @@
 	},
 	{
 		"id": "pirates", "name": "Pirates", "badge": "danger",
-		"scope": "lane", "chance_per_month": 0.05, "days": [60, 240], "weight": "lawless",
+		"scope": "lane", "chance_per_month": 0.025, "days": [150, 600], "weight": "lawless",
 		"where": { "market": true },
 		"effects": { "lane_danger": 0.08, "demand": { "weapons": 1.8 } },
 		"headline": "Pirates prey on the lane between {a} and {b}",
@@ -63,7 +63,7 @@
 	},
 	{
 		"id": "flare", "name": "Stellar flare", "badge": "info",
-		"scope": "system", "chance_per_month": 0.03, "days": [14, 45],
+		"scope": "system", "chance_per_month": 0.015, "days": [35, 110],
 		"where": { "star_class": "M" },
 		"effects": { "supply": { "*": 0.6 }, "demand": { "fuel": 2.0, "machinery": 2.0 } },
 		"headline": "A stellar flare damages the stations at {a}",
@@ -71,7 +71,7 @@
 	},
 	{
 		"id": "embargo", "name": "Embargo", "badge": "politics",
-		"scope": "system", "chance_per_month": 0.025, "days": [90, 270], "weight": "instability",
+		"scope": "system", "chance_per_month": 0.0125, "days": [225, 675], "weight": "instability",
 		"where": { "min_population": 10000, "not_governments": ["custodians", "concordance"] },
 		"effects": { "isolated": true, "stability": -0.05 },
 		"headline": "Neighbours embargo {a}: no traders call there, prices drift",
@@ -79,7 +79,7 @@
 	},
 	{
 		"id": "agreement", "name": "Trade agreement", "badge": "politics",
-		"scope": "pair", "chance_per_month": 0.03, "days": [180, 720], "weight": "size",
+		"scope": "pair", "chance_per_month": 0.015, "days": [360, 1440], "weight": "size",
 		"where": { "min_population": 10000 },
 		"effects": { "tariffs_waived": true, "demand": { "consumer_goods": 1.4, "luxuries": 1.4 }, "stability": 0.05 },
 		"headline": "{a} and {b} sign a trade agreement: no tariffs, a trade boom",
@@ -87,7 +87,7 @@
 	},
 	{
 		"id": "festival", "name": "Festival", "badge": "info",
-		"scope": "system", "chance_per_month": 0.06, "days": [21, 42], "weight": "size",
+		"scope": "system", "chance_per_month": 0.042, "days": [21, 42], "weight": "size",
 		"where": { "min_population": 10000 },
 		"effects": { "demand": { "luxuries": 2.5, "luxury_foods": 2.5 }, "stability": 0.03 },
 		"headline": "Festival season at {a}: luxuries in demand",
@@ -95,7 +95,7 @@
 	},
 	{
 		"id": "tariff_hike", "name": "Tariff hike", "badge": "politics",
-		"scope": "system", "chance_per_month": 0.04, "days": [240, 480], "weight": "size",
+		"scope": "system", "chance_per_month": 0.02, "days": [480, 960], "weight": "size",
 		"vetoable": true,
 		"where": { "min_population": 10000, "not_governments": ["custodians"] },
 		"effects": { "tariff_add": 0.1 },

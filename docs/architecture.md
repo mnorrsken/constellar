@@ -119,12 +119,19 @@ jump range, price, crew cost, maintenance, reliability, production years,
 tech level, allowed modules, default fit, and a `look` — length, beam, nose
 shape, engines, fins, paint — for the 3D model) — 12 now, including later
 models Swift II courier, Starliner II liner and Leviathan II heavy
-freighter, each production-year-gated; `World` posts a news headline on 1
+freighter, each production-year-gated; 42 hulls in all (12 standard plus
+seven government families, `look.style` picks the model style) with
+`builders` (government ids whose yards sell it), module *tags* in
+`allowed`/`forbid` and optional `traits` (`raid_mult`, `armour`,
+`aging_mult`, `influence_mult`, `fixed` built-in first slots); `World` posts a news headline on 1
 Jan of a hull's first production year. `data/modules.json` lists
 modules: cargo holds (`cargo_class`, capacity factor per slot), cabins and
 suites (passengers), mail bay, armour, drive tune (`speed_mult`), jump
 extender (`range_add`), auto-trader — each with the `tech` level a port
-needs to make it, and a `look` (shape, colour) for the model. `data/names.json` also has
+needs to make it, `tags` (cargo, bulk, liquid, secure, passenger, luxury,
+mail, utility, military) and a `look` (shape, colour) for the model.
+`governments.json` has `shipyard_min_tech` per government;
+`balance.json` `shipyards.foreign_service_mult` (1.5). `data/names.json` also has
 `ship_names`.
 
 ## Star data pipeline
@@ -249,9 +256,14 @@ above target decays slowly (`decay_per_day` x days). Prices depend only on
 stock vs target, not on `volume_scale`, so balance is unchanged.
 `price_at(c, s)` is
 `base_price x (target/stock)^elasticity`, clamped to `price_min`/`price_max`.
-`quote_buy`/`quote_sell` integrate price over the stock change (`_integrate`,
-a 24-step midpoint rule) so a big lot costs more, or earns less, per unit
-than a small one; `buy`/`sell` apply that and move stock/price. `record_week`
+Company trades leave stock and price alone: `quote_buy`/`quote_sell` are
+the listed price x tonnes, and `buy` only counts what companies took this
+week (`taken`, reset by `tick`) so `available(c)` = stock - taken caps the
+week's purchases. `add_pull(c, qty)` (called by `Trading.sell` on a sale at
+a profit after tariff) adds `traffic.sale_pull` x qty / target to `pull[c]`,
+capped at `pull_max`, fading by `pull_decay_per_day`; `run_traffic`
+multiplies the flow into that market by `1 + pull`. Saves keep `taken` and
+`pull`. `record_week`
 appends a price sample to `history`, capped at `history_weeks`. Running
 events (`WorldEvents.apply_all`) rebuild each market's `supply_mult`/
 `demand_mult` per commodity, `closed` (no trading), `isolated` (embargoed —
@@ -331,8 +343,13 @@ or losing money — see `Aging` below).
 `sim/fleet.gd` (`Fleet`) owns every ship. Specs: `speed` (drive tunes),
 `jump_range` (jump extenders), `capacity` by cargo class, `sale_value`.
 Shipyards (buying, selling, servicing): `is_shipyard` (archetype + tech
-from `balance.json`), `hulls_for_sale(system, year)` (production years and
-tech). Refits at any inhabited world (`can_refit_at`); a module the ship
+from `balance.json`, lowered by the government's `shipyard_min_tech`),
+`hulls_for_sale(system, year)` (production years, tech and the hull's
+`builders`; `is_home_yard`). `hull_trait`, `module_allowed` (by tags) and
+`fixed_slots` (a refit can't change built-in slots). `Danger` uses
+`raid_mult` and built-in armour, `Aging` the `aging_mult` wear and a
+foreign-yard service surcharge (quote `foreign`), `Trading`/`Contracts`
+`influence_mult`; `World` hull news names the building governments. Refits at any inhabited world (`can_refit_at`); a module the ship
 doesn't already carry must be made there (`module_sold_at`: the port's tech
 level >= the module's `tech`; moving a fitted module between slots is
 fine anywhere). Commands: `buy`, `sell`, `refit` (+ `refit_quote`: new
@@ -516,7 +533,9 @@ Contracts button) shows one market's board: Job, Load, To, Trip days (for
 the ship docked there), Deliver by, Reward, Penalty and Accept — or why
 not (uncharted, out of range, no room; "too slow" is still allowed, with a
 warning, since the penalty would apply) — plus "Your contracts" with
-Abandon (showing the penalty). `FleetPanel` shows each ship's contract
+Abandon (showing the penalty), a Go button beside the destination
+(`Sim.send_ship`; disabled with the reason when the ship can't go) and
+other ships' jobs than the current one greyed. `FleetPanel` shows each ship's contract
 count; `FinancePanel` has Contracts and Penalties ledger rows;
 `MarketPanel`'s hold line adds reserved charter freight; `SystemPanel`'s
 Contracts button shows the board's offer count.
@@ -690,8 +709,15 @@ the danger map mode); `set_badges(systems)` draws a pulsing ring at each
 charted system with a running event (colour by badge kind — danger,
 politics, other). `set_shipyards(systems)` draws a screen-sized
 hollow lime triangle up-right of each charted shipyard
-(`shaders/shipyard_symbol.gdshader`), fading out between 28 and 42 ly
-camera distance so the zoomed-out map stays clean.
+(`shaders/shipyard_symbol.gdshader`), fading out between 26 and 36 ly (`PORT_DETAIL_NEAR`/`FAR`)
+camera distance so the zoomed-out map stays clean. Under each inhabited
+system's name label a smaller amber one gives its settlement's name (the
+news names settlements), fading out over the same distances unless the
+star is hovered or selected. A port's own name shows at least that far
+out too, even round a faint star, whose name range is otherwise short.
+Labels draw after the star glows (`render_priority`), and a soft dark
+patch (`shaders/label_backdrop.gdshader`, sized from the text in label
+units) fades in behind a star's names when the camera is within 14 ly.
 
 `render/map_camera.gd` (`MapCamera`) turns input into edits on a target
 `OrbitRig`, then eases the view toward it: left-drag orbit, right/
@@ -736,14 +762,23 @@ the one on the selected star), and gives `screen_points` for picking
 ships.
 
 `render/ship_model.gd` (`ShipModel`, static) builds a ship's 3D model from
-primitive meshes, no art assets: `build(hull, modules, module_defs, accent)`
-returns a `Node3D` lying along +Z — an engine block with rear nozzles, a
-nose from the hull's `look` (block with a bridge tower, wedge or round),
-optional fins, a keel, and one bay per module slot shaped and coloured for
-what's fitted (crates, hopper, reefer, tanks, vault, cabins, pods, mailpod,
-armour plates, drive tune, jump ring, auto-trader dish), sharing cached
-materials (metal, paint, the owner's accent stripe, emissive glow, an
-additive engine flame). Root meta `size` gives the model's bounds.
+generated meshes, no art assets: `build(hull, modules, module_defs, accent)`
+returns a `Node3D` lying along +Z. The hull is lofted with `SurfaceTool`
+from superellipse sections: an engine section with the owner's colour as
+a belt, a thin spine through the bays, a bow (wedge, round or block) with a
+glass canopy or bridge tower, and frames between bays. Each bay is shaped
+for what's fitted (containers with ribs, ore hopper, reefer, tanks, vault,
+cabin drum, luxury pods, mail canister, armour plates, drive nacelles, jump
+ring, dish). The `STYLES` table holds eight design families (standard,
+corporate, junta, theocracy, feudal, anarchy, custodians, zealots: section
+shape, plating, colours, fins, extras and a `lights` scheme); a hull picks
+one with `look.style`, and its own `paint` beats the style colour. Light
+schemes give side lights, beacons and marker lights (steady, flash,
+breathe, flicker, heartbeat; chase, wave or random phase), pulsing engines
+and flames. Shaders in `render/shaders/`: `ship_hull` (plating),
+`ship_part` (module ribs, windows, ore, grime), `ship_light` (camera-facing
+point lights), `ship_glow`, `ship_flame`, and `ship_blink.gdshaderinc`
+(shared blink patterns). Root meta `size` gives the model's bounds.
 
 **Picking coordinate note:** `main.gd` tracks the mouse from
 `InputEventMouse.position` (not `Viewport.get_mouse_position()`, which did not follow input events) so it stays
@@ -881,7 +916,10 @@ system card's button reads "Refit" there). At a shipyard it lists the hulls
 built here this year as selectable rows (name, NEW mark, class, price); the selected one
 fills a card with its model, class and build years, slots/cargo/speed/
 jump/reliability/fuel/crew/maintenance, standard fit and Buy (or how much
-more cash is needed). Per owned ship docked there it has a
+more cash is needed); it also shows "Built by" and trait rows (cloaked,
+armour, wear, prestige, built in, cannot fit). Built-in slots are labelled
+"built in" and can't be dragged or dropped on, and the Service tooltip
+notes a foreign-yard surcharge. Per owned ship docked there it has a
 drag-and-drop fitting view (`SlotBox`/`ModuleChip` inner classes: drag a
 module from the rack onto a slot, or drag between two slots to swap) with
 a fit summary, refit quote, Reset/Refit, Service and Sell, in a

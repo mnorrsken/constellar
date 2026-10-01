@@ -58,7 +58,7 @@ static func fuel_quote(w: World, ship: Ship, length_ly: float) -> Dictionary:
 	var m := w.economy.market_at(ship.system) if ship.status == Ship.Status.DOCKED else null
 	if m and m.closed:
 		m = null
-	var local := minf(tonnes, m.stock[fuel]) if m else 0.0
+	var local := minf(tonnes, m.available(fuel)) if m else 0.0
 	var cost := m.quote_buy(fuel, local) if m and local > 0.0 else 0.0
 	cost += (tonnes - local) * w.economy.markets[0].base_price[fuel] * float(cfg(w).get("fuel_without_market", 1.5))
 	return {"tonnes": tonnes, "local": local, "cost": cost}
@@ -96,7 +96,7 @@ static func buy(w: World, ship: Ship, c: int, qty: float) -> Dictionary:
 	if is_banned(w, ship.system, c):
 		return {"ok": false, "error": "%s are banned here" % _name(w, c)}
 	var company := w.companies[ship.company]
-	qty = floorf(minf(qty, minf(m.stock[c], free_space(w, ship, c))))
+	qty = floorf(minf(qty, minf(m.available(c), free_space(w, ship, c))))
 	if qty < 1.0:
 		return {"ok": false, "error": "No %s hold space free" % commodity_class(w, c) \
 			if free_space(w, ship, c) < 1.0 else "None for sale"}
@@ -137,12 +137,15 @@ static func sell(w: World, ship: Ship, c: int, qty: float) -> Dictionary:
 	if ship.cargo[c] < 0.5:
 		ship.cargo.erase(c)
 		ship.cargo_cost.erase(c)
+	if gross - basis - gross * tariff(w, ship.system, c, ship.company) > 0.0:
+		m.add_pull(c, qty)
 	company.book("sales", gross, w.month(), ship.id)
 	company.note_cost_of_sales(basis, w.month(), ship.id)
 	var duty := gross * tariff(w, ship.system, c, ship.company)
 	if duty > 0.0:
 		company.book("tariffs", -duty, w.month(), ship.id)
-	Influence.gain(w, ship.company, ship.system, gross, shortage)
+	Influence.gain(w, ship.company, ship.system,
+		gross * float(w.fleet.hull_trait(ship.hull, "influence_mult", 1.0)), shortage)
 	observe(w, ship.company, ship.system)
 	w.events.append({"type": "cargo", "ship": ship.id, "company": ship.company})
 	w.events.append({"type": "sale", "ship": ship.id, "company": ship.company,

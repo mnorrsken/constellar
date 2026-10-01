@@ -4,7 +4,7 @@
 		"slots": 2, "slot_tonnes": 60, "speed": 0.5, "jump_range": 12.0, "fuel_per_ly": 2,
 		"price": 180000, "crew_cost": 3000, "maintenance": 1000, "reliability": 0.97,
 		"year_from": 3380, "year_to": 3430, "tech": 5,
-		"allowed": ["container", "cold", "secure", "mail", "cabins", "suites", "drive_tune", "jump_extender", "armour", "auto_trader"],
+		"builders": ["concordance", "democracy"], "allowed": ["cargo", "secure", "passenger", "mail", "utility"],
 		"look": { "length": 5.0, "beam": 1.2, "nose": "wedge", "engines": 2, "fins": true, "paint": "b9c6d3" },
 		"default_modules": ["container", "mail"]
 	},
@@ -13,7 +13,7 @@
 		"slots": 3, "slot_tonnes": 250, "speed": 0.3, "jump_range": 12.0, "fuel_per_ly": 4,
 		"price": 450000, "crew_cost": 4000, "maintenance": 1500, "reliability": 0.95,
 		"year_from": 3370, "year_to": 3425, "tech": 4,
-		"allowed": ["*"],
+		"builders": ["concordance", "democracy"], "allowed": ["*"],
 		"look": { "length": 7.0, "beam": 1.8, "nose": "block", "engines": 2, "fins": false, "paint": "8e9aa8" },
 		"default_modules": ["container", "container", "container"]
 	},
@@ -22,7 +22,7 @@
 		"slots": 5, "slot_tonnes": 400, "speed": 0.25, "jump_range": 12.0, "fuel_per_ly": 8,
 		"price": 1200000, "crew_cost": 7000, "maintenance": 3000, "reliability": 0.94,
 		"year_from": 3385, "year_to": 3440, "tech": 6,
-		"allowed": ["*"],
+		"builders": ["concordance", "democracy"], "allowed": ["*"],
 		"look": { "length": 10.0, "beam": 2.4, "nose": "block", "engines": 3, "fins": false, "paint": "7f8b96" },
 		"default_modules": ["container", "container", "container", "bulk", "bulk"]
 	},
@@ -31,7 +31,7 @@
 		"slots": 8, "slot_tonnes": 600, "speed": 0.2, "jump_range": 10.0, "fuel_per_ly": 16,
 		"price": 3000000, "crew_cost": 12000, "maintenance": 5500, "reliability": 0.93,
 		"year_from": 3390, "year_to": 3450, "tech": 8,
-		"allowed": ["*"],
+		"builders": ["concordance", "democracy"], "allowed": ["*"],
 		"look": { "length": 16.0, "beam": 3.2, "nose": "block", "engines": 4, "fins": false, "paint": "6f7780" },
 		"default_modules": ["container", "container", "container", "container", "bulk", "bulk", "bulk", "bulk"]
 	},
@@ -40,7 +40,7 @@
 		"slots": 6, "slot_tonnes": 900, "speed": 0.2, "jump_range": 11.0, "fuel_per_ly": 12,
 		"price": 2200000, "crew_cost": 8000, "maintenance": 3500, "reliability": 0.95,
 		"year_from": 3380, "year_to": 3450, "tech": 6,
-		"allowed": ["bulk", "armour", "drive_tune", "jump_extender", "auto_trader"],
+		"builders": ["concordance", "democracy"], "allowed": ["bulk", "utility"],
 		"look": { "length": 13.0, "beam": 3.6, "nose": "block", "engines": 3, "fins": false, "paint": "8a7f6e" },
 		"default_modules": ["bulk", "bulk", "bulk", "bulk", "bulk", "bulk"]
 	},
@@ -49,7 +49,7 @@
 		"slots": 6, "slot_tonnes": 800, "speed": 0.22, "jump_range": 12.0, "fuel_per_ly": 12,
 		"price": 2400000, "crew_cost": 8000, "maintenance": 3800, "reliability": 0.94,
 		"year_from": 3385, "year_to": 3450, "tech": 7,
-		"allowed": ["tank", "armour", "drive_tune", "jump_extender", "auto_trader"],
+		"builders": ["concordance", "democracy"], "allowed": ["liquid", "utility"],
 		"look": { "length": 13.0, "beam": 3.0, "nose": "round", "engines": 3, "fins": false, "paint": "9aa2a8" },
 		"default_modules": ["tank", "tank", "tank", "tank", "tank", "tank"]
 	},
@@ -58,7 +58,7 @@
 		"slots": 6, "slot_tonnes": 300, "speed": 0.35, "jump_range": 12.0, "fuel_per_ly": 9,
 		"price": 2600000, "crew_cost": 14000, "maintenance": 4000, "reliability": 0.96,
 		"year_from": 3395, "year_to": 3450, "tech": 7,
-		"allowed": ["cabins", "suites", "mail", "cold", "container", "armour", "drive_tune", "jump_extender", "auto_trader"],
+		"builders": ["concordance", "democracy"], "allowed": ["cargo", "passenger", "mail", "utility"],
 		"look": { "length": 12.0, "beam": 2.2, "nose": "round", "engines": 2, "fins": true, "paint": "d8dde3" },
 		"default_modules": ["cabins", "cabins", "cabins", "suites", "suites", "mail"]
 	},
@@ -67,7 +67,7 @@
 		"slots": 4, "slot_tonnes": 300, "speed": 0.35, "jump_range": 16.0, "fuel_per_ly": 6,
 		"price": 1900000, "crew_cost": 7000, "maintenance": 3200, "reliability": 0.93,
 		"year_from": 3405, "year_to": 3460, "tech": 8,
-		"allowed": ["*"],
+		"builders": ["concordance", "democracy"], "allowed": ["*"],
 		"look": { "length": 10.0, "beam": 2.0, "nose": "wedge", "engines": 2, "fins": true, "paint": "5f7a8c" },
 		"default_modules": ["container", "container", "cold", "secure"]
 	},
@@ -76,7 +76,7 @@
 		"slots": 6, "slot_tonnes": 450, "speed": 0.32, "jump_range": 13.0, "fuel_per_ly": 8,
 		"price": 1700000, "crew_cost": 7500, "maintenance": 2800, "reliability": 0.97,
 		"year_from": 3412, "year_to": 3470, "tech": 7,
-		"allowed": ["*"],
+		"builders": ["concordance", "democracy"], "allowed": ["*"],
 		"look": { "length": 11.0, "beam": 2.4, "nose": "round", "engines": 3, "fins": false, "paint": "a3aeb8" },
 		"default_modules": ["container", "container", "container", "container", "bulk", "bulk"]
 	},
@@ -85,7 +85,7 @@
 		"slots": 2, "slot_tonnes": 80, "speed": 0.6, "jump_range": 13.0, "fuel_per_ly": 2,
 		"price": 240000, "crew_cost": 3000, "maintenance": 900, "reliability": 0.98,
 		"year_from": 3418, "year_to": 3480, "tech": 6,
-		"allowed": ["container", "cold", "secure", "mail", "cabins", "suites", "drive_tune", "jump_extender", "armour", "auto_trader"],
+		"builders": ["concordance", "democracy"], "allowed": ["cargo", "secure", "passenger", "mail", "utility"],
 		"look": { "length": 5.5, "beam": 1.2, "nose": "wedge", "engines": 2, "fins": true, "paint": "dfe6ee" },
 		"default_modules": ["container", "mail"]
 	},
@@ -94,7 +94,7 @@
 		"slots": 7, "slot_tonnes": 320, "speed": 0.4, "jump_range": 13.0, "fuel_per_ly": 9,
 		"price": 3100000, "crew_cost": 14000, "maintenance": 3500, "reliability": 0.97,
 		"year_from": 3421, "year_to": 3480, "tech": 8,
-		"allowed": ["cabins", "suites", "mail", "cold", "container", "armour", "drive_tune", "jump_extender", "auto_trader"],
+		"builders": ["concordance", "democracy"], "allowed": ["cargo", "passenger", "mail", "utility"],
 		"look": { "length": 13.0, "beam": 2.2, "nose": "round", "engines": 3, "fins": true, "paint": "eef1f4" },
 		"default_modules": ["cabins", "cabins", "cabins", "suites", "suites", "suites", "mail"]
 	},
@@ -103,8 +103,304 @@
 		"slots": 9, "slot_tonnes": 650, "speed": 0.24, "jump_range": 12.0, "fuel_per_ly": 16,
 		"price": 3600000, "crew_cost": 12000, "maintenance": 4800, "reliability": 0.96,
 		"year_from": 3426, "year_to": 3490, "tech": 8,
-		"allowed": ["*"],
+		"builders": ["concordance", "democracy"], "allowed": ["*"],
 		"look": { "length": 17.0, "beam": 3.2, "nose": "round", "engines": 4, "fins": false, "paint": "7d8894" },
 		"default_modules": ["container", "container", "container", "container", "container", "bulk", "bulk", "bulk", "bulk"]
+	},
+	{
+		"id": "tallyman", "name": "Tallyman light freighter", "class": "Light freighter",
+		"slots": 4, "slot_tonnes": 250, "speed": 0.3, "jump_range": 12.0, "fuel_per_ly": 4,
+		"price": 420000, "crew_cost": 4000, "maintenance": 1400, "reliability": 0.92,
+		"year_from": 3380, "year_to": 3440, "tech": 5,
+		"builders": ["corporate"], "allowed": ["*"],
+		"traits": { "fixed": 1 },
+		"look": { "length": 9.6, "beam": 1.8, "nose": "block", "engines": 2, "fins": false, "style": "corporate" },
+		"default_modules": ["auto_trader", "container", "container", "container"]
+	},
+	{
+		"id": "conveyor", "name": "Conveyor medium freighter", "class": "Medium freighter",
+		"slots": 6, "slot_tonnes": 380, "speed": 0.24, "jump_range": 11.0, "fuel_per_ly": 8,
+		"price": 1050000, "crew_cost": 7000, "maintenance": 2600, "reliability": 0.91,
+		"year_from": 3385, "year_to": 3445, "tech": 6,
+		"builders": ["corporate"], "allowed": ["*"],
+		"look": { "length": 12.8, "beam": 2.4, "nose": "block", "engines": 3, "fins": false, "style": "corporate" },
+		"default_modules": ["container", "container", "container", "container", "bulk", "bulk"]
+	},
+	{
+		"id": "bulkline", "name": "Bulkline bulk carrier", "class": "Bulk carrier",
+		"slots": 7, "slot_tonnes": 850, "speed": 0.19, "jump_range": 11.0, "fuel_per_ly": 12,
+		"price": 1900000, "crew_cost": 8000, "maintenance": 3000, "reliability": 0.92,
+		"year_from": 3380, "year_to": 3450, "tech": 6,
+		"builders": ["corporate"], "allowed": ["bulk", "utility"],
+		"look": { "length": 14.4, "beam": 3.4, "nose": "block", "engines": 3, "fins": false, "style": "corporate" },
+		"default_modules": ["bulk", "bulk", "bulk", "bulk", "bulk", "bulk", "bulk"]
+	},
+	{
+		"id": "flowline", "name": "Flowline tanker", "class": "Tanker",
+		"slots": 7, "slot_tonnes": 750, "speed": 0.2, "jump_range": 11.0, "fuel_per_ly": 12,
+		"price": 2000000, "crew_cost": 8000, "maintenance": 3200, "reliability": 0.91,
+		"year_from": 3385, "year_to": 3450, "tech": 7,
+		"builders": ["corporate"], "allowed": ["liquid", "utility"],
+		"look": { "length": 14.4, "beam": 3.4, "nose": "round", "engines": 3, "fins": false, "style": "corporate" },
+		"default_modules": ["tank", "tank", "tank", "tank", "tank", "tank", "tank"]
+	},
+	{
+		"id": "megahold", "name": "Megahold heavy freighter", "class": "Heavy freighter",
+		"slots": 10, "slot_tonnes": 600, "speed": 0.18, "jump_range": 10.0, "fuel_per_ly": 18,
+		"price": 3100000, "crew_cost": 13000, "maintenance": 5000, "reliability": 0.9,
+		"year_from": 3395, "year_to": 3455, "tech": 8,
+		"builders": ["corporate"], "allowed": ["*"],
+		"look": { "length": 19.2, "beam": 3.0, "nose": "block", "engines": 4, "fins": false, "style": "corporate" },
+		"default_modules": ["container", "container", "container", "container", "container", "container", "bulk", "bulk", "bulk", "bulk"]
+	},
+	{
+		"id": "conveyor_ii", "name": "Conveyor II medium freighter", "class": "Medium freighter",
+		"slots": 7, "slot_tonnes": 420, "speed": 0.3, "jump_range": 12.0, "fuel_per_ly": 8,
+		"price": 1500000, "crew_cost": 7000, "maintenance": 2500, "reliability": 0.94,
+		"year_from": 3416, "year_to": 3475, "tech": 7,
+		"builders": ["corporate"], "allowed": ["*"],
+		"traits": { "fixed": 1 },
+		"look": { "length": 14.4, "beam": 2.4, "nose": "round", "engines": 3, "fins": false, "style": "corporate" },
+		"default_modules": ["auto_trader", "container", "container", "container", "container", "bulk", "bulk"]
+	},
+	{
+		"id": "picket", "name": "Picket fast courier", "class": "Courier",
+		"slots": 2, "slot_tonnes": 50, "speed": 0.6, "jump_range": 13.0, "fuel_per_ly": 3,
+		"price": 260000, "crew_cost": 4500, "maintenance": 1300, "reliability": 0.96,
+		"year_from": 3375, "year_to": 3440, "tech": 6,
+		"builders": ["junta"], "allowed": ["cargo", "secure", "passenger", "mail", "utility"], "forbid": ["luxury"],
+		"traits": { "armour": 1 },
+		"look": { "length": 6.4, "beam": 1.2, "nose": "wedge", "engines": 2, "fins": true, "style": "junta" },
+		"default_modules": ["container", "mail"]
+	},
+	{
+		"id": "lancer", "name": "Lancer fast freighter", "class": "Fast freighter",
+		"slots": 4, "slot_tonnes": 200, "speed": 0.42, "jump_range": 12.0, "fuel_per_ly": 6,
+		"price": 900000, "crew_cost": 7500, "maintenance": 2400, "reliability": 0.95,
+		"year_from": 3380, "year_to": 3445, "tech": 6,
+		"builders": ["junta"], "allowed": ["*"], "forbid": ["luxury"],
+		"traits": { "armour": 1 },
+		"look": { "length": 9.6, "beam": 1.8, "nose": "wedge", "engines": 2, "fins": true, "style": "junta" },
+		"default_modules": ["container", "container", "container", "secure"]
+	},
+	{
+		"id": "bastion", "name": "Bastion armoured freighter", "class": "Armoured freighter",
+		"slots": 6, "slot_tonnes": 350, "speed": 0.27, "jump_range": 12.0, "fuel_per_ly": 10,
+		"price": 1800000, "crew_cost": 10000, "maintenance": 3600, "reliability": 0.95,
+		"year_from": 3385, "year_to": 3450, "tech": 7,
+		"builders": ["junta"], "allowed": ["*"], "forbid": ["luxury"],
+		"traits": { "armour": 2 },
+		"look": { "length": 12.8, "beam": 2.4, "nose": "wedge", "engines": 3, "fins": true, "style": "junta" },
+		"default_modules": ["container", "container", "container", "container", "bulk", "bulk"]
+	},
+	{
+		"id": "warden", "name": "Warden transport", "class": "Transport",
+		"slots": 5, "slot_tonnes": 300, "speed": 0.32, "jump_range": 12.0, "fuel_per_ly": 8,
+		"price": 1600000, "crew_cost": 11000, "maintenance": 3200, "reliability": 0.95,
+		"year_from": 3390, "year_to": 3450, "tech": 7,
+		"builders": ["junta"], "allowed": ["*"], "forbid": ["luxury"],
+		"traits": { "armour": 1 },
+		"look": { "length": 11.2, "beam": 2.4, "nose": "wedge", "engines": 2, "fins": true, "style": "junta" },
+		"default_modules": ["cabins", "cabins", "cabins", "cabins", "container"]
+	},
+	{
+		"id": "rampart", "name": "Rampart heavy freighter", "class": "Heavy freighter",
+		"slots": 8, "slot_tonnes": 520, "speed": 0.25, "jump_range": 12.0, "fuel_per_ly": 16,
+		"price": 3400000, "crew_cost": 14000, "maintenance": 5200, "reliability": 0.95,
+		"year_from": 3418, "year_to": 3480, "tech": 8,
+		"builders": ["junta"], "allowed": ["*"], "forbid": ["luxury"],
+		"traits": { "armour": 2 },
+		"look": { "length": 16.0, "beam": 3.0, "nose": "wedge", "engines": 4, "fins": true, "style": "junta" },
+		"default_modules": ["container", "container", "container", "container", "container", "bulk", "bulk", "bulk"]
+	},
+	{
+		"id": "almoner", "name": "Almoner light freighter", "class": "Light freighter",
+		"slots": 3, "slot_tonnes": 260, "speed": 0.3, "jump_range": 12.0, "fuel_per_ly": 4,
+		"price": 430000, "crew_cost": 3800, "maintenance": 1400, "reliability": 0.97,
+		"year_from": 3375, "year_to": 3440, "tech": 5,
+		"builders": ["theocracy"], "allowed": ["*"], "forbid": ["secure"],
+		"traits": { "aging_mult": 0.8 },
+		"look": { "length": 8.0, "beam": 1.8, "nose": "round", "engines": 2, "fins": false, "style": "theocracy" },
+		"default_modules": ["container", "container", "container"]
+	},
+	{
+		"id": "pilgrim", "name": "Pilgrim liner", "class": "Liner",
+		"slots": 7, "slot_tonnes": 250, "speed": 0.3, "jump_range": 12.0, "fuel_per_ly": 8,
+		"price": 2200000, "crew_cost": 12000, "maintenance": 3400, "reliability": 0.96,
+		"year_from": 3380, "year_to": 3450, "tech": 6,
+		"builders": ["theocracy"], "allowed": ["cargo", "passenger", "mail", "utility"], "forbid": ["secure"],
+		"traits": { "aging_mult": 0.8 },
+		"look": { "length": 14.4, "beam": 1.8, "nose": "round", "engines": 2, "fins": true, "style": "theocracy" },
+		"default_modules": ["cabins", "cabins", "cabins", "cabins", "cabins", "cabins", "mail"]
+	},
+	{
+		"id": "reliquary", "name": "Reliquary medium freighter", "class": "Medium freighter",
+		"slots": 5, "slot_tonnes": 400, "speed": 0.26, "jump_range": 12.0, "fuel_per_ly": 8,
+		"price": 1250000, "crew_cost": 6800, "maintenance": 2700, "reliability": 0.96,
+		"year_from": 3385, "year_to": 3450, "tech": 6,
+		"builders": ["theocracy"], "allowed": ["*"], "forbid": ["secure"],
+		"traits": { "aging_mult": 0.8 },
+		"look": { "length": 11.2, "beam": 2.4, "nose": "block", "engines": 3, "fins": false, "style": "theocracy" },
+		"default_modules": ["container", "container", "container", "cold", "cold"]
+	},
+	{
+		"id": "procession", "name": "Procession starliner", "class": "Liner",
+		"slots": 8, "slot_tonnes": 300, "speed": 0.38, "jump_range": 13.0, "fuel_per_ly": 9,
+		"price": 3300000, "crew_cost": 15000, "maintenance": 3800, "reliability": 0.97,
+		"year_from": 3420, "year_to": 3480, "tech": 7,
+		"builders": ["theocracy"], "allowed": ["cargo", "passenger", "mail", "utility"], "forbid": ["secure"],
+		"traits": { "aging_mult": 0.75 },
+		"look": { "length": 16.0, "beam": 2.4, "nose": "round", "engines": 3, "fins": true, "style": "theocracy" },
+		"default_modules": ["cabins", "cabins", "cabins", "cabins", "cabins", "suites", "suites", "mail"]
+	},
+	{
+		"id": "herald", "name": "Herald courier", "class": "Courier",
+		"slots": 2, "slot_tonnes": 70, "speed": 0.5, "jump_range": 12.0, "fuel_per_ly": 2,
+		"price": 280000, "crew_cost": 3500, "maintenance": 1200, "reliability": 0.95,
+		"year_from": 3370, "year_to": 3440, "tech": 5,
+		"builders": ["feudal"], "allowed": ["cargo", "secure", "passenger", "mail", "utility"],
+		"traits": { "influence_mult": 1.25 },
+		"look": { "length": 6.4, "beam": 1.2, "nose": "round", "engines": 2, "fins": true, "style": "feudal" },
+		"default_modules": ["secure", "mail"]
+	},
+	{
+		"id": "barque", "name": "Barque merchantman", "class": "Medium freighter",
+		"slots": 5, "slot_tonnes": 380, "speed": 0.26, "jump_range": 12.0, "fuel_per_ly": 8,
+		"price": 1500000, "crew_cost": 7500, "maintenance": 3200, "reliability": 0.93,
+		"year_from": 3375, "year_to": 3445, "tech": 5,
+		"builders": ["feudal"], "allowed": ["*"],
+		"traits": { "influence_mult": 1.2 },
+		"look": { "length": 11.2, "beam": 2.4, "nose": "round", "engines": 3, "fins": true, "style": "feudal" },
+		"default_modules": ["container", "container", "container", "cold", "secure"]
+	},
+	{
+		"id": "palatine", "name": "Palatine liner", "class": "Liner",
+		"slots": 6, "slot_tonnes": 280, "speed": 0.33, "jump_range": 12.0, "fuel_per_ly": 9,
+		"price": 3000000, "crew_cost": 15000, "maintenance": 4200, "reliability": 0.94,
+		"year_from": 3385, "year_to": 3450, "tech": 6,
+		"builders": ["feudal"], "allowed": ["cargo", "passenger", "mail", "utility"],
+		"traits": { "influence_mult": 1.3 },
+		"look": { "length": 12.8, "beam": 1.8, "nose": "round", "engines": 2, "fins": true, "style": "feudal" },
+		"default_modules": ["suites", "suites", "suites", "cabins", "cabins", "mail"]
+	},
+	{
+		"id": "galleon", "name": "Galleon heavy merchantman", "class": "Heavy freighter",
+		"slots": 8, "slot_tonnes": 560, "speed": 0.21, "jump_range": 11.0, "fuel_per_ly": 16,
+		"price": 3600000, "crew_cost": 13000, "maintenance": 5800, "reliability": 0.93,
+		"year_from": 3395, "year_to": 3460, "tech": 6,
+		"builders": ["feudal"], "allowed": ["*"],
+		"traits": { "influence_mult": 1.25 },
+		"look": { "length": 16.0, "beam": 3.0, "nose": "block", "engines": 4, "fins": true, "style": "feudal" },
+		"default_modules": ["container", "container", "container", "container", "container", "bulk", "bulk", "bulk"]
+	},
+	{
+		"id": "shade", "name": "Shade cloaked courier", "class": "Cloaked courier",
+		"slots": 2, "slot_tonnes": 50, "speed": 0.42, "jump_range": 12.0, "fuel_per_ly": 4,
+		"price": 520000, "crew_cost": 3500, "maintenance": 2400, "reliability": 0.9,
+		"year_from": 3370, "year_to": 3440, "tech": 5,
+		"builders": ["anarchy"], "allowed": ["cargo", "secure", "mail", "utility"],
+		"traits": { "raid_mult": 0.1 },
+		"look": { "length": 6.4, "beam": 1.2, "nose": "wedge", "engines": 2, "fins": true, "style": "anarchy" },
+		"default_modules": ["secure", "container"]
+	},
+	{
+		"id": "scrapper", "name": "Scrapper light freighter", "class": "Light freighter",
+		"slots": 3, "slot_tonnes": 240, "speed": 0.28, "jump_range": 11.0, "fuel_per_ly": 5,
+		"price": 260000, "crew_cost": 3500, "maintenance": 1500, "reliability": 0.88,
+		"year_from": 3370, "year_to": 3450, "tech": 3,
+		"builders": ["anarchy"], "allowed": ["*"],
+		"traits": { "aging_mult": 1.5 },
+		"look": { "length": 8.0, "beam": 1.8, "nose": "block", "engines": 2, "fins": true, "style": "anarchy" },
+		"default_modules": ["container", "container", "container"]
+	},
+	{
+		"id": "junker", "name": "Junker bulk hauler", "class": "Bulk carrier",
+		"slots": 5, "slot_tonnes": 550, "speed": 0.2, "jump_range": 11.0, "fuel_per_ly": 10,
+		"price": 800000, "crew_cost": 6000, "maintenance": 2600, "reliability": 0.87,
+		"year_from": 3375, "year_to": 3450, "tech": 4,
+		"builders": ["anarchy"], "allowed": ["bulk", "liquid", "utility"],
+		"traits": { "aging_mult": 1.4 },
+		"look": { "length": 11.2, "beam": 3.0, "nose": "block", "engines": 3, "fins": true, "style": "anarchy" },
+		"default_modules": ["bulk", "bulk", "bulk", "tank", "tank"]
+	},
+	{
+		"id": "ghost", "name": "Ghost cloaked runner", "class": "Cloaked freighter",
+		"slots": 3, "slot_tonnes": 130, "speed": 0.36, "jump_range": 12.0, "fuel_per_ly": 7,
+		"price": 1400000, "crew_cost": 5000, "maintenance": 3600, "reliability": 0.9,
+		"year_from": 3385, "year_to": 3450, "tech": 5,
+		"builders": ["anarchy"], "allowed": ["cargo", "secure", "mail", "utility"],
+		"traits": { "raid_mult": 0.1 },
+		"look": { "length": 8.0, "beam": 1.8, "nose": "wedge", "engines": 2, "fins": true, "style": "anarchy" },
+		"default_modules": ["container", "container", "secure"]
+	},
+	{
+		"id": "wraith", "name": "Wraith cloaked freighter", "class": "Cloaked freighter",
+		"slots": 4, "slot_tonnes": 180, "speed": 0.4, "jump_range": 13.0, "fuel_per_ly": 8,
+		"price": 2200000, "crew_cost": 6000, "maintenance": 4200, "reliability": 0.92,
+		"year_from": 3420, "year_to": 3480, "tech": 5,
+		"builders": ["anarchy"], "allowed": ["cargo", "secure", "mail", "utility"],
+		"traits": { "raid_mult": 0.1 },
+		"look": { "length": 9.6, "beam": 1.8, "nose": "wedge", "engines": 3, "fins": true, "style": "anarchy" },
+		"default_modules": ["container", "container", "container", "secure"]
+	},
+	{
+		"id": "drone_freighter", "name": "Custodian drone freighter", "class": "Drone freighter",
+		"slots": 4, "slot_tonnes": 300, "speed": 0.3, "jump_range": 12.0, "fuel_per_ly": 5,
+		"price": 1300000, "crew_cost": 0, "maintenance": 2800, "reliability": 0.99,
+		"year_from": 3360, "year_to": 3450, "tech": 8,
+		"builders": ["custodians"], "allowed": ["*"], "forbid": ["passenger"],
+		"traits": { "aging_mult": 0.6 },
+		"look": { "length": 9.6, "beam": 2.4, "nose": "round", "engines": 2, "fins": false, "style": "custodians" },
+		"default_modules": ["container", "container", "container", "container"]
+	},
+	{
+		"id": "drone_bulk", "name": "Custodian bulk drone", "class": "Bulk carrier",
+		"slots": 6, "slot_tonnes": 800, "speed": 0.22, "jump_range": 11.0, "fuel_per_ly": 11,
+		"price": 2800000, "crew_cost": 0, "maintenance": 4000, "reliability": 0.99,
+		"year_from": 3360, "year_to": 3460, "tech": 8,
+		"builders": ["custodians"], "allowed": ["bulk", "liquid", "utility"], "forbid": ["passenger"],
+		"traits": { "aging_mult": 0.6 },
+		"look": { "length": 12.8, "beam": 3.4, "nose": "round", "engines": 3, "fins": false, "style": "custodians" },
+		"default_modules": ["bulk", "bulk", "bulk", "bulk", "bulk", "bulk"]
+	},
+	{
+		"id": "drone_scout", "name": "Custodian long-range drone", "class": "Long-range drone",
+		"slots": 3, "slot_tonnes": 220, "speed": 0.38, "jump_range": 16.0, "fuel_per_ly": 5,
+		"price": 1600000, "crew_cost": 0, "maintenance": 3000, "reliability": 0.99,
+		"year_from": 3370, "year_to": 3460, "tech": 9,
+		"builders": ["custodians"], "allowed": ["*"], "forbid": ["passenger"],
+		"traits": { "aging_mult": 0.6 },
+		"look": { "length": 8.0, "beam": 1.8, "nose": "round", "engines": 2, "fins": false, "style": "custodians" },
+		"default_modules": ["container", "container", "cold"]
+	},
+	{
+		"id": "drone_tanker", "name": "Custodian tanker drone", "class": "Tanker",
+		"slots": 6, "slot_tonnes": 750, "speed": 0.24, "jump_range": 12.0, "fuel_per_ly": 11,
+		"price": 3000000, "crew_cost": 0, "maintenance": 4200, "reliability": 0.99,
+		"year_from": 3380, "year_to": 3460, "tech": 9,
+		"builders": ["custodians"], "allowed": ["liquid", "utility"], "forbid": ["passenger"],
+		"traits": { "aging_mult": 0.6 },
+		"look": { "length": 12.8, "beam": 3.4, "nose": "round", "engines": 3, "fins": false, "style": "custodians" },
+		"default_modules": ["tank", "tank", "tank", "tank", "tank", "tank"]
+	},
+	{
+		"id": "pyre", "name": "Pyre armed freighter", "class": "Armed freighter",
+		"slots": 4, "slot_tonnes": 280, "speed": 0.38, "jump_range": 12.0, "fuel_per_ly": 7,
+		"price": 1100000, "crew_cost": 8000, "maintenance": 2600, "reliability": 0.93,
+		"year_from": 3370, "year_to": 3480, "tech": 4,
+		"builders": ["zealots"], "allowed": ["*"], "forbid": ["luxury"],
+		"traits": { "armour": 1 },
+		"look": { "length": 9.6, "beam": 1.8, "nose": "wedge", "engines": 2, "fins": true, "style": "zealots" },
+		"default_modules": ["container", "container", "container", "container"]
+	},
+	{
+		"id": "crusade", "name": "Crusade hauler", "class": "Armed freighter",
+		"slots": 6, "slot_tonnes": 420, "speed": 0.27, "jump_range": 12.0, "fuel_per_ly": 10,
+		"price": 1900000, "crew_cost": 10000, "maintenance": 3600, "reliability": 0.93,
+		"year_from": 3380, "year_to": 3480, "tech": 5,
+		"builders": ["zealots"], "allowed": ["*"], "forbid": ["luxury"],
+		"traits": { "armour": 1 },
+		"look": { "length": 12.8, "beam": 2.4, "nose": "wedge", "engines": 3, "fins": true, "style": "zealots" },
+		"default_modules": ["container", "container", "container", "container", "bulk", "bulk"]
 	}
 ]

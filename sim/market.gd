@@ -8,6 +8,12 @@ extends RefCounted
 ## (inputs only: the population and the industries' upkeep). A recipe runs at
 ## the fraction its scarcest input allows, and each output slows down when its
 ## warehouse overflows. Price = base x (target / stock)^elasticity, clamped.
+##
+## Company trades (players and, later, rivals) do not move stock or prices:
+## a lot costs the listed price x tonnes. Companies can buy at most the stock
+## each week (`taken` counts it; the weekly tick resets it). A sale at a
+## profit adds `pull` to that good here, which draws more background traffic
+## in (Economy.run_traffic), so a well-used route slowly evens out.
 
 ## Index into Galaxy.systems.
 var system: int
@@ -39,6 +45,11 @@ var isolated := false
 var tariff_add := 0.0
 var tariff_mult := 1.0
 var banned := PackedByteArray()
+## Bought by companies this week, per good (resets each weekly tick).
+var taken := PackedFloat64Array()
+## Extra background traffic wanted per good (0 = none, 1 = twice as much),
+## from companies' profitable sales here; fades week by week.
+var pull := PackedFloat64Array()
 
 var _cfg: Dictionary
 
@@ -58,6 +69,8 @@ func _init(system_index: int, bases: PackedFloat64Array, cfg: Dictionary) -> voi
 	demand_mult.resize(n)
 	demand_mult.fill(1.0)
 	banned.resize(n)
+	taken.resize(n)
+	pull.resize(n)
 
 ## Adds a recipe; amounts are per day at full rate (already scaled by size).
 func add_recipe(inputs: Dictionary, outputs: Dictionary) -> void:
@@ -88,8 +101,12 @@ func is_traded(c: int) -> bool:
 	return target[c] > 0.0
 
 ## `days` of production and consumption in one step (the economy updates
-## weekly; player trades move prices at once through buy/sell).
+## weekly). Companies may buy the new stock again, and the pull fades.
 func tick(days: int) -> void:
+	taken.fill(0.0)
+	var keep := pow(1.0 - float(_cfg.get("traffic", {}).get("pull_decay_per_day", 0.0)), days)
+	for c in pull.size():
+		pull[c] *= keep
 	var start := float(_cfg.get("overstock_start", 1.0))
 	var stop := float(_cfg.get("overstock_stop", 2.0))
 	for r in recipes:
@@ -139,30 +156,37 @@ func price_at(c: int, s: float) -> float:
 	var ratio := pow(wanted / maxf(s, target[c] * 0.01), float(_cfg.get("elasticity", 0.8)))
 	return base_price[c] * clampf(ratio, float(_cfg.get("price_min", 0.25)), float(_cfg.get("price_max", 4.0)))
 
-## Total cost of buying `qty` here: every unit is priced along the curve as
-## the stock drops, so big lots cost more per unit.
+## What companies can still buy of `c` this week.
+func available(c: int) -> float:
+	return maxf(stock[c] - taken[c], 0.0)
+
+## Total cost of buying `qty` here (up to what is available) at the
+## listed price.
 func quote_buy(c: int, qty: float) -> float:
-	qty = minf(qty, stock[c])
-	return _integrate(c, stock[c] - qty, stock[c])
+	return minf(qty, available(c)) * price[c]
 
-## Total income from selling `qty` here (each unit pushes the price down).
+## Total income from selling `qty` here at the listed price.
 func quote_sell(c: int, qty: float) -> float:
-	return _integrate(c, stock[c], stock[c] + qty)
+	return qty * price[c]
 
-## Buys up to `qty`; returns [amount bought, total cost].
+## Buys up to `qty` (what is available); returns [amount bought, total
+## cost]. The stock and price stay as they are.
 func buy(c: int, qty: float) -> Array:
-	qty = minf(qty, stock[c])
-	var cost := quote_buy(c, qty)
-	stock[c] -= qty
-	price[c] = price_at(c, stock[c])
-	return [qty, cost]
+	qty = minf(qty, available(c))
+	taken[c] += qty
+	return [qty, qty * price[c]]
 
-## Sells `qty`; returns the total income.
+## Sells `qty`; returns the total income. The stock and price stay.
 func sell(c: int, qty: float) -> float:
-	var income := quote_sell(c, qty)
-	stock[c] += qty
-	price[c] = price_at(c, stock[c])
-	return income
+	return qty * price[c]
+
+## A company sold `qty` of `c` here at a profit: background traders bring
+## a little more of it (pull grows with the lot against the target stock).
+func add_pull(c: int, qty: float) -> void:
+	if target[c] <= 0.0:
+		return
+	var t: Dictionary = _cfg.get("traffic", {})
+	pull[c] = minf(pull[c] + float(t.get("sale_pull", 0.0)) * qty / target[c], float(t.get("pull_max", 0.0)))
 
 func record_week() -> void:
 	var sample := PackedFloat32Array()
@@ -173,11 +197,3 @@ func record_week() -> void:
 	if history.size() > int(_cfg.get("history_weeks", 104)):
 		history.pop_front()
 
-## Midpoint rule over stock levels [s0, s1].
-func _integrate(c: int, s0: float, s1: float) -> float:
-	var steps := 24
-	var width := (s1 - s0) / steps
-	var total := 0.0
-	for i in steps:
-		total += price_at(c, s0 + (i + 0.5) * width)
-	return total * width

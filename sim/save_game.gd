@@ -29,7 +29,7 @@ static func to_data(w: World) -> Dictionary:
 				int(s.settlement.population)])
 	var markets := []
 	for m in w.economy.markets:
-		markets.append({"system": m.system, "stock": _f64s(m.stock),
+		markets.append({"system": m.system, "stock": _f64s(m.stock), "taken": _f64s(m.taken), "pull": _f64s(m.pull),
 			"history": m.history.map(func(h): return _f32s(h))})
 	var jobs := []
 	for ship_id in w.jobs:
@@ -78,6 +78,9 @@ static func from_data(d: Dictionary, stars: Dictionary, content: Dictionary, err
 		var m := w.economy.markets[k]
 		var md: Dictionary = d.markets[k]
 		m.stock = _rf64s(md.stock)
+		if md.has("taken"):  # saves from before company trades left stock alone
+			m.taken = _rf64s(md.taken)
+			m.pull = _rf64s(md.pull)
 		m.history.clear()
 		for h in md.history:
 			m.history.append(_rf32s(h))

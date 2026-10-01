@@ -291,7 +291,8 @@ static func deliver(w: World, ship: Ship, system_index: int) -> void:
 		w.jobs[ship.id].erase(c)
 		var bonus := early_bonus(w, c, w.day)
 		w.companies[c.company].book("contracts", c.reward + bonus, w.month(), ship.id)
-		Influence.gain(w, c.company, system_index, (c.reward + bonus) * float(Influence.cfg(w).get("contract_weight", 1.0)))
+		Influence.gain(w, c.company, system_index, (c.reward + bonus) * float(Influence.cfg(w).get("contract_weight", 1.0))
+			* float(w.fleet.hull_trait(ship.hull, "influence_mult", 1.0)))
 		w.events.append({"type": "contract_done", "company": c.company, "ship": ship.id, "contract": c.id,
 			"reward": c.reward + bonus, "bonus": bonus, "system": system_index})
 

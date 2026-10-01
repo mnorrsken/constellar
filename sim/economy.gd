@@ -9,7 +9,9 @@ extends RefCounted
 ## consumption, then abstract NPC traders move goods between markets up to
 ## max_hops lanes apart, from cheap to dear, when the price gap beats the
 ## friction and distance costs. That keeps prices from drifting to extremes;
-## real rival companies will take over part of this job later.
+## real rival companies will take over part of this job later. Company
+## trades don't move stock or prices; a profitable sale pulls more traffic
+## in (Market.pull), so the gap a company uses slowly closes.
 
 ## Commodity ids in index order (commodities.json order).
 var commodity_ids: PackedStringArray
@@ -110,7 +112,9 @@ func run_traffic() -> void:
 				var gap := to.price[c] / from.price[c] - cost
 				if gap <= 0.0:
 					continue
-				var amount := minf(cap * gap, from.stock[c] * max_share)
+				# Companies selling here at a profit draw more traders in.
+				var boost := 1.0 + to.pull[c]
+				var amount := minf(cap * gap * boost, from.stock[c] * max_share * boost)
 				amount = minf(amount, maxf(to.target[c] * full - to.stock[c], 0.0))
 				if amount <= 0.0:
 					continue

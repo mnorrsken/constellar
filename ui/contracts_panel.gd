@@ -2,7 +2,9 @@ class_name ContractsPanel
 extends PanelContainer
 ## Contracts (C): the job board of one market, with Accept for a player ship
 ## docked there, and the player's running jobs with Abandon (express jobs
-## show their early-delivery bonus). It stays in the middle of the screen
+## show their early-delivery bonus; jobs of other ships than the current one
+## are greyed, and "Go" sends a job's ship to its destination at once). It
+## stays in the middle of the screen
 ## and scrolls when the lists would run off it. Place names are links: they close the
 ## panel and show the system on the map. Opened from the system card or
 ## with C; Esc closes.
@@ -35,7 +37,7 @@ var _offer_cells: Array = []  # per offer: [trip label, deliver-by label]
 var _jobs_key: Variant = null
 var _scroll := ScrollContainer.new()
 var _body: VBoxContainer
-var _job_cells: Array = []  # per job: [deliver-by label, reward label]
+var _job_cells: Array = []  # per job: [deliver-by label, reward label, go button]
 
 func _ready() -> void:
 	visible = false
@@ -109,7 +111,7 @@ func _refresh() -> void:
 		_ship_line.text = "None of your ships is docked here: dock one to take a job."
 		_ship_line.add_theme_color_override("font_color", MUTED)
 	_fill_offers(w, ship)
-	_fill_jobs(w)
+	_fill_jobs(w, ship.id if ship else ship_id)
 	Fit.fit_screen.call_deferred(self, _scroll, _body)
 
 func _fill_offers(w: World, ship: Ship) -> void:
@@ -178,14 +180,16 @@ func _fill_offers(w: World, ship: Ship) -> void:
 			accept.tooltip_text = "This ship cannot make the deadline: the penalty would be charged"
 		_offers.add_child(accept)
 
-func _fill_jobs(w: World) -> void:
+## `current`: the ship the panel is about (docked here, else selected);
+## the other ships' jobs are greyed.
+func _fill_jobs(w: World, current: int) -> void:
 	var jobs := w.contracts_of(Sim.PLAYER)
 	_jobs_title.text = "Your contracts  ·  %d" % jobs.size()
 	_jobs.visible = not jobs.is_empty()
-	var key := jobs.map(func(c): return c.id)
+	var key := [current, jobs.map(func(c): return c.id)]
 	if key == _jobs_key:
 		for k in jobs.size():
-			_update_job(w, jobs[k], _job_cells[k][0], _job_cells[k][1])
+			_update_job(w, jobs[k], _job_cells[k][0], _job_cells[k][1], _job_cells[k][2])
 		return
 	_jobs_key = key
 	_job_cells.clear()
@@ -198,23 +202,29 @@ func _fill_jobs(w: World) -> void:
 		_jobs.add_child(_cell(h, MUTED, 12))
 	for c in jobs:
 		var ship := w.fleet.get_ship(c.ship)
-		_jobs.add_child(_cell(ship.name if ship else "—", TEXT, 14))
-		_jobs.add_child(_cell(_load(c), TEXT, 14))
-		_jobs.add_child(_link(c.origin))
-		_jobs.add_child(_link(c.destination))
+		var to := HBoxContainer.new()
+		to.add_theme_constant_override("separation", 8)
+		to.add_child(_link(c.destination))
+		var go := _button("Go", func(): Sim.send_ship(c.ship, c.destination))
+		to.add_child(go)
 		var deliver := _cell("", TEXT, 14, true)
 		var pay := _money(c.reward, GREEN)
-		_update_job(w, c, deliver, pay)
-		_job_cells.append([deliver, pay])
-		_jobs.add_child(deliver)
-		_jobs.add_child(pay)
+		_update_job(w, c, deliver, pay, go)
+		_job_cells.append([deliver, pay, go])
 		var abandon := _button("Abandon  −%s" % Format.thousands(roundi(c.penalty)),
 			func(): Sim.abandon_contract(c.id))
 		abandon.tooltip_text = "Give the job up and pay the penalty"
-		_jobs.add_child(abandon)
+		var row := [_cell(ship.name if ship else "—", TEXT, 14), _cell(_load(c), TEXT, 14), _link(c.origin), to,
+			deliver, pay, abandon]
+		for cell in row:
+			# Another ship's job: greyed (still usable).
+			if current >= 0 and c.ship != current:
+				cell.modulate = Color(1, 1, 1, 0.4)
+			_jobs.add_child(cell)
 
-## The cells of a running job that change by the day.
-func _update_job(w: World, c: Contract, deliver: Label, pay: Label) -> void:
+## The cells of a running job that change by the day, and whether its ship
+## can go to the destination now.
+func _update_job(w: World, c: Contract, deliver: Label, pay: Label, go: Button) -> void:
 	deliver.text = _date_left(w, c.deadline)
 	deliver.add_theme_color_override("font_color", AMBER if c.deadline - w.day <= 10 else TEXT)
 	pay.text = Format.thousands(roundi(c.reward))
@@ -223,6 +233,26 @@ func _update_job(w: World, c: Contract, deliver: Label, pay: Label) -> void:
 		pay.text += "  +%s" % Format.money_short(bonus)
 		pay.tooltip_text = "Express: %s cr bonus if delivered today; it shrinks toward the deadline" % Format.thousands(roundi(bonus))
 		pay.mouse_filter = Control.MOUSE_FILTER_PASS
+	var ship := w.fleet.get_ship(c.ship)
+	var why := ""
+	if ship == null:
+		why = "The ship is gone"
+	elif ship.status == Ship.Status.TRAVELING:
+		why = "%s is under way" % ship.name
+	elif ship.status != Ship.Status.DOCKED:
+		why = "%s is in the yard" % ship.name
+	elif ship.system == c.destination:
+		why = "%s is there" % ship.name
+	var plan := Sim.plan_route(ship.id, c.destination) if why == "" else {}
+	if why == "" and not plan.ok:
+		why = plan.error
+	go.disabled = why != ""
+	if why != "":
+		go.tooltip_text = why
+	else:
+		go.tooltip_text = "Send %s there now: %d days, arrives %s%s" % [ship.name, plan.days,
+			Calendar.format(w.day + int(plan.days), w.start_year),
+			" (stops its route orders)" if ship.orders_active else ""]
 
 ## A system's name as a link to it on the map.
 func _link(i: int) -> SystemLink:
