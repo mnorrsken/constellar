@@ -291,6 +291,8 @@ static func _stop(s: Dictionary, loading := false) -> Dictionary:
 				out[k] = s[k].map(func(b):
 					var amount: Variant = b.get("amount", 0.0)
 					return {"commodity": str(b.commodity), "amount": _rf(amount) if loading else _f(float(amount))})
+			"wait_full":
+				pass  # gone: older saves had "wait for a full load"
 			_:
 				out[k] = bool(s[k])
 	return out
@@ -306,7 +308,7 @@ static func _ship(s: Ship) -> Dictionary:
 		"month_days_under_way": s.month_days_under_way, "note": s.note,
 		"cargo": _pairs(s.cargo, _f), "cargo_cost": _pairs(s.cargo_cost, _f),
 		"orders": s.orders.map(_stop), "order_index": s.order_index, "orders_active": s.orders_active,
-		"stop_handled": s.stop_handled, "wait_start": s.wait_start, "allow_loss": s.allow_loss,
+		"stop_handled": s.stop_handled, "allow_loss": s.allow_loss,
 		"insured": s.insured, "safe_routing": s.safe_routing, "risk_month": _f(s.risk_month),
 		"risk_last_month": _f(s.risk_last_month),
 	}
@@ -342,7 +344,6 @@ static func _load_ship(d: Dictionary) -> Ship:
 	s.order_index = int(d.order_index)
 	s.orders_active = bool(d.orders_active)
 	s.stop_handled = bool(d.stop_handled)
-	s.wait_start = int(d.wait_start)
 	s.allow_loss = bool(d.allow_loss)
 	s.insured = bool(d.insured)
 	s.safe_routing = bool(d.safe_routing)

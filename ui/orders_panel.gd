@@ -1,9 +1,9 @@
 class_name OrdersPanel
 extends PanelContainer
 ## Route orders for one ship (Transport Tycoon style): a looping list of
-## stops. Each stop: sell all cargo, buy one good (0 t = fill the hold),
-## wait for a full load, auto-trade (needs an auto-trader module), or get
-## serviced when worn (at a shipyard). The ship's routing (shortest or
+## stops. Each stop: sell all cargo, buy a list of goods in order (each a
+## set number of tonnes, or "fill" for the rest of its hold), auto-trade
+## (needs an auto-trader module), or get serviced when worn (at a shipyard). The ship's routing (shortest or
 ## safest) and insurance are set here too. Stops are added from a list of
 ## the charted ports nearest the last stop (and the one selected on the
 ## map), or by typing a name with suggestions from every charted port. A
@@ -260,35 +260,95 @@ func _stop_row(s: Ship, i: int) -> Control:
 	opts.add_theme_constant_override("separation", 14)
 	var sell := _check("Sell all cargo", stop.get("sell_all", true),
 		func(on): _edit(func(o): o[i].sell_all = on))
-	var wait := _check("Wait for full load", stop.get("wait_full", false),
-		func(on): _edit(func(o): o[i].wait_full = on))
 	var auto := _check("Auto-trade", stop.get("auto", false),
 		func(on): _edit(func(o): o[i].auto = on))
 	auto.disabled = not ("auto_trader" in s.modules)
-	auto.tooltip_text = "Buys the best known margin for the next stop. Needs an auto-trader module."
-	var buy := OptionButton.new()
-	buy.focus_mode = Control.FOCUS_NONE
-	buy.add_item("Buy: nothing")
-	var ids: PackedStringArray = w.economy.commodity_ids
-	var holds := w.fleet.capacity(s)
-	for id in ids:
-		var carry: bool = holds.get(Defs.commodities[id].cargo_class, 0.0) > 0.0
-		buy.add_item("Buy: %s%s" % [Defs.commodities[id].name, "" if carry else "  (no hold)"])
-	var buys: Array = stop.get("buy", [])
-	buy.select(0 if buys.is_empty() else ids.find(buys[0].commodity) + 1)
-	buy.disabled = stop.get("auto", false)
-	buy.item_selected.connect(func(k): _edit(func(o):
-		o[i].buy = [] if k == 0 else [{"commodity": ids[k - 1], "amount": 0}]))
+	auto.tooltip_text = "Buys the best known margin for the next stop instead of the list below. Needs an auto-trader module."
 	var service := _check("Service when worn", stop.get("service", false),
 		func(on): _edit(func(o): o[i].service = on))
 	service.disabled = not w.fleet.is_shipyard(int(stop.system))
 	service.tooltip_text = "At this shipyard, service the ship when its condition is well below what its age allows." \
 		if not service.disabled else "Only at a shipyard"
-	for c in [sell, buy, wait, auto, service]:
+	for c in [sell, auto, service]:
 		opts.add_child(c)
 	box.add_child(opts)
+	box.add_child(_buy_list(s, i))
 	panel.add_child(box)
 	return panel
+
+## The goods a stop buys, in order: a row per good (good, tonnes or "fill",
+## remove) and a dropdown to add another. Greyed while auto-trade is on.
+func _buy_list(s: Ship, i: int) -> Control:
+	var w: World = Sim.world
+	var stop: Dictionary = s.orders[i]
+	var buys: Array = stop.get("buy", [])
+	var auto: bool = stop.get("auto", false)
+	var ids: PackedStringArray = w.economy.commodity_ids
+	var holds := w.fleet.capacity(s)
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 4)
+	for k in buys.size():
+		var b: Dictionary = buys[k]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var label := Label.new()
+		label.text = "Buy" if k == 0 else "then"
+		label.custom_minimum_size = Vector2(40, 0)
+		label.add_theme_color_override("font_color", MUTED)
+		var good := _goods(ids, holds, "")
+		good.select(ids.find(b.commodity))
+		good.disabled = auto
+		good.item_selected.connect(func(g): _edit(func(o): o[i].buy[k].commodity = ids[g]))
+		var amount := LineEdit.new()
+		amount.custom_minimum_size = Vector2(80, 0)
+		amount.placeholder_text = "fill"
+		amount.alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		amount.text = "" if float(b.get("amount", 0)) <= 0.0 else str(roundi(float(b.amount)))
+		amount.editable = not auto
+		amount.tooltip_text = "Tonnes to have aboard after buying. Empty: fill the rest of its hold."
+		var commit := func(_t = null):
+			var v := maxf(amount.text.strip_edges().to_float(), 0.0)
+			if not is_equal_approx(v, float(b.get("amount", 0))):
+				_edit(func(o): o[i].buy[k].amount = v)
+		amount.text_submitted.connect(commit)
+		amount.focus_exited.connect(commit)
+		var unit := Label.new()
+		unit.text = "t"
+		unit.add_theme_color_override("font_color", MUTED)
+		var remove := Button.new()
+		remove.text = "✕"
+		remove.focus_mode = Control.FOCUS_NONE
+		remove.disabled = auto
+		remove.tooltip_text = "Don't buy this here"
+		remove.pressed.connect(func(): _edit(func(o): o[i].buy.remove_at(k)))
+		for c in [label, good, amount, unit, remove]:
+			row.add_child(c)
+		list.add_child(row)
+	var add := _goods(ids, holds, "+ Buy a good…" if buys.is_empty() else "+ Then buy…")
+	add.select(0)
+	add.disabled = auto
+	add.item_selected.connect(func(g):
+		if g > 0:
+			_edit(func(o):
+				if not o[i].has("buy"):
+					o[i].buy = []
+				o[i].buy.append({"commodity": ids[g - 1], "amount": 0})))
+	var add_row := HBoxContainer.new()
+	add_row.add_child(add)
+	list.add_child(add_row)
+	return list
+
+## A dropdown of every good (noting the ones this ship has no hold for),
+## after a first `placeholder` item if one is given.
+func _goods(ids: PackedStringArray, holds: Dictionary, placeholder: String) -> OptionButton:
+	var b := OptionButton.new()
+	b.focus_mode = Control.FOCUS_NONE
+	if placeholder != "":
+		b.add_item(placeholder)
+	for id in ids:
+		var carry: bool = holds.get(Defs.commodities[id].cargo_class, 0.0) > 0.0
+		b.add_item("%s%s" % [Defs.commodities[id].name, "" if carry else "  (no hold)"])
+	return b
 
 ## Applies a change to a copy of the orders; restarts the route if it ran.
 func _edit(change: Callable) -> void:
@@ -311,7 +371,7 @@ func _add_stop(system_index: int) -> void:
 	var sell := w.economy.market_at(system_index) != null
 	_search.clear()
 	_search.release_focus()
-	_edit(func(o): o.append({"system": system_index, "sell_all": sell, "buy": [], "wait_full": false, "auto": false}))
+	_edit(func(o): o.append({"system": system_index, "sell_all": sell, "buy": [], "auto": false}))
 	_suggest()
 
 func _toggle_run() -> void:

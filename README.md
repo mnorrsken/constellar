@@ -108,8 +108,9 @@ open, hover another
 star: the "vs base" column compares with it instead (what a tonne bought here
 sells for there after its tariff, from the prices you know there). O opens the selected ship's route
 orders (add a stop from the ports nearest the last stop or the one selected
-on the map, or type a name and pick a suggestion; sell, buy, wait for a full
-load, auto-trade, service when worn at a shipyard; Start route). A ship on
+on the map, or type a name and pick a suggestion; sell all, a list of goods
+to buy in order (each a set number of tonnes, or empty to fill the rest of
+its hold), auto-trade, service when worn at a shipyard; Start route). A ship on
 route orders that gets badly worn goes to the nearest shipyard for a
 service by itself, then carries on. Fuel and servicing can be paid on credit
 down to -200,000 cr. Place names
@@ -137,7 +138,7 @@ Press M, or the system panel's Market button, to see the selected system's
 market. Space pauses/resumes the game clock; 1-4 set its speed (also
 buttons on the clock bar, top centre).
 
-Contracts: C, or the system card's Contracts button, shows a market's job
+Contracts: C, or the system card's Contracts button (the game pauses while it is open), shows a market's job
 board (freight, passengers, mail) for a docked ship, and your running jobs
 with Abandon and a Go button that sends the job's ship to its destination
 at once (other ships' jobs are greyed). Deliver on time for the reward; miss the deadline or abandon

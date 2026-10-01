@@ -45,13 +45,13 @@ var note := ""
 var cargo: Dictionary = {}
 var cargo_cost: Dictionary = {}
 ## Route orders: looping stops, each {system, sell_all, buy: [{commodity,
-## amount (0 = fill)}], wait_full, auto}. See Trading.process_orders.
+## amount (0 = fill the rest of its hold)}, ...] (bought in order), auto,
+## service}. See Trading.process_orders.
 var orders: Array[Dictionary] = []
 var order_index := 0
 var orders_active := false
-## At the current stop: trades done, and the day loading started.
+## At the current stop: trades done.
 var stop_handled := false
-var wait_start := 0
 ## The player restarted the route here: sell even at a loss this once.
 var allow_loss := false
 ## Insured (monthly premium, pays out on raids and losses) and "safest"

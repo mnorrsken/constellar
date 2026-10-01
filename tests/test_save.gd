@@ -22,7 +22,7 @@ func _busy_world() -> World:
 	var next: int = w.galaxy.lanes_of(s.system)[0].other(s.system)
 	w.set_orders(0, s.id, [
 		{"system": s.system, "sell_all": true, "buy": [{"commodity": "machinery", "amount": 0}]},
-		{"system": next, "sell_all": true, "buy": [], "wait_full": false}])
+		{"system": next, "sell_all": true, "buy": []}])
 	w.start_orders(0, s.id)
 	var sol := w.galaxy.index_of("sol")
 	var r := w.buy_ship(0, "courier", sol)

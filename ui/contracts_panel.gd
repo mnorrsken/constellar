@@ -5,7 +5,8 @@ extends PanelContainer
 ## show their early-delivery bonus; jobs of other ships than the current one
 ## are greyed, and "Go" sends a job's ship to its destination at once). It
 ## stays in the middle of the screen
-## and scrolls when the lists would run off it. Place names are links: they close the
+## and scrolls when the lists would run off it. The game is paused while it
+## is open and runs on at its old speed when it closes. Place names are links: they close the
 ## panel and show the system on the map. Opened from the system card or
 ## with C; Esc closes.
 
@@ -38,6 +39,8 @@ var _jobs_key: Variant = null
 var _scroll := ScrollContainer.new()
 var _body: VBoxContainer
 var _job_cells: Array = []  # per job: [deliver-by label, reward label, go button]
+## The game speed to go back to on closing (0 = it was paused already).
+var _resume_speed := 0
 
 func _ready() -> void:
 	visible = false
@@ -80,6 +83,13 @@ func _ready() -> void:
 	for c in [head, _ship_line, _scroll]:
 		box.add_child(c)
 	add_child(box)
+	# However the panel goes away (Esc, a link, another panel), the game
+	# runs on.
+	visibility_changed.connect(func():
+		if not visible and _resume_speed > 0:
+			if Sim.speed == 0:
+				Sim.set_speed(_resume_speed)
+			_resume_speed = 0)
 	Events.contracts_changed.connect(_refresh)
 	Events.fleet_changed.connect(_refresh)
 	Events.day_passed.connect(func(_d): _refresh())
@@ -89,9 +99,16 @@ func open(system_index: int, selected_ship: int) -> void:
 	_jobs_key = null
 	system = system_index
 	ship_id = selected_ship
+	_pause()
 	visible = true
 	Motion.pop_in(self)
 	_refresh()
+
+## Stops the clock, remembering its speed for when the panel closes.
+func _pause() -> void:
+	if Sim.speed > 0:
+		_resume_speed = Sim.speed
+		Sim.set_speed(0)
 
 func close_panel() -> void:
 	visible = false
@@ -205,7 +222,9 @@ func _fill_jobs(w: World, current: int) -> void:
 		var to := HBoxContainer.new()
 		to.add_theme_constant_override("separation", 8)
 		to.add_child(_link(c.destination))
-		var go := _button("Go", func(): Sim.send_ship(c.ship, c.destination))
+		var go := _button("Go", func():
+			Sim.send_ship(c.ship, c.destination)
+			_pause())  # orders given may have restarted the clock
 		to.add_child(go)
 		var deliver := _cell("", TEXT, 14, true)
 		var pay := _money(c.reward, GREEN)

@@ -182,28 +182,6 @@ func test_two_stop_route_runs_five_years(t: Object) -> void:
 	t.ok(arrivals >= 20, "made %d stops" % arrivals)
 	t.ok(not is_nan(w.companies[0].cash), "books intact")
 
-func test_wait_for_full_load(t: Object) -> void:
-	var w := _world()
-	_all_known(w)
-	var s := w.ships_of(0)[0]
-	var next: int = w.galaxy.lanes_of(w.start_system)[0].other(w.start_system)
-	var m := w.economy.market_at(w.start_system)
-	var c := w.economy.index_of("ore")
-	s.modules.assign(["bulk", "bulk", "bulk"])
-	m.stock[c] = 100.0  # far less than a full load
-	w.set_orders(0, s.id, [
-		{"system": w.start_system, "buy": [{"commodity": "ore", "amount": 0}], "wait_full": true},
-		{"system": next, "sell_all": true},
-	])
-	w.start_orders(0, s.id)
-	t.eq(s.status, Ship.Status.DOCKED, "waiting for a full load")
-	for i in 5:
-		w.advance_day()
-	t.eq(s.status, Ship.Status.DOCKED, "still waiting after 5 days")
-	for i in 30:
-		w.advance_day()
-	t.ok(s.status == Ship.Status.TRAVELING or s.system == next, "gives up after the wait limit and sails")
-
 func test_auto_trader(t: Object) -> void:
 	var w := _world()
 	_all_known(w)
@@ -308,3 +286,28 @@ func test_profitable_sale_pulls_traffic(t: Object) -> void:
 	t.ok(is_equal_approx(m.price[ore], price), "and leaves the price")
 	t.ok(w.sell_cargo(0, s.id, "grain", 100.0).ok, "sold the grain")
 	t.ok(is_zero_approx(m.pull[grain]), "a sale at a loss pulls nothing")
+
+## A stop can buy several goods, in order: a set amount of one, then the
+## rest of a hold with another, and a third good for a second hold.
+func test_stop_buys_several_goods(t: Object) -> void:
+	var w := _world()
+	_all_known(w)
+	var s := w.ships_of(0)[0]
+	var next: int = w.galaxy.lanes_of(w.start_system)[0].other(w.start_system)
+	var m := w.economy.market_at(w.start_system)
+	s.modules.assign(["container", "container", "bulk"])
+	var ids := ["machinery", "textiles", "grain"]
+	for id in ids:
+		m.stock[w.economy.index_of(id)] = 5000.0
+	w.set_orders(0, s.id, [
+		{"system": w.start_system, "sell_all": true, "buy": [
+			{"commodity": "machinery", "amount": 100}, {"commodity": "textiles", "amount": 0},
+			{"commodity": "grain", "amount": 0}]},
+		{"system": next, "sell_all": true},
+	])
+	w.start_orders(0, s.id)
+	var cap := w.fleet.capacity(s)
+	t.ok(is_equal_approx(s.cargo.get(w.economy.index_of("machinery"), 0.0), 100.0), "100 t of machinery")
+	t.ok(is_equal_approx(s.cargo.get(w.economy.index_of("textiles"), 0.0), cap.container - 100.0),
+		"textiles fill the rest of the container hold")
+	t.ok(is_equal_approx(s.cargo.get(w.economy.index_of("grain"), 0.0), cap.bulk), "grain fills the bulk hold")

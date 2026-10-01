@@ -240,8 +240,9 @@ cabins and a mail bay.
   (Ports of Call style, good for the first hours).
 - **Route orders** (Transport Tycoon style): a looping list of stops. Each
   stop has buy rules (commodity, max quantity, max price), sell rules
-  (commodity, min price), "wait for full load" with a timeout, and service
-  or refuel.
+  (commodity, min price), and service or refuel. A stop buys a list of
+  goods in order (tonnes, or fill the rest of a hold). ("Wait for full
+  load" was dropped after v0.3: it rarely helped.)
 - **Auto-trade** (needs the auto-trader module): at each stop the ship buys
   whatever has the best known margin for its next stop. The quality of its
   decisions depends on how fresh your price info is.

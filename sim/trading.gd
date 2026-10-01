@@ -232,9 +232,8 @@ static func loss_reason(company: Company, ship_id: int, month: int) -> String:
 
 # --- route orders -------------------------------------------------------------------
 
-## Runs every docked ship's route orders: at the right stop, sell then buy
-## (once per visit), wait for a full load if asked (up to
-## wait_full_max_days), then head for the next stop. A ship that cannot go
+## Runs every docked ship's route orders: at the right stop, sell, then buy
+## the stop's goods in order (once per visit), then head for the next stop. A ship that cannot go
 ## on (cash, fuel, no charted route) stops its orders, and so does one whose
 ## cargo would sell at a loss (it keeps the cargo; restarting the route
 ## there sells anyway). A badly worn ship first goes for a service
@@ -268,16 +267,9 @@ static func process_orders(w: World) -> void:
 			s.note = ""
 			_load(w, s, stop)
 			s.stop_handled = true
-			s.wait_start = w.day
 			if stop.get("service", false) and w.fleet.is_shipyard(s.system) and Aging.needs_service(w, s):
 				if Aging.service(w, s).ok:
 					continue  # in the yard; the route goes on when it is out
-		elif stop.get("wait_full", false):
-			_load(w, s, stop)
-		var max_wait := int(cfg(w).get("wait_full_max_days", 28))
-		if stop.get("wait_full", false) and not _full(w, s, stop) and w.day - s.wait_start < max_wait:
-			s.note = "waiting for a full load (day %d of %d)" % [w.day - s.wait_start + 1, max_wait]
-			continue
 		s.order_index = (s.order_index + 1) % s.orders.size()
 		s.stop_handled = false
 		_go(w, s, int(s.orders[s.order_index].system))
@@ -304,21 +296,6 @@ static func _load(w: World, s: Ship, stop: Dictionary) -> void:
 			var r := buy(w, s, c, want)
 			if not r.ok:
 				s.note = "no cargo: %s (%s)" % [r.error.to_lower(), _name(w, c)]
-
-## Loaded as far as this stop wants: no free space for anything it buys.
-static func _full(w: World, s: Ship, stop: Dictionary) -> bool:
-	if stop.get("auto", false):
-		return true
-	for b in stop.get("buy", []):
-		var c := w.economy.index_of(b.commodity)
-		if is_banned(w, s.system, c):
-			continue
-		var amount := float(b.get("amount", 0))
-		if amount <= 0.0 and free_space(w, s, c) >= 1.0:
-			return false
-		if amount > 0.0 and s.cargo.get(c, 0.0) + 1.0 < amount:
-			return false
-	return true
 
 ## Auto-trader: for each cargo class aboard, the good with the best known
 ## margin (after the next stop's tariff) at the next stop, if any is

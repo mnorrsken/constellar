@@ -46,6 +46,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- The contracts panel pauses the game while it is open (it runs on at its
+  old speed when the panel closes).
+- Route orders: a stop can buy several goods, in order, each a set number
+  of tonnes or "fill" (the rest of its hold): a Buy row per good with
+  ✕ to remove it, and a "+ Then buy…" dropdown to add one.
+
 - The UI is smaller overall (window scale 1.25 -> 1.1, map star names
   26 -> 22).
 - The system card on the right is shorter: planet/belt count moved onto
@@ -73,6 +79,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The test suite runs in about 35 s instead of 95 (the warmed-up world is
   made once per run and copied), and `make test T="trading save"` runs only
   some test files.
+
+### Removed
+
+- "Wait for full load" in route orders (and `wait_full_max_days`); old
+  saves just drop it.
 
 ### Fixed
 

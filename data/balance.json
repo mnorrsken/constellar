@@ -34,7 +34,7 @@
 	"trade": {
 		"docking_fee": 400, "docking_fee_per_slot": 150,
 		"fuel_commodity": "fuel", "fuel_without_market": 1.5,
-		"wait_full_max_days": 28, "ledger_months": 24
+		"ledger_months": 24
 	},
 	"contracts": {
 		"offers_per_size": 1.0, "max_offers": 12, "offer_weeks": 3, "max_hops": 5,

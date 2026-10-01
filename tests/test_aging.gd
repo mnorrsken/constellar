@@ -114,15 +114,16 @@ func test_notes_explain_idle_ships(t: Object) -> void:
 	var next := _next_market(w)
 	var ore := w.economy.index_of("ore")
 	s.modules.assign(["bulk", "bulk", "bulk"])
-	w.economy.market_at(w.start_system).stock[ore] = 50.0
+	w.economy.market_at(w.start_system).stock[ore] = 0.0
 	w.set_orders(0, s.id, [
-		{"system": w.start_system, "buy": [{"commodity": "ore", "amount": 0}], "wait_full": true},
+		{"system": w.start_system, "buy": [{"commodity": "ore", "amount": 0}]},
 		{"system": next, "sell_all": true},
 	])
 	w.start_orders(0, s.id)
-	w.advance_day()
-	t.ok("full load" in s.note, "waiting for a full load: %s" % s.note)
-	w.stop_orders(0, s.id)
+	t.ok("no cargo" in s.note and "ore" in s.note.to_lower(), "nothing to buy: %s" % s.note)
+	# The ship went on without cargo: a fresh world for the auto-trader case.
+	w = _world()
+	s = w.ships_of(0)[0]
 	s.modules.assign(["container", "container", "auto_trader"])
 	w.companies[0].prices.erase(next)
 	w.set_orders(0, s.id, [{"system": w.start_system, "auto": true}, {"system": next, "auto": true}])

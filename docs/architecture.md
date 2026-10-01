@@ -414,7 +414,7 @@ loans, ledger trimmed to `ledger_months`. `observe(company, system)` stores
 the market's prices in `Company.prices` (with the day); `observe_docked`
 refreshes them weekly where ships are docked. `process_orders` runs route
 orders daily for docked ships: at the stop, sell all, buy (fill or an
-amount), wait for a full load up to `wait_full_max_days`, service when worn
+amount; a stop's `buy` list runs in order), service when worn
 (`Aging.service`, see `Aging` below), then `World.depart` to the next stop;
 auto-trade (`auto_trader` module) buys the best known margin for the next
 stop per cargo class. A ship that can't go on stops its route
@@ -940,7 +940,8 @@ over another star (`main.gd` calls `MarketPanel.set_compare(i)` when the
 hovered star changes), the "vs base" column compares with that system:
 known price there after the player's tariff there, over the price here.
 `OrdersPanel`
-(O) edits a ship's route orders (sell, buy, wait for a full load,
+(O) edits a ship's route orders (sell, a list of goods to buy per stop —
+each a good, tonnes or empty for "fill", and remove, plus an add dropdown —
 auto-trade, service when worn at a shipyard stop), and has Safest routing
 (adds `Danger.penalty` to route planning) and Insured (shows the monthly
 premium) toggles per ship. Stops are added from an OptionButton of the
@@ -1162,7 +1163,7 @@ refresh while docked), buying limited by cargo class, space and cash,
 sales at the market price, fuel at departure and docking fees on arrival,
 monthly crew/age-based maintenance/interest, a manual buy-travel-sell loop
 that makes money after costs, a two-stop route running 5 years unattended,
-waiting for a full load, the auto-trader, order refusals, sale profit
+a stop buying several goods in order, the auto-trader, order refusals, sale profit
 against cost, and a route stopping (cargo kept) before a loss and selling
 after a restart.
 
