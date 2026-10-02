@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The contracts panel's Go button closes the panel once the ship is under
+  way.
+
 ## [0.4.0] - 2026-10-01
 
 ### Added

@@ -3,7 +3,8 @@ extends PanelContainer
 ## Contracts (C): the job board of one market, with Accept for a player ship
 ## docked there, and the player's running jobs with Abandon (express jobs
 ## show their early-delivery bonus; jobs of other ships than the current one
-## are greyed, and "Go" sends a job's ship to its destination at once). It
+## are greyed, and "Go" sends a job's ship to its destination at once and
+## closes the panel). It
 ## stays in the middle of the screen
 ## and scrolls when the lists would run off it. The game is paused while it
 ## is open and runs on at its old speed when it closes. Place names are links: they close the
@@ -223,8 +224,9 @@ func _fill_jobs(w: World, current: int) -> void:
 		to.add_theme_constant_override("separation", 8)
 		to.add_child(_link(c.destination))
 		var go := _button("Go", func():
-			Sim.send_ship(c.ship, c.destination)
-			_pause())  # orders given may have restarted the clock
+			# Under way: the panel closes and the game runs on.
+			if Sim.send_ship(c.ship, c.destination).ok:
+				close_panel())
 		to.add_child(go)
 		var deliver := _cell("", TEXT, 14, true)
 		var pay := _money(c.reward, GREEN)

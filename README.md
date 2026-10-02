@@ -141,7 +141,7 @@ buttons on the clock bar, top centre).
 Contracts: C, or the system card's Contracts button (the game pauses while it is open), shows a market's job
 board (freight, passengers, mail) for a docked ship, and your running jobs
 with Abandon and a Go button that sends the job's ship to its destination
-at once (other ships' jobs are greyed). Deliver on time for the reward; miss the deadline or abandon
+at once and closes the panel (other ships' jobs are greyed). Deliver on time for the reward; miss the deadline or abandon
 and you pay the penalty. Express jobs (marked "· express": mail, luxury
 passengers, and some cargo) pay a bonus on top for delivering early.
 
